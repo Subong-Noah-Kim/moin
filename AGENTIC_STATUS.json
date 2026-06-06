@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T01:20:00+09:00",
+  "updatedAt": "2026-06-07T01:28:00+09:00",
   "branch": "codex/priority-roadmap-batch",
   "summary": {
     "active": 2,
     "blocked": 0,
-    "doneLocal": 2,
+    "doneLocal": 3,
     "deployNeeded": 0
   },
   "agents": [
@@ -25,6 +25,15 @@
       "lastUpdate": "2026-06-07",
       "blocker": "총괄 할당 대기",
       "next": "유저/관리자 개선 후보 정의"
+    },
+    {
+      "name": "UX/UI Agent",
+      "role": "UX/UI",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "기획 후보 대기",
+      "next": "화면 흐름, 모바일 사용성, 접근성 검토"
     },
     {
       "name": "검토 Agent",
@@ -107,9 +116,19 @@
       "priority": "P2",
       "owner": "개발 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "90f81cd",
       "deployNeeded": false,
       "next": "Subagent 기획/검토 작업 착수"
+    },
+    {
+      "id": "AG-0003",
+      "title": "UX/UI Agent 역할 추가",
+      "priority": "P3",
+      "owner": "총괄 디렉터",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "기획/UX/UI/검토 Subagent 작업 착수"
     }
   ]
 }

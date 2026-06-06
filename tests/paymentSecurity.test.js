@@ -150,6 +150,7 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.equal(status.branch, 'codex/priority-roadmap-batch');
   assert.ok(Array.isArray(status.agents));
   assert.ok(Array.isArray(status.tasks));
+  assert.ok(status.agents.some((agent) => agent.name === 'UX/UI Agent'));
 });
 
 test('public submissions route through an abuse-controlled Edge Function', async () => {

@@ -47,3 +47,25 @@
   - Static JSON parsed as branch `codex/priority-roadmap-batch`, 9 agents, 2 tasks.
 - Next:
   - 기획/검토/보안 Subagent를 투입해 다음 개발 후보를 분류한다.
+
+### AG-0003 - UX/UI Agent 역할 추가
+
+- Status: `done_local`
+- Branch: `codex/priority-roadmap-batch`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터
+- Purpose: 기획 Agent와 별도로 화면 흐름, 모바일 사용성, 접근성, 시각적 밀도, 인터페이스 품질을 검토하는 UX/UI Agent 역할을 추가한다.
+- Changed files:
+  - `AGENTIC_WORKFLOW.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - 기획 Agent는 서비스 관점의 기능 후보를 정의한다.
+  - UX/UI Agent는 기능 후보와 구현 결과가 실제 화면에서 자연스럽고 사용하기 쉬운지 검토한다.
+  - 검토 Agent의 우선순위 판단 기준에 UX/UI 영향을 포함한다.
+- Verification:
+  - `npm test` passed: 14 tests.
+  - Agentic status JSON now includes `UX/UI Agent`.
+- Next:
+  - 기획/UX/UI/검토 Subagent를 투입해 다음 개발 후보를 분류한다.
