@@ -24,6 +24,7 @@ npm run dev
 - 데모 결제 플로우
 - 토스페이먼츠 테스트 결제 승인
 - Supabase 신청/주문/결제 기록 저장
+- 공개 신청/주문 생성 반복 제출 제한
 - Supabase 모임 목록 불러오기
 - 관리자 대시보드
 - 관리자 주문/결제 기록 확인
@@ -33,15 +34,35 @@ npm run dev
 
 1. Supabase 프로젝트를 만든 뒤 SQL editor에서 `supabase/migrations/20260605000000_initial_schema.sql`을 실행합니다.
 2. `supabase-config.js`에 프로젝트 URL과 public anon key를 입력합니다.
-3. 다시 배포하면 모임 목록을 Supabase에서 불러오고, 신청서와 데모 결제 주문이 Supabase에 저장됩니다.
+3. 공개 신청/주문 생성 Edge Function을 배포하면 모임 목록을 Supabase에서 불러오고, 신청서와 데모/토스 주문이 서버 검증을 거쳐 Supabase에 저장됩니다.
 
 브라우저에는 public anon key만 넣어야 합니다. service role key는 결제 승인 서버나 Edge Function에서만 사용하세요.
+
+### 공개 신청/주문 생성 Edge Function
+
+신청서와 주문 생성은 `supabase/functions/create-public-submission` Edge Function을 거칩니다. 이 함수는 방문자/IP 정보를 해시한 값으로 짧은 시간 반복 제출을 제한하고, 주문 금액은 브라우저가 보낸 값이 아니라 Supabase `meetups.price_amount`를 기준으로 저장합니다.
+
+적용 순서가 중요합니다.
+
+1. `supabase/migrations/20260606080000_public_submission_abuse_controls.sql` 실행
+2. `create-public-submission` Edge Function 배포
+3. GitHub Pages 프론트엔드 배포
+4. 실제 신청/데모 주문/토스 테스트 주문 생성 확인
+5. 확인 후 `supabase/migrations/20260606090000_lock_public_direct_inserts.sql` 실행
+
+마지막 잠금 마이그레이션을 너무 일찍 실행하면 아직 직접 insert를 사용하는 배포본에서 신청/주문 생성이 막힐 수 있습니다.
+
+```bash
+supabase functions deploy create-public-submission --no-verify-jwt
+```
+
+`PUBLIC_SUBMISSION_HASH_SALT`를 Supabase secret으로 추가하면 방문자 해시를 별도 salt로 만들 수 있습니다. 설정하지 않으면 Edge Function이 service role key를 salt로 사용합니다.
 
 ## 토스페이먼츠 테스트 연동
 
 `toss-config.js`의 `TOSS_CLIENT_KEY`에 토스페이먼츠 개발자센터에서 받은 테스트 클라이언트 키를 넣으면 결제 모달의 버튼이 토스 테스트 결제창을 엽니다.
 
-결제 버튼을 누르면 Supabase `orders` 테이블에 `status = 'pending'`, `provider = 'tosspayments'` 주문이 먼저 저장되고, 토스 성공/실패 결과는 `payment-result.html`에서 확인합니다.
+결제 버튼을 누르면 `create-public-submission` Edge Function이 Supabase `orders` 테이블에 `status = 'pending'`, `provider = 'tosspayments'` 주문을 먼저 저장하고, 토스 성공/실패 결과는 `payment-result.html`에서 확인합니다.
 
 실제 결제 완료 처리는 브라우저에서 하지 않습니다. Supabase Edge Function이 토스 결제 승인 API를 호출하고, 승인 결과로 `orders.status`와 `payments`를 업데이트합니다.
 

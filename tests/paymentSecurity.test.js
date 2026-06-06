@@ -126,6 +126,35 @@ test('admin orders include payment record reconciliation', async () => {
   assert.match(adminScript, /기록 없음/);
 });
 
+test('public submissions route through an abuse-controlled Edge Function', async () => {
+  const [config, supabaseClient, edgeFunction, setupMigration, lockMigration] = await Promise.all([
+    readProjectFile('../supabase/config.toml'),
+    readProjectFile('../supabase-client.js'),
+    readProjectFile('../supabase/functions/create-public-submission/index.ts'),
+    readProjectFile('../supabase/migrations/20260606080000_public_submission_abuse_controls.sql'),
+    readProjectFile('../supabase/migrations/20260606090000_lock_public_direct_inserts.sql'),
+  ]);
+
+  assert.match(config, /\[functions\.create-public-submission\]\s+verify_jwt = false/);
+  assert.match(supabaseClient, /functions\/v1\/create-public-submission/);
+  assert.match(supabaseClient, /callPublicSubmission\('application'/);
+  assert.match(supabaseClient, /callPublicSubmission\('demo_order'/);
+  assert.match(supabaseClient, /callPublicSubmission\('toss_order'/);
+  assert.doesNotMatch(supabaseClient, /insertRow\('applications'/);
+  assert.doesNotMatch(supabaseClient, /insertRow\('orders'/);
+  assert.match(edgeFunction, /getVisitorHash/);
+  assert.match(edgeFunction, /PUBLIC_SUBMISSION_HASH_SALT/);
+  assert.match(edgeFunction, /rpc\/create_public_application/);
+  assert.match(edgeFunction, /rpc\/create_public_order/);
+  assert.match(edgeFunction, /PUBLIC_SUBMISSION_RATE_LIMITED/);
+  assert.match(setupMigration, /create table if not exists public\.public_submission_attempts/);
+  assert.match(setupMigration, /create or replace function public\.create_public_application/);
+  assert.match(setupMigration, /create or replace function public\.create_public_order/);
+  assert.match(setupMigration, /v_meetup\.price_amount/);
+  assert.match(lockMigration, /revoke insert on public\.applications from anon/);
+  assert.match(lockMigration, /revoke insert on public\.orders from anon/);
+});
+
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
   const [indexHtml, mainScript] = await Promise.all([
     readProjectFile('../index.html'),

@@ -1,2 +1,5 @@
 [functions.confirm-toss-payment]
 verify_jwt = false
+
+[functions.create-public-submission]
+verify_jwt = false

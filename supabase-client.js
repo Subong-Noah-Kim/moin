@@ -75,28 +75,39 @@ function getNumericAmount(value) {
   return Number.isFinite(amount) && amount >= 0 ? amount : null;
 }
 
-async function insertRow(tableName, payload) {
+async function callPublicSubmission(action, payload) {
   if (!isSupabaseConfigured()) {
     return { skipped: true, rows: [] };
   }
 
-  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/${tableName}`, {
+  const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/create-public-submission`, {
     method: 'POST',
     headers: {
       apikey: supabaseAnonKey,
       Authorization: `Bearer ${supabaseAnonKey}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      action,
+      ...payload,
+    }),
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`Supabase insert failed for ${tableName}: ${response.status} ${message}`);
+    const message = await parseErrorMessage(response);
+    const error = new Error(message.text);
+    error.status = response.status;
+    error.code = message.code;
+    throw error;
   }
 
-  return { skipped: false, rows: [] };
+  const body = await response.json();
+  const result = body?.result || {};
+
+  return {
+    skipped: false,
+    rows: [result.application || result.order].filter(Boolean),
+  };
 }
 
 async function selectRows(tableName, queryString) {
@@ -348,39 +359,28 @@ export async function fetchPublishedMeetups() {
 }
 
 export async function createApplication({ meetup, name, interest }) {
-  return insertRow('applications', {
-    meetup_id: meetup.id,
-    applicant_name: name.trim(),
+  return callPublicSubmission('application', {
+    meetupId: meetup.id,
+    name: name.trim(),
     interest: interest.trim(),
-    source: 'github-pages-demo',
   });
 }
 
 export async function createDemoOrder({ meetup, payerName, paymentMethod }) {
-  return insertRow('orders', {
-    meetup_id: meetup.id,
-    buyer_name: payerName ? payerName.trim() : null,
-    amount: getAmountFromMeetup(meetup),
-    currency: 'KRW',
-    status: 'demo_paid',
-    provider: 'demo',
-    payment_method: paymentMethod,
-    source: 'github-pages-demo',
+  return callPublicSubmission('demo_order', {
+    meetupId: meetup.id,
+    payerName: payerName ? payerName.trim() : '',
+    paymentMethod,
   });
 }
 
 export async function createTossPendingOrder({ meetup, payerName, paymentMethod, providerOrderId, checkoutToken }) {
-  return insertRow('orders', {
-    meetup_id: meetup.id,
-    buyer_name: payerName ? payerName.trim() : null,
-    amount: getAmountFromMeetup(meetup),
-    currency: 'KRW',
-    status: 'pending',
-    provider: 'tosspayments',
-    payment_method: paymentMethod,
-    provider_order_id: providerOrderId,
-    checkout_token: checkoutToken,
-    source: 'toss-test',
+  return callPublicSubmission('toss_order', {
+    meetupId: meetup.id,
+    payerName: payerName ? payerName.trim() : '',
+    paymentMethod,
+    providerOrderId,
+    checkoutToken,
   });
 }
 

@@ -30,9 +30,36 @@ export const SUPABASE_ANON_KEY = 'YOUR_PUBLIC_ANON_KEY';
 
 Only use the public anon key in the browser. Never put the service role key in this file.
 
-## 4. Payment Flow
+## 4. Public Submission Flow
 
-The browser checkout writes a pending Toss test order with `status = 'pending'`.
+Public application and order creation should go through `functions/create-public-submission` before direct browser inserts are locked down.
+
+Run `migrations/20260606080000_public_submission_abuse_controls.sql` first. This migration creates:
+
+- `public_submission_attempts`
+- `create_public_application` RPC
+- `create_public_order` RPC
+- server-side rate-limit checks for anonymous application/order creation
+
+Then deploy the Edge Function:
+
+```bash
+supabase functions deploy create-public-submission --no-verify-jwt
+```
+
+Optional but recommended:
+
+```bash
+supabase secrets set PUBLIC_SUBMISSION_HASH_SALT=YOUR_RANDOM_SECRET
+```
+
+After the frontend has been deployed and real application/demo order/Toss pending order creation has been checked, run `migrations/20260606090000_lock_public_direct_inserts.sql`.
+
+Important deployment caution: do not run the lock migration before the Edge Function and frontend are both live. It revokes anonymous direct inserts into `applications` and `orders`, so the old browser insert path will stop working.
+
+## 5. Payment Flow
+
+The browser checkout asks `functions/create-public-submission` to write a pending Toss test order with `status = 'pending'`.
 The Supabase Edge Function then:
 
 - calls the payment provider confirm API
@@ -40,7 +67,7 @@ The Supabase Edge Function then:
 - writes the final payment row into `payments`
 - records Toss checkout cancellations and failures as `cancelled` or `failed`
 
-## 5. Admin Dashboard
+## 6. Admin Dashboard
 
 Run `migrations/20260606000000_admin_dashboard.sql`, then create a Supabase Auth user and register that user as an admin:
 
@@ -69,27 +96,27 @@ where email = 'invitee@example.com'
 on conflict do nothing;
 ```
 
-## 6. Admin Meetup Editing
+## 7. Admin Meetup Editing
 
 Run `migrations/20260606010000_admin_meetup_writes.sql` to allow registered admins to add, edit, publish, and hide meetups from `admin.html`.
 
 Run `migrations/20260606060000_meetup_image_storage.sql` to create the public `meetup-images` Storage bucket and allow registered admins to upload meetup images.
 
-## 7. Admin Application Status
+## 8. Admin Application Status
 
 Run `migrations/20260606020000_admin_application_status.sql` to allow registered admins to update application statuses from `admin.html`.
 
-## 8. Admin Order Status
+## 9. Admin Order Status
 
 Run `migrations/20260606030000_admin_order_status.sql` to allow registered admins to update order statuses from `admin.html`.
 
-## 9. Toss Payments Test Preparation
+## 10. Toss Payments Test Preparation
 
 The static checkout can create a pending Toss Payments test order before opening the Toss test payment window. Add the public test client key to `../toss-config.js`.
 
 Do not put a Toss secret key in browser code. Payment confirmation should be handled by a server endpoint or Supabase Edge Function that validates `paymentKey`, `orderId`, and `amount`, then updates `orders` and inserts a row into `payments`.
 
-## 10. Toss Payment Confirmation
+## 11. Toss Payment Confirmation
 
 Run `migrations/20260606040000_toss_payment_confirmation.sql` to prevent duplicate Toss order IDs and duplicate Toss payment keys.
 
