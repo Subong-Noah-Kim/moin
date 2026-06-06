@@ -133,4 +133,23 @@ supabase functions deploy confirm-toss-payment --no-verify-jwt
 
 The function reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `TOSS_SECRET_KEY`, confirms the Toss test payment with the configured test secret key, updates the matching `orders.provider_order_id`, and inserts a `payments` row. It also records Toss checkout cancellation/failure redirects so pending test orders do not stay stuck.
 
+## 12. Capacity and Sold-Out Guard Rollout
+
+Only run this section after the earlier public-submission and Toss hardening migrations are already present in the target Supabase project, especially:
+
+- `migrations/20260606070000_harden_toss_payment_security.sql`
+- `migrations/20260606080000_public_submission_abuse_controls.sql`
+- `migrations/20260606090000_lock_public_direct_inserts.sql`
+
+Before deploying the capacity-aware Edge Functions, apply the capacity migrations in this order:
+
+1. `migrations/20260607000000_capacity_remaining_spots.sql`
+2. `migrations/20260607010000_capacity_rpc_guards.sql`
+
+Then run `capacity-smoke-test.sql` in the Supabase SQL editor. The smoke test uses a transaction and ends with `ROLLBACK`, so successful runs should not leave test rows behind.
+
+Do not deploy `functions/create-public-submission` or `functions/confirm-toss-payment` from this branch before both capacity migrations exist in the live Supabase project. The updated functions read `orders.expires_at` and expect the new capacity RPCs to be available.
+
+After the smoke test passes, deploy the two Edge Functions, then deploy the frontend/admin bundle that reads or displays structured capacity state.
+
 This repository documents the Toss Payments test flow only. Before switching to live payment keys, confirm business approval, user-facing terms, cancellation/refund policy, privacy notices, and operational reconciliation outside this setup checklist.

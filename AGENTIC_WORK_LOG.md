@@ -632,3 +632,36 @@
 - Next:
   - 다음 구현 조각은 공개/관리자 화면에서 `capacity`, `remaining_spots`, `effective_registration_status`를 보여주고 신청/결제 진입을 비활성화하는 UI 작업입니다.
   - 실제 배포 전에는 Supabase migration 2개를 먼저 적용하고 SQL/RPC smoke test를 실행해야 합니다.
+
+### AG-0023 - 정원/잔여석 SQL/RPC smoke-test 준비
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 정원/잔여석 backend guard를 실제 Supabase에 적용하기 전에 DB/RPC가 맞게 동작하는지 확인할 수 있게 한다.
+- Subagents:
+  - Security/Review Agent: Plato
+  - QA Agent: Hilbert
+- Changed files:
+  - `supabase/capacity-smoke-test.sql`
+  - `supabase/README.md`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - smoke-test SQL은 `BEGIN`/`ROLLBACK`으로 감싸 성공 시 테스트 row가 남지 않게 했습니다.
+  - cleanup은 wildcard `LIKE`가 아니라 exact smoke id 목록으로 제한했습니다.
+  - 무제한 정원, 정원 1명 sold-out, sold-out 신청 차단, 신청 종료 차단, Toss pending `expires_at`, 정상 pending confirm, expired pending `ORDER_EXPIRED`, stale pending failed 처리를 확인합니다.
+  - README에는 선행 migration과 `capacity` migration 적용 순서를 명시했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Security/Review Agent가 Edge Function 선배포 위험과 wildcard cleanup 위험을 확인했고 수정했습니다.
+  - QA Agent가 prerequisite 문서 위치, 전역 stale pending 의존성, sold-out application, 정상 Toss pending confirm 누락을 확인했고 반영했습니다.
+  - `npm test` passed: 27 tests.
+- Next:
+  - 사용자가 원격 적용을 선택하면 migration 2개 적용 후 `supabase/capacity-smoke-test.sql`을 SQL Editor에서 실행합니다.
+  - UI 개발은 public/admin이 읽을 구조화된 잔여석 read contract를 먼저 정한 뒤 시작하는 편이 안전합니다.

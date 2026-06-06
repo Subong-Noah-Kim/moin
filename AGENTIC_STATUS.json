@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T04:47:21+09:00",
+  "updatedAt": "2026-06-07T04:58:15+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 20,
+    "doneLocal": 21,
     "deployNeeded": 7
   },
   "agents": [
@@ -12,70 +12,70 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0022 정원/마감 backend guard 완료 검수",
+      "currentTask": "AG-0023 SQL/RPC smoke-test 준비 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "public/admin capacity UI 또는 SQL smoke-test 준비 배정"
+      "next": "public/admin capacity read contract 배정"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정원/잔여석 P0 우선순위 유지 확인",
+      "currentTask": "capacity rollout 순서 재정렬 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "공개/관리자 UI 구현 전 운영 문구 재검토"
+      "next": "read contract 이후 public/admin UX 범위 검토"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "이번 사이클은 backend guard 우선으로 보류",
+      "currentTask": "UI 선행보다 read contract 우선 결정 지원",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "정원 UI 구현 시 잔여석/마감 문구 검토"
+      "next": "잔여석 UI 문구와 비활성 상태 설계"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public RPC guard와 Toss expiry guard 리스크 검토 완료",
+      "currentTask": "smoke-test 배포 순서와 live Supabase 위험 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "SQL smoke test 전 배포 순서 재검토"
+      "next": "read contract 보안 검토"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "정원/마감 public RPC와 Edge guard 로컬 완료",
+      "currentTask": "정원/잔여석 smoke-test SQL과 문서 가드 로컬 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "public/admin capacity UI 구현 대기"
+      "next": "public/admin read contract 구현 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "정원 backend guard 회귀 테스트 추가 및 npm test 26개 통과",
+      "currentTask": "capacity smoke-test 구조 검토 및 npm test 27개 통과",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "Supabase SQL/RPC smoke-test 체크리스트 작성"
+      "next": "원격 적용 시 SQL Editor smoke-test 실행 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "sold-out/closed 409, pending expires_at, late Toss success guard 검토 완료",
+      "currentTask": "wildcard cleanup, migration prerequisite, Edge 선배포 위험 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "실제 원격 적용 전 migration/Edge 순서 확인"
+      "next": "read contract 권한 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0022 정원/마감 backend guard 기록 완료",
+      "currentTask": "AG-0023 SQL/RPC smoke-test 준비 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -522,6 +522,29 @@
           "만료 경계에 걸린 Toss 결제는 live payment 전 환불/재시도 운영 정책을 별도로 정해야 합니다.",
           "현재 테스트는 소스 계약 테스트이므로 실제 PL/pgSQL 문법과 동시성은 Supabase SQL smoke test로 다시 확인해야 합니다.",
           "로컬 테스트는 26개 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0023",
+      "title": "정원/잔여석 SQL/RPC smoke-test 준비",
+      "priority": "P0",
+      "owner": "QA Agent + 보안 Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "원격 적용 선택 시 migration 2개 적용 후 SQL Editor에서 smoke-test 실행",
+      "details": {
+        "summary": "정원/잔여석 backend guard를 실제 Supabase에 적용하기 전 확인할 SQL 점검표를 만들었습니다.",
+        "what": "supabase/capacity-smoke-test.sql을 추가하고 Supabase README에 적용 순서를 기록했습니다. smoke-test는 transaction 안에서 테스트 모임/주문을 만들고 rollback으로 끝나도록 구성했습니다.",
+        "why": "npm test는 코드 모양을 확인하지만 실제 Supabase에서 SQL 함수가 실행되는지는 확인하지 못합니다. DB migration을 적용하기 전에 정원 1명, 신청 종료, pending 만료, Toss 주문 확정 같은 핵심 경로를 직접 확인해야 합니다.",
+        "developmentDirection": "먼저 DB/RPC smoke-test를 통과시킨 뒤 Edge Function을 배포하고, 그 다음 public/admin UI가 구조화된 잔여석 상태를 읽도록 붙입니다.",
+        "notes": [
+          "이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "smoke-test cleanup은 exact smoke id 목록만 대상으로 하며 wildcard LIKE를 쓰지 않습니다.",
+          "성공 시 ROLLBACK으로 테스트 row가 남지 않아야 합니다.",
+          "현재 smoke-test는 Toss 외부 API를 호출하지 않습니다. Edge Function callback 검증은 배포 후 별도로 필요합니다.",
+          "로컬 테스트는 27개 모두 통과했습니다."
         ]
       }
     }

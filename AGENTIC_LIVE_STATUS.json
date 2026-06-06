@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T04:47:21+09:00",
-  "currentFocus": "정원/마감 public RPC와 Edge guard 로컬 완료",
+  "updatedAt": "2026-06-07T04:58:15+09:00",
+  "currentFocus": "정원/잔여석 SQL/RPC smoke-test 준비 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,72 +11,72 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0022 done_local"
+    "currentFocus": "AG-0023 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0022 정원/마감 backend guard 완료 검수",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
-      "next": "public/admin capacity UI 또는 SQL smoke-test 준비 배정"
+      "currentTask": "AG-0023 SQL/RPC smoke-test 준비 완료 검수",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
+      "next": "public/admin capacity read contract 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "정원/마감 public RPC와 Edge guard 로컬 완료",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
-      "next": "다음 구현 조각 대기"
+      "currentTask": "정원/잔여석 smoke-test SQL과 문서 가드 로컬 완료",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
+      "next": "public/admin read contract 구현 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "이번 사이클은 backend guard 우선으로 보류",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
-      "next": "정원 UI 구현 시 잔여석/마감 문구 검토"
+      "currentTask": "UI 선행보다 read contract 우선 결정 지원",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
+      "next": "잔여석 UI 문구와 비활성 상태 설계"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "정원 backend guard 회귀 테스트 추가 및 npm test 26개 통과",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
-      "next": "Supabase SQL/RPC smoke-test 체크리스트 작성"
+      "currentTask": "capacity smoke-test 구조 검토 및 npm test 27개 통과",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
+      "next": "원격 적용 시 SQL Editor smoke-test 실행 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0022 정원/마감 backend guard 기록 완료",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
+      "currentTask": "AG-0023 SQL/RPC smoke-test 준비 기록 완료",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정원/잔여석 P0 우선순위 유지 확인",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
-      "next": "공개/관리자 UI 구현 전 운영 문구 재검토"
+      "currentTask": "capacity rollout 순서 재정렬 확인",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
+      "next": "read contract 이후 public/admin UX 범위 검토"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public RPC guard와 Toss expiry guard 리스크 검토 완료",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
-      "next": "SQL smoke test 전 배포 순서 재검토"
+      "currentTask": "smoke-test 배포 순서와 live Supabase 위험 검토 완료",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
+      "next": "read contract 보안 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "sold-out/closed 409, pending expires_at, late Toss success guard 검토 완료",
-      "updatedAt": "2026-06-07T04:47:21+09:00",
-      "next": "실제 원격 적용 전 migration/Edge 순서 확인"
+      "currentTask": "wildcard cleanup, migration prerequisite, Edge 선배포 위험 검토 완료",
+      "updatedAt": "2026-06-07T04:58:15+09:00",
+      "next": "read contract 권한 검토"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,34 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T04:58:15+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "SQL/RPC smoke-test 준비",
+      "body": "capacity-smoke-test.sql이 무제한 정원, sold-out, 신청 종료, pending expires_at, 정상 confirm, ORDER_EXPIRED, stale pending failed 경로를 확인하도록 구성했습니다."
+    },
+    {
+      "time": "2026-06-07T04:58:15+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "live 적용 순서 보강",
+      "body": "README에 선행 public-submission/Toss hardening migration과 capacity migration 순서를 명시했습니다. Edge Function을 DB migration보다 먼저 배포하면 안 됩니다."
+    },
+    {
+      "time": "2026-06-07T04:58:15+09:00",
+      "agent": "검토 Agent",
+      "level": "review",
+      "title": "wildcard cleanup 제거",
+      "body": "SQL smoke-test cleanup이 LIKE wildcard 대신 exact smoke id 목록만 대상으로 하도록 수정했습니다."
+    },
+    {
+      "time": "2026-06-07T04:58:15+09:00",
+      "agent": "총괄 디렉터",
+      "level": "review",
+      "title": "AG-0023 로컬 완료",
+      "body": "정원/잔여석 SQL/RPC smoke-test 준비를 완료했습니다. 원격 DB 적용, Edge Function deploy, push는 하지 않았습니다."
+    },
     {
       "time": "2026-06-07T04:47:21+09:00",
       "agent": "개발 Agent",

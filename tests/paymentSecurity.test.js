@@ -715,6 +715,46 @@ test('capacity guards wire public submissions and Toss confirmation expiry check
   assert.match(supabaseClient, /error\.code = message\.code/);
 });
 
+test('capacity smoke test SQL covers safe live migration verification paths', async () => {
+  const [smokeTest, supabaseReadme] = await Promise.all([
+    readProjectFile('../supabase/capacity-smoke-test.sql'),
+    readProjectFile('../supabase/README.md'),
+  ]);
+
+  assert.match(smokeTest, /begin;/);
+  assert.match(smokeTest, /rollback;/);
+  assert.match(smokeTest, /20260607000000_capacity_remaining_spots\.sql/);
+  assert.match(smokeTest, /20260607010000_capacity_rpc_guards\.sql/);
+  assert.match(smokeTest, /__capacity_smoke_/);
+  assert.match(smokeTest, /where meetup_id in \(/);
+  assert.match(smokeTest, /where id in \(/);
+  assert.match(smokeTest, /public\.create_public_application/);
+  assert.match(smokeTest, /public\.create_public_order/);
+  assert.match(smokeTest, /provider_order_id = 'capacity-smoke-unlimited-order'[\s\S]*expires_at > now\(\)/);
+  assert.match(smokeTest, /expected no pending Toss smoke orders with null expires_at/);
+  assert.match(smokeTest, /capacity-smoke-active-payment-key/);
+  assert.match(smokeTest, /expected non-expired Toss pending order to become paid/);
+  assert.match(smokeTest, /expected payment row for confirmed non-expired Toss order/);
+  assert.match(smokeTest, /public\.get_meetup_seat_snapshot\('__capacity_smoke_one__'\)/);
+  assert.match(smokeTest, /effective_registration_status' <> 'sold_out'/);
+  assert.match(smokeTest, /expected MEETUP_SOLD_OUT/);
+  assert.match(smokeTest, /expected MEETUP_SOLD_OUT for application/);
+  assert.match(smokeTest, /expected MEETUP_REGISTRATION_CLOSED/);
+  assert.match(smokeTest, /public\.confirm_toss_payment_order/);
+  assert.match(smokeTest, /expected ORDER_EXPIRED/);
+  assert.match(smokeTest, /public\.expire_stale_pending_orders\(10000\)/);
+  assert.match(smokeTest, /expected the smoke expired pending order to be marked failed/);
+  assert.doesNotMatch(smokeTest, /commit;/i);
+  assert.doesNotMatch(smokeTest, /like '__capacity_smoke_%'/i);
+
+  assert.match(supabaseReadme, /## 12\. Capacity and Sold-Out Guard Rollout/);
+  assert.match(supabaseReadme, /20260606070000_harden_toss_payment_security\.sql/);
+  assert.match(supabaseReadme, /20260606080000_public_submission_abuse_controls\.sql/);
+  assert.match(supabaseReadme, /20260606090000_lock_public_direct_inserts\.sql/);
+  assert.match(supabaseReadme, /20260607000000_capacity_remaining_spots\.sql[\s\S]*20260607010000_capacity_rpc_guards\.sql/);
+  assert.match(supabaseReadme, /Do not deploy `functions\/create-public-submission` or `functions\/confirm-toss-payment`/);
+});
+
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
   const [indexHtml, mainScript] = await Promise.all([
     readProjectFile('../index.html'),

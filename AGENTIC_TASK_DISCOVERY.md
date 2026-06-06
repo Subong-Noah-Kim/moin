@@ -508,3 +508,32 @@
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `supabase-client.js`는 결제 승인 Edge Function 실패 시 `error.status`와 `error.code`를 보존하게 맞췄다.
   - `npm test` 26개가 모두 통과했다.
+
+## Round 11 - 2026-06-07 04:58 KST
+
+### 요약
+
+이번 사이클은 정원/잔여석 backend guard를 실제 Supabase에 적용하기 전에 사람이 확인할 수 있는 SQL/RPC smoke-test를 준비했습니다. 쉽게 말하면, 아침에 DB migration을 적용하기로 결정했을 때 “정원이 1명인 모임에서 두 번째 주문이 막히는지”, “신청 종료 모임이 막히는지”, “만료된 Toss pending 주문이 결제완료로 바뀌지 않는지”를 SQL Editor에서 한 번에 확인하는 점검표입니다. 테스트 데이터는 transaction 안에서 만들고 마지막에 `ROLLBACK`합니다.
+
+### TD-022 - 정원/잔여석 SQL/RPC smoke-test 준비
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, Security/Review, QA, Ops Log
+- What: capacity migration 적용 후 live Supabase SQL Editor에서 실행할 smoke-test 스크립트를 만든다.
+- Why: 현재 `npm test`는 소스 코드와 migration 문자열을 확인하지만, 실제 Supabase에서 PL/pgSQL 함수가 실행되는지, 권한과 schema 순서가 맞는지는 확인하지 못합니다.
+- First development unit:
+  - `supabase/capacity-smoke-test.sql`을 추가한다.
+  - 스크립트는 `BEGIN`/`ROLLBACK`으로 감싸 테스트 row가 남지 않게 한다.
+  - exact smoke id를 사용하고 wildcard `LIKE` cleanup을 피한다.
+  - 무제한 정원, 정원 1명 sold-out, 신청 종료, Toss pending `expires_at`, 정상 Toss pending confirm, expired pending `ORDER_EXPIRED`, stale pending failed 처리 경로를 확인한다.
+  - `supabase/README.md`에 선행 migration과 실행 순서를 명시한다.
+- Development direction: 원격 DB 적용과 Edge Function deploy 전에 SQL/RPC 실행 경로를 먼저 검증한다. public/admin UI는 실제 잔여석 read contract가 정리된 뒤 붙인다.
+- Risks:
+  - 이 스크립트는 아직 실제 `jqnnolsyvynrhjvfmege` 프로젝트에서 실행하지 않았다.
+  - 성공하더라도 Toss 외부 API 자체를 부르는 smoke-test는 아니므로 Edge Function callback 검증은 별도입니다.
+  - 만료 경계에 걸린 실제 결제는 live payment 전 환불/재시도 정책이 필요합니다.
+- Notes:
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `tests/paymentSecurity.test.js`에 smoke-test 구조와 README 배포 순서 가드를 추가했다.
+  - `npm test` 27개가 모두 통과했다.
