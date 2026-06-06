@@ -268,7 +268,6 @@ input[readonly] {
 
 .agentic-board {
   overflow: hidden;
-  margin-top: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -426,7 +425,7 @@ input[readonly] {
 
 .segmented {
   display: inline-grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border: 1px solid var(--line);
   border-radius: 8px;
   overflow: hidden;

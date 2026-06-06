@@ -785,6 +785,10 @@ function renderOverview() {
   renderMeetups();
 }
 
+function getActiveTab() {
+  return document.querySelector('[data-tab-button].is-active')?.dataset.tabButton || 'applications';
+}
+
 async function fetchAgenticStatus() {
   const response = await fetch(`./AGENTIC_STATUS.json?v=__ASSET_VERSION__`, {
     cache: 'no-store',
@@ -942,7 +946,9 @@ async function loadOverview() {
     overview = await fetchAdminOverview();
     renderOverview();
     showDashboard();
-    void loadAgenticStatus();
+    if (getActiveTab() === 'agentic') {
+      void loadAgenticStatus();
+    }
     syncStatus.textContent = overview.warnings?.length
       ? `${overview.warnings.join(' ')} 업데이트 ${dateFormatter.format(new Date())}`
       : `업데이트 ${dateFormatter.format(new Date())}`;
@@ -1236,6 +1242,10 @@ tabButtons.forEach((button) => {
     tabPanels.forEach((panel) => {
       panel.hidden = panel.dataset.tabPanel !== target;
     });
+
+    if (target === 'agentic') {
+      void loadAgenticStatus();
+    }
   });
 });
 

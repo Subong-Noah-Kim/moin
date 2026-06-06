@@ -80,42 +80,12 @@
           </article>
         </section>
 
-        <section class="agentic-board" aria-labelledby="agenticBoardTitle" data-agentic-board>
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">AGENTIC BOARD</p>
-              <h2 id="agenticBoardTitle">Agentic 작업판</h2>
-            </div>
-            <div class="agentic-actions">
-              <span data-agentic-updated>확인 전</span>
-              <button class="small-action ghost-button" type="button" data-agentic-refresh>작업판 새로고침</button>
-            </div>
-          </div>
-          <div class="agentic-summary" aria-label="Agentic 작업 요약" data-agentic-summary></div>
-          <div class="agentic-layout">
-            <section aria-label="Agent 상태">
-              <div class="agentic-subhead">
-                <h3>Agent 상태</h3>
-                <span data-agentic-agent-count>0명</span>
-              </div>
-              <div class="agent-grid" data-agentic-agents></div>
-            </section>
-            <section aria-label="Task 상태">
-              <div class="agentic-subhead">
-                <h3>Task 상태</h3>
-                <span data-agentic-task-count>0개</span>
-              </div>
-              <div class="task-list" data-agentic-tasks></div>
-            </section>
-          </div>
-          <p class="agentic-status" data-agentic-status></p>
-        </section>
-
         <div class="toolbar">
           <div class="segmented" role="tablist" aria-label="관리자 보기">
             <button class="is-active" type="button" data-tab-button="applications">신청</button>
             <button type="button" data-tab-button="orders">주문</button>
             <button type="button" data-tab-button="meetups">모임</button>
+            <button type="button" data-tab-button="agentic">작업판</button>
           </div>
           <p data-sync-status></p>
         </div>
@@ -301,6 +271,43 @@
               <tbody data-meetups-body></tbody>
             </table>
           </div>
+        </section>
+
+        <section
+          class="agentic-board"
+          aria-labelledby="agenticBoardTitle"
+          data-tab-panel="agentic"
+          data-agentic-board
+          hidden
+        >
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">AGENTIC BOARD</p>
+              <h2 id="agenticBoardTitle">Agentic 작업판</h2>
+            </div>
+            <div class="agentic-actions">
+              <span data-agentic-updated>확인 전</span>
+              <button class="small-action ghost-button" type="button" data-agentic-refresh>작업판 새로고침</button>
+            </div>
+          </div>
+          <div class="agentic-summary" aria-label="Agentic 작업 요약" data-agentic-summary></div>
+          <div class="agentic-layout">
+            <section aria-label="Agent 상태">
+              <div class="agentic-subhead">
+                <h3>Agent 상태</h3>
+                <span data-agentic-agent-count>0명</span>
+              </div>
+              <div class="agent-grid" data-agentic-agents></div>
+            </section>
+            <section aria-label="Task 상태">
+              <div class="agentic-subhead">
+                <h3>Task 상태</h3>
+                <span data-agentic-task-count>0개</span>
+              </div>
+              <div class="task-list" data-agentic-tasks></div>
+            </section>
+          </div>
+          <p class="agentic-status" data-agentic-status></p>
         </section>
       </section>
     </main>

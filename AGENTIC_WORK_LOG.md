@@ -93,3 +93,28 @@
   - Deployed admin page uses the current deploy asset version.
 - Next:
   - 기획/UX/UI/검토 Subagent를 투입해 다음 개발 후보를 분류한다.
+
+### AG-0005 - Agentic 작업판 별도 탭 분리
+
+- Status: `deployed`
+- Branch: `main`
+- Director Agent: main Codex thread
+- Owner Agent: UX/UI Agent + 개발 Agent
+- Purpose: 관리자 페이지 첫 진입 화면에서 내부 Agentic 작업판이 크게 노출되지 않도록 별도 `작업판` 탭으로 분리한다.
+- Changed files:
+  - `admin.html`
+  - `admin.css`
+  - `admin.js`
+  - `tests/paymentSecurity.test.js`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 기본 활성 탭은 `신청`으로 유지한다.
+  - `Agentic 작업판`은 `작업판` 탭을 눌렀을 때만 보인다.
+  - 작업판 JSON은 기본 진입 시 자동 호출하지 않고, 작업판 탭 진입 또는 작업판 새로고침 시 호출한다.
+- Verification:
+  - `npm test` passed: 14 tests.
+  - GitHub Actions `deploy-pages.yml` test/deploy jobs passed on `main`.
+  - Deployed `admin.html` contains the `작업판` tab and hides the Agentic panel by default.
+- Next:
+  - 기획/UX/UI/검토 Subagent를 투입해 다음 개발 후보를 분류한다.

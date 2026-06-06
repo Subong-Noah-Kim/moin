@@ -137,6 +137,8 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   const status = JSON.parse(agenticStatus);
 
   assert.match(adminHtml, /data-agentic-board/);
+  assert.match(adminHtml, /data-tab-button="agentic"/);
+  assert.match(adminHtml, /data-tab-panel="agentic"[\s\S]*data-agentic-board[\s\S]*hidden/);
   assert.match(adminHtml, /data-agentic-summary/);
   assert.match(adminHtml, /data-agentic-agents/);
   assert.match(adminHtml, /data-agentic-tasks/);
@@ -147,6 +149,9 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.match(adminScript, /AGENTIC_STATUS\.json\?v=__ASSET_VERSION__/);
   assert.match(adminScript, /function renderAgenticStatus/);
   assert.match(adminScript, /function loadAgenticStatus/);
+  assert.match(adminScript, /if \(getActiveTab\(\) === 'agentic'\)/);
+  assert.match(adminScript, /if \(target === 'agentic'\)/);
+  assert.doesNotMatch(adminScript, /showDashboard\(\);\s+void loadAgenticStatus\(\);/);
   assert.match(adminScript, /agenticRefreshButton\.addEventListener\('click', loadAgenticStatus\)/);
   assert.equal(status.branch, 'main');
   assert.equal(status.summary.deployNeeded, 0);
