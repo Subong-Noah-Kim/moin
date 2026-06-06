@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T04:22:31+09:00",
-  "currentFocus": "결제 결과 식별자 노출 최소화 로컬 완료",
+  "updatedAt": "2026-06-07T04:26:15+09:00",
+  "currentFocus": "정원/잔여석 P0 롤아웃 명세 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,71 +11,71 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0019 done_local"
+    "currentFocus": "AG-0020 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0019 결제 결과 식별자 노출 최소화 완료 검수",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "currentTask": "AG-0020 정원/잔여석 P0 롤아웃 명세 완료 검수",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
       "next": "다음 TODO 개발 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "결제 결과 식별자 노출 최소화 구현 완료",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "currentTask": "정원/잔여석 P0 롤아웃 명세 문서화 완료",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
       "next": "다음 개발 태스크 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "결제키 숨김 상태에서 결과 화면이 이해되는지 검토 완료",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
-      "next": "배포 선택 시 결제 결과 화면 확인"
+      "currentTask": "잔여석/마감/신청 종료 공개·관리자 UX 기준 검토 완료",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
+      "next": "정원 UI 구현 시 상세 카피 재검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "paymentKey 화면/저장소/URL 최소화 테스트 검증 완료",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
-      "next": "배포 선택 시 payment-result callback 화면 수동 확인"
+      "currentTask": "정원/잔여석 P0 테스트·검증 기준 정리 완료",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
+      "next": "DB migration 구현 시 SQL/RPC 테스트 추가"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0019 결제 결과 식별자 노출 최소화 기록 완료",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "currentTask": "AG-0020 정원/잔여석 롤아웃 명세 기록 완료",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "결제 결과 화면의 비개발자용 확인 문구 검토 완료",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "currentTask": "정원/잔여석 P0 구현 순서와 운영 정책 검토 완료",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
       "next": "다음 라운드 대기"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "결제 결과 식별자 노출 최소화 승인 및 리스크 검토 완료",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "currentTask": "정원/잔여석 P0 보안·데이터 무결성 리스크 검토 완료",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
       "next": "다음 라운드 후보 재분류"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "paymentKey 원문 노출과 referrer 리스크 검토 완료",
-      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "currentTask": "pending 만료와 늦은 Toss success 리스크 검토 완료",
+      "updatedAt": "2026-06-07T04:26:15+09:00",
       "next": "다음 보안 태스크 대기"
     },
     {
@@ -96,6 +96,41 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T04:26:15+09:00",
+      "agent": "DB/Backend Agent",
+      "level": "review",
+      "title": "정원 P0 DB 순서 확정",
+      "body": "capacity, registration_status, orders.expires_at를 DB migration으로 먼저 추가하고, RPC row lock과 pending 만료 계산을 그 다음에 적용해야 한다고 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T04:26:15+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "늦은 Toss success 리스크 확인",
+      "body": "만료된 pending 주문이 좌석을 돌려준 뒤 늦게 결제 성공으로 돌아오면 과판매가 생길 수 있어 confirm-toss-payment 쪽 expiry guard가 필요하다고 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T04:26:15+09:00",
+      "agent": "UX/UI Agent",
+      "level": "review",
+      "title": "잔여석/마감 UX 기준 정리",
+      "body": "기존 status_label은 홍보 문구로 남기고, 신청/결제 가능 여부는 계산된 잔여석과 신청 상태를 기준으로 표시하는 방향을 제안했습니다."
+    },
+    {
+      "time": "2026-06-07T04:26:15+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "정원 P0 검증 기준 정리",
+      "body": "capacity 2 시나리오, unlimited capacity, expired pending 회수, 마지막 1석 동시 주문, sold-out 409 응답을 필수 검증으로 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T04:26:15+09:00",
+      "agent": "총괄 디렉터",
+      "level": "review",
+      "title": "AG-0020 로컬 완료",
+      "body": "정원/잔여석 P0 롤아웃 명세를 완료했습니다. 기능 코드, 원격 DB, Edge Function deploy, push는 하지 않았습니다."
+    },
     {
       "time": "2026-06-07T04:22:31+09:00",
       "agent": "보안 Agent",

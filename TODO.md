@@ -11,6 +11,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 ## P0 - Before Real Payment Use
 
+- [ ] Add capacity, remaining spots, and automatic sold-out controls
+  - Problem: meetup capacity is still a manual display label such as "4자리 남음"; public application/order creation does not atomically block over-capacity submissions, and Toss `pending` orders have no expiry.
+  - Files: `supabase/migrations/`, `supabase/functions/create-public-submission/index.ts`, `supabase/functions/confirm-toss-payment/index.ts`, `supabase-client.js`, `main.js`, `admin.html`, `admin.js`, `tests/paymentSecurity.test.js`
+  - Done when: capacity is stored in Supabase, remaining spots are computed from seat-holding orders, sold-out/closed states return stable 409 errors, expired pending Toss holds do not consume seats forever, and public/admin UI use structured status instead of freeform `status_label`.
+  - Status: implementation is not started. The rollout plan is documented in `AGENTIC_TASK_DISCOVERY.md` Round 8 / AG-0020. Do not deploy Edge Functions for this package before the DB migration exists.
+
 - [x] Lock payment amount to server-side meetup price
   - Problem: anonymous clients can insert `orders.amount`, and the Edge Function currently validates Toss amount against that untrusted order row.
   - Files: `supabase/migrations/20260605000000_initial_schema.sql`, `supabase/functions/confirm-toss-payment/index.ts`, `supabase-client.js`, `main.js`

@@ -526,3 +526,38 @@
   - `npm test` passed: 24 tests.
 - Next:
   - 사용자가 배포 묶음에 포함하면 payment-result success/fail callback 화면에서 인증값이 직접 보이지 않는지 확인한다.
+
+### AG-0020 - 정원/잔여석 P0 롤아웃 명세
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + DB/Backend Agent + 보안 Agent + UX/UI Agent + QA Agent + 작업 정리 Agent
+- Purpose: 정원보다 많은 신청/결제가 들어오는 사고를 막기 위한 큰 P0 작업을 안전한 구현 순서로 쪼갠다.
+- Subagents:
+  - DB/Backend Planning Agent: Russell
+  - Security/Review Agent: Kepler
+  - UX/UI Planning Agent: Leibniz
+  - QA Agent: Ptolemy
+- Changed files:
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 실제 기능 코드, Supabase 원격 DB, Edge Function 배포, push는 하지 않았다.
+  - TODO.md에 `Add capacity, remaining spots, and automatic sold-out controls`를 P0 열린 항목으로 추가했다.
+  - 현재 `status_label`은 사람이 적는 문구라 신청/결제 가능 여부의 기준으로 쓰면 안 된다.
+  - DB migration을 먼저 적용한 뒤에야 `confirm-toss-payment`와 `create-public-submission`이 새 컬럼/상태를 읽어야 한다.
+  - `pending` Toss 주문에는 만료 시간이 필요하고, 만료된 pending 주문의 늦은 결제 성공은 과판매를 만들지 않게 막아야 한다.
+  - 가장 빠른 기능 롤백은 새 컬럼을 drop하는 것이 아니라 `meetups.capacity = null`로 전체를 무제한 상태처럼 운영하는 방식이다.
+- Verification:
+  - DB/Backend Agent가 migration 객체, RPC 변경, Edge Function 배포 순서, rollback caution을 제안했다.
+  - Security/Review Agent가 pending expiry와 late Toss success를 blocker로 확인했다.
+  - UX/UI Agent가 public/admin 좌석 표시와 한국어 카피를 제안했다.
+  - QA Agent가 static test 후보와 실제 Supabase 검증 체크리스트를 정리했다.
+  - `npm test`는 이 사이클 전에 24개 통과 상태였고, 이번 변경은 문서/현황판 갱신만 포함한다.
+- Next:
+  - 사용자가 승인하면 다음 구현 사이클은 DB migration 초안부터 시작한다.
+  - 원격 적용 전에는 SQL/RPC smoke test 시나리오를 먼저 준비한다.

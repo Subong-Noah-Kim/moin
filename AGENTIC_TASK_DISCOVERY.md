@@ -11,7 +11,7 @@
 ### TD-001 - 정원 데이터 모델 추가
 
 - Priority: `P0`
-- Status: `done_local`
+- Status: `approved`
 - Source agents: DB/Backend, UX/UI, QA, Review
 - What: `meetups`에 정원과 마감 상태를 저장할 필드를 추가한다.
 - Why: 현재는 정원을 저장할 곳이 없어서 잔여석을 실제 숫자로 계산할 수 없다.
@@ -21,7 +21,7 @@
   - `meetups.closed_at`, `meetups.close_reason` 추가 후보.
 - Development direction: 잔여석은 DB에 저장하지 않고 `capacity - 자리 사용 수`로 계산한다.
 - Notes:
-  - 자리 사용 기준을 먼저 정해야 한다. P0에서는 `pending`, `demo_paid`, `paid` 주문을 좌석 사용으로 보는 쪽이 안전하다.
+  - 자리 사용 기준을 먼저 정해야 한다. P0에서는 `demo_paid`, `paid`, 만료되지 않은 `pending` 주문을 좌석 사용으로 보는 쪽이 안전하다.
   - 신청과 결제를 같은 사람이 둘 다 할 수 있어 중복 카운트 정책은 별도 후속 작업이 필요하다.
 
 ### TD-002 - 신청/주문 생성 시 정원 초과 차단
@@ -90,7 +90,7 @@
 ### TD-006 - Toss 승인값 노출 최소화
 
 - Priority: `P1`
-- Status: `approved`
+- Status: `done_local`
 - Source agents: Security, QA
 - What: 결제 결과 화면과 브라우저 저장소에 전체 `paymentKey`를 남기지 않는다.
 - Why: 결제 승인 식별자는 비밀번호는 아니지만 사용자 화면과 저장소에 오래 남길 이유가 없다.
@@ -101,6 +101,7 @@
 - Development direction: confirm 요청에는 필요한 값을 보내되, 화면/스토리지/로그에는 원문을 남기지 않는다.
 - Notes:
   - URL을 빨리 지우면 새로고침 재시도 UX가 약해질 수 있으므로 실패 안내가 필요하다.
+  - 2026-06-07 04:22 KST에 `payment-result.html`, `payment-result.js`, `tests/paymentSecurity.test.js`에 로컬 구현과 테스트를 추가했다.
 
 ### TD-007 - Agent status 민감정보 가드
 
@@ -390,3 +391,57 @@
   - 이 사이클에서 push와 deploy는 하지 않았다.
   - `npm test` 24개가 모두 통과했다.
   - 배포 후에는 payment-result 성공/실패 callback 화면에서 인증값이 직접 노출되지 않는지 확인한다.
+
+## Round 8 - 2026-06-07 04:26 KST
+
+### 요약
+
+이번 사이클은 `정원/잔여석/자동 마감` P0 패키지를 실제 구현 전에 다시 쪼갰습니다. 쉽게 말하면, “정원이 10명인데 12명이 결제되는 사고”를 막는 핵심 작업입니다. 다만 이 작업은 Supabase DB migration, 두 개의 Edge Function, 공개 화면, 관리자 화면이 모두 맞물려 있어 순서를 틀리면 결제가 막히거나 과판매가 생길 수 있습니다. 그래서 이번 라운드는 코드 구현이 아니라 안전한 구현 순서와 검증 기준을 확정하는 데 집중했습니다.
+
+### TD-019 - 정원/잔여석 P0 롤아웃 명세
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, DB/Backend, Security/Review, UX/UI, QA, Ops Log
+- What: TD-001, TD-002, TD-003, TD-004, TD-009, TD-010을 하나의 배포 가능한 패키지로 묶고 안전한 구현 순서를 확정한다.
+- Why: 정원 필드만 추가하거나 UI 배지만 먼저 바꾸면 실제 과판매를 막지 못합니다. 반대로 Edge Function이 새 컬럼을 먼저 읽으면 DB migration 전 배포에서 결제/신청이 깨질 수 있습니다.
+- First development unit:
+  - DB migration으로 `meetups.capacity`, `meetups.registration_status`, `meetups.closed_at`, `meetups.close_reason`, `orders.expires_at`를 추가한다.
+  - 기존 Toss `pending` 주문은 `created_at + interval '30 minutes'` 같은 명시 정책으로 backfill한다.
+  - 좌석 점유는 `paid`, `demo_paid`, 만료되지 않은 `pending`만 계산한다.
+  - `create_public_application`과 `create_public_order`는 meetup row를 `FOR UPDATE`로 잠그고, `MEETUP_SOLD_OUT`, `MEETUP_REGISTRATION_CLOSED` 같은 안정적인 에러 코드를 발생시킨다.
+  - `confirm-toss-payment`는 만료된 pending 주문을 결제 승인하기 전에 막거나, 적어도 capacity를 다시 확인해야 한다.
+  - `create-public-submission`은 sold-out/closed 에러를 HTTP 409와 사용자용 한국어 메시지로 변환한다.
+  - 공개 화면은 기존 `status_label` 대신 계산된 `remaining_spots`와 `effective_registration_status`를 신청/결제 가능 여부의 기준으로 쓴다.
+  - 관리자 화면은 `운영 설정` 영역에 정원/신청 상태를 추가하고, 목록에는 좌석 요약을 보여준다.
+- Development direction: DB가 최종 차단선을 맡고, Edge Function은 안정적인 상태 코드를 사용자에게 번역하며, 프론트엔드는 그 결과를 이해하기 쉽게 보여준다.
+- Rollout order:
+  - 1. DB migration 적용: 새 컬럼, helper 함수, view, RPC 갱신, pending backfill.
+  - 2. Supabase SQL/RPC smoke test: unlimited, capacity 1, sold out, closed, expired pending.
+  - 3. `confirm-toss-payment` 배포: `expires_at` 컬럼 존재 이후에만 배포.
+  - 4. `create-public-submission` 배포: sold-out/closed를 409로 매핑.
+  - 5. frontend/admin 배포: 공개 조회와 관리자 폼/목록이 새 구조를 사용.
+  - 6. 실제 Pages 배포 후 public/admin/Toss test callback 수동 확인.
+- Rollback:
+  - 가장 빠른 기능 롤백은 `meetups.capacity = null`로 전체를 무제한 상태로 되돌리는 것입니다.
+  - 급한 상황에서도 새 컬럼을 바로 drop하지 않습니다.
+  - RPC 정의는 이전 migration의 함수 정의로 되돌릴 수 있게 보관합니다.
+  - anon direct insert lock은 되열지 않습니다. 이걸 열면 row lock을 우회해 과판매 위험이 돌아옵니다.
+- Verification:
+  - `capacity = 2`에서 유효 주문 생성 시 잔여석이 `2 -> 1 -> 0`으로 줄어드는지 확인한다.
+  - `capacity = null`은 무제한으로 계속 접수 가능한지 확인한다.
+  - `paid`, `demo_paid`, 만료되지 않은 Toss `pending`만 좌석을 차지하는지 확인한다.
+  - `cancelled`, `failed`, 만료된 `pending`은 좌석을 돌려주는지 확인한다.
+  - 마지막 1석에 동시 주문 2개를 보내면 정확히 1개만 성공하고 1개는 409인지 확인한다.
+  - 만료된 pending 주문의 늦은 Toss success가 과판매를 만들지 않는지 확인한다.
+  - public card/detail/checkout/application form이 마감/신청 종료 상태에서 비활성화되는지 확인한다.
+  - admin form/list가 정원, 결제중, 확정, 잔여석을 구분해 보여주는지 확인한다.
+- Risks:
+  - `registration_status = sold_out`를 DB에 저장하면 실제 주문 취소 후 상태가 낡을 수 있습니다. 수동 상태는 `closed` 중심으로 쓰고 sold-out은 계산값으로 도출하는 편이 안전합니다.
+  - 기존 `status_label`은 계속 홍보/상태 문구로 남기되, 신청/결제 가능 여부 판단에 쓰면 안 됩니다.
+  - pending 만료 시간을 너무 길게 잡으면 결제 이탈자가 자리를 오래 붙잡고, 너무 짧게 잡으면 결제 중인 사용자가 늦은 성공에서 실패할 수 있습니다. 첫 후보는 30분입니다.
+  - 이 작업은 원격 Supabase migration과 Edge Function 배포가 필요하므로 밤중 자동 개발에서 바로 적용하지 않습니다.
+- Notes:
+  - 이번 사이클에서 기능 코드, 원격 DB, Edge Function 배포, push는 하지 않았다.
+  - TODO.md에 P0 실제 구현 항목을 추가했다.
+  - AGENTIC_STATUS.json에는 AG-0020 문서화 작업으로 기록한다.
