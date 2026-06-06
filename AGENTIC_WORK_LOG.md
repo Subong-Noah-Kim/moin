@@ -89,7 +89,7 @@
   - 배포된 `admin.html`, `admin.js`, `AGENTIC_STATUS.json`을 URL에서 직접 확인했다.
 - Verification:
   - `npm test` passed: 14 tests.
-  - GitHub Actions deploy run passed: `27068780476`.
-  - Deployed admin page uses asset version `7f5941dd0a14`.
+  - GitHub Actions `deploy-pages.yml` test/deploy jobs passed on `main`.
+  - Deployed admin page uses the current deploy asset version.
 - Next:
   - 기획/UX/UI/검토 Subagent를 투입해 다음 개발 후보를 분류한다.
