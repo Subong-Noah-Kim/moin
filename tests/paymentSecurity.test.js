@@ -178,6 +178,59 @@ test('checkout waits for Toss SDK loading and prevents duplicate pending orders'
   assert.match(mainScript, /shouldUnlockForm = false/);
 });
 
+test('docs distinguish wired test integration from remaining production setup', async () => {
+  const [readme, supabaseReadme] = await Promise.all([
+    readProjectFile('../README.md'),
+    readProjectFile('../supabase/README.md'),
+  ]);
+  const docs = `${readme}\n${supabaseReadme}`;
+
+  assert.match(readme, /create-public-submission/);
+  assert.match(readme, /confirm-toss-payment/);
+  assert.match(readme, /토스페이먼츠 테스트/);
+  assert.match(readme, /실제 과금 전환/);
+  assert.match(readme, /토스 라이브 키/);
+
+  assert.match(supabaseReadme, /Supabase migrations and Edge Function setup notes/);
+  assert.match(supabaseReadme, /create-public-submission/);
+  assert.match(supabaseReadme, /confirm-toss-payment/);
+  assert.match(supabaseReadme, /Toss Payments test flow only/);
+  assert.match(supabaseReadme, /Toss Payments test confirm API/);
+
+  assert.doesNotMatch(docs, /연동 준비|연결 준비|실제 결제 연동 전|서버 함수 연결 후/);
+  assert.doesNotMatch(supabaseReadme, /Payment confirmation should be handled by a server endpoint or Supabase Edge Function/);
+});
+
+test('public payment copy separates Toss test mode from live payments', async () => {
+  const [mainScript, resultHtml, resultScript] = await Promise.all([
+    readProjectFile('../main.js'),
+    readProjectFile('../payment-result.html'),
+    readProjectFile('../payment-result.js'),
+  ]);
+
+  assert.match(mainScript, /토스 테스트 결제와 서버 승인 흐름/);
+  assert.match(mainScript, /실제 출금은 없습니다/);
+  assert.match(mainScript, /Supabase Edge Function이 승인 API를 호출/);
+  assert.match(mainScript, /데모 결제 표시하기/);
+  assert.match(mainScript, /데모 결제 표시를 저장했어요/);
+  assert.match(mainScript, /테스트 결제 확인 표시가 있는 모임입니다/);
+  assert.doesNotMatch(mainScript, /결제가 완료된 모임입니다/);
+  assert.doesNotMatch(mainScript, /데모 결제 완료/);
+  assert.doesNotMatch(mainScript, /서버 함수 연결 후 완료됩니다/);
+
+  assert.match(resultHtml, /TOSS TEST RESULT/);
+  assert.match(resultHtml, /토스페이먼츠 테스트/);
+  assert.match(resultHtml, /테스트 키로 토스 결제 승인 API/);
+  assert.match(resultHtml, /주문 상태와 결제 기록/);
+
+  assert.match(resultScript, /테스트 결제 승인이 완료됐어요/);
+  assert.match(resultScript, /테스트 주문 상태가 결제완료로 변경되었습니다/);
+  assert.match(resultScript, /message\.includes\('TOSS_SECRET_KEY'\)[\s\S]*return '결제 승인 서버 설정을 확인해주세요\.'/);
+  assert.doesNotMatch(resultScript, /결제가 완료됐어요/);
+  assert.doesNotMatch(resultScript, /아직 배포되지 않았|아직 설정되지 않았/);
+  assert.doesNotMatch(resultScript, /return message \|\| '결제 승인 처리에 실패했습니다\.'/);
+});
+
 test('public localStorage sets recover from corrupted saved state', async () => {
   const [mainScript, paymentResultScript] = await Promise.all([
     readProjectFile('../main.js'),

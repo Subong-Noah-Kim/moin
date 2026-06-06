@@ -330,3 +330,32 @@
   - 이 사이클에서 push와 deploy는 하지 않았다.
   - `npm test` 21개가 모두 통과했다.
   - 로컬 서버에서 `index.html`, 최신 `main.js`, 최신 `styles.css` 응답을 확인했다.
+
+## Round 6 - 2026-06-07 04:08 KST
+
+### 요약
+
+이번 사이클은 `TODO.md`의 운영 준비 항목인 제품/데모 결제 문구와 설정 문서 정리를 개발했습니다. 쉽게 말하면, 지금 moin은 토스 테스트 결제와 Supabase 승인 함수까지 연결되어 있지만 실제 출금이 일어나는 운영 결제는 아니므로, 사용자가 화면만 보고 실결제나 참가 확정으로 오해하지 않게 문구를 정리한 작업입니다.
+
+### TD-018 - 제품/데모 결제 문구와 설정 문서 정리
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Copy, QA, Security/Review, Ops Log
+- What: 공개 결제 모달, 모임 상세 결제 상태, 결제 결과 화면, README, Supabase README가 현재 통합 상태를 정확히 설명하게 한다.
+- Why: Supabase, Toss Payments test, confirm Edge Function이 연결된 상태에서 예전 `데모`, `연결 준비`, 단독 `결제 완료` 문구가 섞이면 사용자가 실제 과금 또는 참가 확정으로 오해할 수 있다.
+- First development unit:
+  - public checkout copy를 `토스 테스트 결제`, `실제 출금 없음`, `Supabase Edge Function 승인 API 호출` 중심으로 정리한다.
+  - screen-only demo fallback은 `데모 결제 표시`로 표현해 실제 결제 완료처럼 보이지 않게 한다.
+  - payment-result success/error copy에서 테스트 승인과 주문/결제 기록 업데이트를 구분한다.
+  - README와 `supabase/README.md`가 현재 연결된 Edge Function 흐름과 라이브 결제 전 준비 항목을 분리해 설명한다.
+  - 문서와 화면 copy가 다시 낡은 표현으로 돌아가지 않도록 테스트를 추가한다.
+- Development direction: 결제 로직을 크게 바꾸지 않고, 사용자에게 보이는 설명과 운영 문서를 먼저 정확하게 만든다.
+- Risks:
+  - 문구가 너무 길어지면 모바일 결제 모달에서 줄바꿈이 늘어날 수 있으므로 배포 전 화면 확인이 필요하다.
+  - 테스트 결제 완료 표시는 여전히 브라우저 보조 상태이며 결제 증명으로 쓰면 안 된다.
+  - 실제 live payment 전환은 토스 라이브 키, 약관/환불/개인정보 고지, 운영 정산 확인이 별도로 필요하다.
+- Notes:
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+  - `npm test` 23개가 모두 통과했다.
+  - TODO.md의 해당 항목은 로컬 완료로 체크했다.

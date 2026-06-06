@@ -754,7 +754,7 @@ function getStatusClass(status) {
 }
 
 function getPaymentButtonText(itemId) {
-  return paid.has(itemId) ? '결제 완료' : '결제하기';
+  return paid.has(itemId) ? '테스트 결제 완료' : '결제하기';
 }
 
 function renderMeetups() {
@@ -949,8 +949,8 @@ function openDrawer(itemId, opener = document.activeElement) {
       <section class="payment-summary ${isPaid ? 'is-paid' : ''}" aria-label="결제 요약">
         <div>
           <span>${isPaid ? '결제 상태' : '참가비 결제'}</span>
-          <strong>${isPaid ? '결제가 완료된 모임입니다' : escapeHtml(item.price)}</strong>
-          <p>${isPaid ? '데모 결제 완료 상태가 이 브라우저에 저장되어 있어요.' : '실제 결제가 아닌 테스트용 결제 흐름입니다.'}</p>
+          <strong>${isPaid ? '테스트 결제 확인 표시가 있는 모임입니다' : escapeHtml(item.price)}</strong>
+          <p>${isPaid ? '이 브라우저에 테스트 결제 확인 표시가 저장되어 있어요.' : '토스 테스트 결제와 서버 승인 흐름을 확인합니다. 실제 출금은 없습니다.'}</p>
         </div>
         <button
           class="drawer-pay-button"
@@ -1039,8 +1039,8 @@ function openCheckout(itemId, opener = document.activeElement) {
       <p class="checkout-desc">
         ${
           tossConfigured
-            ? '토스페이먼츠 테스트 결제창을 열어 결제 인증 흐름을 확인합니다.'
-            : '토스 테스트 키가 없어서 화면 테스트용 데모 결제로 진행합니다.'
+            ? '토스페이먼츠 테스트 결제창을 열고 Supabase 승인 함수까지 이어지는 흐름을 확인합니다.'
+            : '토스 테스트 키가 없어서 결제창 없이 화면 확인용 데모 결제로 진행합니다.'
         }
       </p>
 
@@ -1087,13 +1087,13 @@ function openCheckout(itemId, opener = document.activeElement) {
         <p class="checkout-note">
           ${
             tossConfigured
-              ? '테스트 결제는 실제 출금되지 않으며, 결제 승인은 서버 함수 연결 후 완료됩니다.'
+              ? '테스트 결제는 실제 출금되지 않으며, 인증 후 Supabase Edge Function이 승인 API를 호출합니다.'
               : '토스 개발자센터에서 받은 test_ 클라이언트 키를 toss-config.js에 넣으면 테스트 결제창이 열립니다.'
           }
         </p>
         <p class="checkout-status" data-checkout-status aria-live="polite"></p>
         <button class="checkout-submit" type="submit">
-          ${tossConfigured ? '토스 테스트 결제 열기' : '데모 결제 완료'}
+          ${tossConfigured ? '토스 테스트 결제 열기' : '데모 결제 표시하기'}
         </button>
       </form>
     </div>
@@ -1186,7 +1186,7 @@ async function completeCheckout(itemId, form) {
     persist('momentclub:paid', paid);
     closeCheckout({ restoreFocus: false });
     openDrawer(itemId);
-    showToast(`${item.title} 결제가 완료됐어요.`);
+    showToast(`${item.title} 데모 결제 표시를 저장했어요.`);
   } catch (error) {
     console.error(error);
     setCheckoutStatus(form, error?.message || '결제를 다시 시도해주세요.', 'error');

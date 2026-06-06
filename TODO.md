@@ -81,10 +81,11 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Done when: admin sessions either use a deliberate refresh flow or shorter-lived storage such as `sessionStorage`, expired sessions are handled clearly, and sign-out reliably clears stored credentials.
   - Status: local implementation is complete on `codex/overnight-task-discovery`; admin sessions now use tab-scoped storage, refresh token persistence was removed, expired/corrupted sessions are cleaned up, and `npm test` passes. Deploy is still needed before this affects the live admin page.
 
-- [ ] Update product/demo copy and setup docs to match current integration state
+- [x] Update product/demo copy and setup docs to match current integration state
   - Problem: some README and UI copy still says "temporary," "demo," or "connection preparation" even though Supabase, Toss test payment, and Edge Function confirmation are wired.
   - Files: `README.md`, `supabase/README.md`, `main.js`, `payment-result.html`
   - Done when: public/admin copy clearly distinguishes real service behavior, Toss test mode, and remaining production setup work.
+  - Status: local implementation is complete on `codex/overnight-task-discovery`; public checkout/result copy and setup docs now distinguish screen-only demo state, Toss test payment approval, Supabase Edge Function confirmation, and remaining live payment setup. `npm test` passes. Deploy is still needed before this affects the live public page.
 
 ## P2 - Accessibility and Mobile UX
 

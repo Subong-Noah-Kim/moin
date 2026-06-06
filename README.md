@@ -2,7 +2,7 @@
 
 moin은 독일어 인사말과, 취향이 같은 사람들이 모인 곳이라는 한국어 발음을 함께 담은 모임 플랫폼입니다.
 
-취향 기반 정기 모임, 원데이 이벤트, 오픈 예정 알림을 탐색하는 정적 웹앱입니다. 특정 브랜드의 문구, 로고, 이미지 자산은 사용하지 않고 기능 구조와 UX 패턴만 참고해 만든 데모입니다.
+취향 기반 정기 모임, 원데이 이벤트, 오픈 예정 알림을 탐색하는 정적 웹앱입니다. Supabase 모임/신청/주문/결제 기록과 토스페이먼츠 테스트 결제 승인 흐름이 연결되어 있으며, 실제 과금 전까지는 토스 테스트 키로 검증합니다.
 
 ## 로컬 실행
 
@@ -21,7 +21,7 @@ npm run dev
 - 오픈 예정 알림 토글
 - 상세 드로어
 - 신청 저장 폼
-- 데모 결제 플로우
+- 화면 확인용 데모 결제 플로우
 - 토스페이먼츠 테스트 결제 승인
 - Supabase 신청/주문/결제 기록 저장
 - 공개 신청/주문 생성 반복 제출 제한
@@ -34,7 +34,7 @@ npm run dev
 
 1. Supabase 프로젝트를 만든 뒤 SQL editor에서 `supabase/migrations/20260605000000_initial_schema.sql`을 실행합니다.
 2. `supabase-config.js`에 프로젝트 URL과 public anon key를 입력합니다.
-3. 공개 신청/주문 생성 Edge Function을 배포하면 모임 목록을 Supabase에서 불러오고, 신청서와 데모/토스 주문이 서버 검증을 거쳐 Supabase에 저장됩니다.
+3. 공개 신청/주문 생성 Edge Function을 배포하면 모임 목록을 Supabase에서 불러오고, 신청서와 화면 확인용 데모 주문/토스 테스트 주문이 서버 검증을 거쳐 Supabase에 저장됩니다.
 
 브라우저에는 public anon key만 넣어야 합니다. service role key는 결제 승인 서버나 Edge Function에서만 사용하세요.
 
@@ -64,7 +64,7 @@ supabase functions deploy create-public-submission --no-verify-jwt
 
 결제 버튼을 누르면 `create-public-submission` Edge Function이 Supabase `orders` 테이블에 `status = 'pending'`, `provider = 'tosspayments'` 주문을 먼저 저장하고, 토스 성공/실패 결과는 `payment-result.html`에서 확인합니다.
 
-실제 결제 완료 처리는 브라우저에서 하지 않습니다. Supabase Edge Function이 토스 결제 승인 API를 호출하고, 승인 결과로 `orders.status`와 `payments`를 업데이트합니다.
+토스 테스트 결제 승인 처리는 브라우저에서 직접 하지 않습니다. Supabase Edge Function이 토스 테스트 결제 승인 API를 호출하고, 승인 결과로 `orders.status`와 `payments`를 업데이트합니다. 이 저장소에는 테스트 결제 흐름만 포함되어 있으며, 실제 과금 전환은 토스 라이브 키, 약관/환불/개인정보 고지, 운영 검증을 별도로 완료한 뒤 진행해야 합니다.
 
 ### 결제 승인 Edge Function
 

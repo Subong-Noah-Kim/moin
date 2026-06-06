@@ -92,18 +92,18 @@ function getConfirmErrorMessage(error) {
   const message = error?.message || String(error);
 
   if (message.includes('network request failed') || message.includes('Load failed')) {
-    return 'Supabase Edge Function(confirm-toss-payment)이 아직 배포되지 않았거나 CORS 응답이 없습니다.';
+    return 'Supabase Edge Function(confirm-toss-payment) 호출에 실패했습니다. 함수 배포와 CORS 응답을 확인해주세요.';
   }
 
   if (message.includes('Requested function was not found')) {
-    return 'Supabase Edge Function(confirm-toss-payment)이 아직 배포되지 않았습니다.';
+    return 'Supabase Edge Function(confirm-toss-payment)을 찾지 못했습니다. 함수 배포 상태를 확인해주세요.';
   }
 
   if (message.includes('TOSS_SECRET_KEY')) {
-    return 'Supabase Edge Function에 TOSS_SECRET_KEY가 아직 설정되지 않았습니다.';
+    return '결제 승인 서버 설정을 확인해주세요.';
   }
 
-  return message || '결제 승인 처리에 실패했습니다.';
+  return '결제 승인 처리에 실패했습니다. 잠시 후 다시 시도하거나 운영자에게 문의해주세요.';
 }
 
 function getFailureStatusLabel(status) {
@@ -144,10 +144,10 @@ async function handleSuccessResult() {
     const meetupId = resultBody?.order?.meetup_id;
 
     markMeetupPaid(meetupId);
-    if (successTitle) successTitle.textContent = '결제가 완료됐어요';
+    if (successTitle) successTitle.textContent = '테스트 결제 승인이 완료됐어요';
     if (successDescription) successDescription.textContent =
-      '토스페이먼츠 테스트 결제 승인과 주문 상태 업데이트가 완료됐습니다.';
-    setConfirmStatus('주문 상태가 결제완료로 변경되었습니다.', 'success');
+      '토스페이먼츠 테스트 결제 승인과 주문/결제 기록 업데이트가 완료됐습니다.';
+    setConfirmStatus('테스트 주문 상태가 결제완료로 변경되었습니다.', 'success');
   } catch (error) {
     console.error(error);
     if (successTitle) successTitle.textContent = '승인 처리가 필요해요';

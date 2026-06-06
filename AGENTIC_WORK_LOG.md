@@ -451,3 +451,41 @@
   - Local dev server returned HTTP 200 for `index.html` and served updated `main.js`/`styles.css`.
 - Next:
   - 사용자가 배포 묶음에 포함하면 모바일에서 신청 drawer와 결제 modal의 label 간격을 직접 확인한다.
+
+### AG-0018 - 제품/데모 결제 문구와 설정 문서 정리
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + 기획 Agent + QA Agent + 보안/검토 Agent + 작업 정리 Agent
+- Purpose: 토스 테스트 결제와 실제 과금이 헷갈리지 않도록 공개 화면과 설정 문서를 현재 구현 상태에 맞게 정리한다.
+- Subagents:
+  - Planning/Copy Agent: Pascal
+  - QA Agent: Carson
+  - Security/Review Agent: Franklin
+- Changed files:
+  - `README.md`
+  - `supabase/README.md`
+  - `main.js`
+  - `payment-result.html`
+  - `payment-result.js`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - `결제 완료`처럼 단독으로 보이는 표현을 `테스트 결제 확인`, `데모 결제 표시`, `테스트 결제 승인`처럼 더 구체적인 문구로 바꿨다.
+  - 결제 모달은 토스 테스트 결제창과 Supabase Edge Function 승인 흐름을 설명하고, 실제 출금이 없다는 점을 계속 보여준다.
+  - 결제 결과 화면은 주문 상태와 결제 기록 업데이트를 설명하되, 내부 서버 설정 이름이나 원문 오류를 사용자에게 그대로 보여주지 않는다.
+  - README와 Supabase README는 현재 연결된 Edge Function 흐름과 실제 라이브 결제 전 준비 항목을 분리해 설명한다.
+  - 위험한 옛 문구가 다시 들어오면 `npm test`가 실패하도록 문구 회귀 테스트 2개를 추가했다.
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+- Verification:
+  - Planning/Copy Agent가 테스트 결제와 실결제 오해를 줄이는 문구 기준을 승인했다.
+  - Security/Review Agent가 `결제가 완료됐어요`, 내부 설정명 노출, 원문 오류 노출을 block으로 잡았고 수정했다.
+  - QA Agent 제안에 따라 문서/공개 화면 문구 테스트를 추가했다.
+  - `npm test` passed: 23 tests.
+- Next:
+  - 사용자가 배포 묶음에 포함하면 public checkout modal, 데모 fallback 버튼, payment-result success/fail 화면을 직접 확인한다.

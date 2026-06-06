@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-06-07T03:54:14+09:00",
+  "updatedAt": "2026-06-07T04:08:22+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 15,
-    "deployNeeded": 3
+    "doneLocal": 16,
+    "deployNeeded": 4
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0017 신청/결제 폼 label 접근성 개선 완료 검수",
+      "currentTask": "AG-0018 제품/데모 결제 문구와 설정 문서 정리 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 TODO 개발 배정"
@@ -21,7 +21,7 @@
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "서비스 관점 다음 개발 후보 재정리 완료",
+      "currentTask": "테스트 결제와 실제 과금 구분 문구 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 라운드 대기"
@@ -30,16 +30,16 @@
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "신청/결제 폼 label 문구와 화면 기준 검토 완료",
+      "currentTask": "테스트 결제 결과/버튼 문구 사용자 오해 가능성 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 선택 시 모바일 화면 확인"
+      "next": "배포 선택 시 결제 모달과 결과 화면 문구 확인"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "정원/잔여석/자동 마감 P0 승인 완료",
+      "currentTask": "제품/데모 결제 문구 정리 승인 및 위험 문구 차단 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 라운드 후보 재분류"
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "신청/결제 폼 label 접근성 개선 구현 완료",
+      "currentTask": "제품/데모 결제 문구와 설정 문서 정리 구현 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 개발 태스크 대기"
@@ -57,16 +57,16 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "폼 label 접근성 테스트 검증 완료",
+      "currentTask": "테스트 결제/실제 과금 구분 문구 회귀 테스트 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 선택 시 public page 수동 확인"
+      "next": "배포 선택 시 public checkout/result page 수동 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "폼 label/id/helper 문구 보안 검토 완료",
+      "currentTask": "결제 성공/오류 문구의 실결제 오해와 내부 설정 노출 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 보안 태스크 대기"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0017 신청/결제 폼 label 개선 기록 완료",
+      "currentTask": "AG-0018 제품/데모 결제 문구 정리 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -407,6 +407,29 @@
           "기존 FormData 이름인 name, interest, payer, method는 유지했습니다.",
           "로컬 테스트는 21개 모두 통과했습니다.",
           "로컬 서버에서 index.html, 최신 main.js, 최신 styles.css 응답을 확인했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0018",
+      "title": "제품/데모 결제 문구와 설정 문서 정리",
+      "priority": "P1",
+      "owner": "개발 Agent + 기획 Agent + QA Agent + 보안/검토 Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "배포 묶음에 포함하면 public checkout/result page와 README 문구 확인",
+      "details": {
+        "summary": "테스트 결제와 실제 과금이 헷갈리지 않도록 공개 화면과 설정 문서를 정리했습니다.",
+        "what": "결제 버튼, 모임 상세 결제 상태, 결제 결과 화면, README, supabase/README.md 문구를 현재 연결 상태에 맞게 바꿨습니다. 화면 확인용 데모 결제, 토스페이먼츠 테스트 결제, Supabase Edge Function 승인 처리, 실제 라이브 결제 전 준비가 서로 구분되게 했습니다.",
+        "why": "현재 앱은 토스 테스트 결제와 서버 승인 함수까지 연결되어 있지만 실제 출금이 일어나는 운영 결제는 아닙니다. 문구가 '결제 완료'처럼 단독으로 보이면 사용자가 실제 결제 또는 참가 확정으로 오해할 수 있습니다.",
+        "developmentDirection": "기능 로직은 크게 바꾸지 않고 사용자에게 보이는 copy와 setup 문서를 먼저 정리했습니다. 동시에 위험한 옛 문구가 다시 들어오면 npm test가 실패하도록 회귀 테스트를 추가했습니다.",
+        "notes": [
+          "이번 사이클에서 push와 deploy는 하지 않았습니다.",
+          "실제 live payment 전환은 토스 라이브 키, 약관/환불/개인정보 고지, 운영 정산 확인이 별도로 필요합니다.",
+          "결제 결과 화면의 일반 오류는 내부 서버 원문을 그대로 보여주지 않고 운영자 문의 안내로 정리했습니다.",
+          "로컬 테스트는 23개 모두 통과했습니다.",
+          "배포 후에는 결제 모달, 화면 확인용 데모 fallback, payment-result.html 성공/실패 화면 문구를 직접 확인하면 됩니다."
         ]
       }
     }

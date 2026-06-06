@@ -1,6 +1,6 @@
 # Supabase Setup
 
-This folder contains the database migration for the moin demo.
+This folder contains the Supabase migrations and Edge Function setup notes for moin.
 
 ## 1. Create a Supabase Project
 
@@ -17,7 +17,7 @@ The migration creates:
 - `orders`
 - `payments`
 
-It also enables RLS and seeds the current demo meetup data.
+It also enables RLS and seeds the starter meetup data.
 
 ## 3. Add Public API Settings
 
@@ -53,7 +53,7 @@ Optional but recommended:
 supabase secrets set PUBLIC_SUBMISSION_HASH_SALT=YOUR_RANDOM_SECRET
 ```
 
-After the frontend has been deployed and real application/demo order/Toss pending order creation has been checked, run `migrations/20260606090000_lock_public_direct_inserts.sql`.
+After the frontend has been deployed and application, screen-only demo order, and Toss test pending order creation have been checked, run `migrations/20260606090000_lock_public_direct_inserts.sql`.
 
 Important deployment caution: do not run the lock migration before the Edge Function and frontend are both live. It revokes anonymous direct inserts into `applications` and `orders`, so the old browser insert path will stop working.
 
@@ -62,7 +62,7 @@ Important deployment caution: do not run the lock migration before the Edge Func
 The browser checkout asks `functions/create-public-submission` to write a pending Toss test order with `status = 'pending'`.
 The Supabase Edge Function then:
 
-- calls the payment provider confirm API
+- calls the Toss Payments test confirm API
 - validates amount and order ID
 - writes the final payment row into `payments`
 - records Toss checkout cancellations and failures as `cancelled` or `failed`
@@ -114,7 +114,7 @@ Run `migrations/20260606030000_admin_order_status.sql` to allow registered admin
 
 The static checkout can create a pending Toss Payments test order before opening the Toss test payment window. Add the public test client key to `../toss-config.js`.
 
-Do not put a Toss secret key in browser code. Payment confirmation should be handled by a server endpoint or Supabase Edge Function that validates `paymentKey`, `orderId`, and `amount`, then updates `orders` and inserts a row into `payments`.
+Do not put a Toss secret key in browser code. Payment confirmation is handled by `functions/confirm-toss-payment`, which validates `paymentKey`, `orderId`, and `amount`, then updates `orders` and inserts a row into `payments`.
 
 ## 11. Toss Payment Confirmation
 
@@ -131,4 +131,6 @@ supabase secrets set TOSS_SECRET_KEY=YOUR_TOSS_TEST_SECRET_KEY
 supabase functions deploy confirm-toss-payment --no-verify-jwt
 ```
 
-The function reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `TOSS_SECRET_KEY`, confirms the payment with Toss Payments, updates the matching `orders.provider_order_id`, and inserts a `payments` row. It also records Toss checkout cancellation/failure redirects so pending test orders do not stay stuck.
+The function reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `TOSS_SECRET_KEY`, confirms the Toss test payment with the configured test secret key, updates the matching `orders.provider_order_id`, and inserts a `payments` row. It also records Toss checkout cancellation/failure redirects so pending test orders do not stay stuck.
+
+This repository documents the Toss Payments test flow only. Before switching to live payment keys, confirm business approval, user-facing terms, cancellation/refund policy, privacy notices, and operational reconciliation outside this setup checklist.

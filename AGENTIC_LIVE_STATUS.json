@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T03:54:14+09:00",
-  "currentFocus": "신청/결제 폼 label 접근성 개선 로컬 완료",
+  "updatedAt": "2026-06-07T04:08:22+09:00",
+  "currentFocus": "제품/데모 결제 문구와 설정 문서 정리 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,71 +11,71 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0017 done_local"
+    "currentFocus": "AG-0018 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0017 신청/결제 폼 label 접근성 개선 완료 검수",
-      "updatedAt": "2026-06-07T03:54:14+09:00",
+      "currentTask": "AG-0018 제품/데모 결제 문구와 설정 문서 정리 완료 검수",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
       "next": "다음 TODO 개발 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "신청/결제 폼 label 접근성 개선 구현 완료",
-      "updatedAt": "2026-06-07T03:54:14+09:00",
+      "currentTask": "제품/데모 결제 문구와 설정 문서 정리 구현 완료",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
       "next": "다음 개발 태스크 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "신청/결제 폼 label 문구와 화면 기준 검토 완료",
-      "updatedAt": "2026-06-07T03:54:14+09:00",
-      "next": "배포 선택 시 모바일 화면 확인"
+      "currentTask": "테스트 결제 결과/버튼 문구 사용자 오해 가능성 검토 완료",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "next": "배포 선택 시 결제 모달과 결과 화면 문구 확인"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "폼 label 접근성 테스트 검증 완료",
-      "updatedAt": "2026-06-07T03:54:14+09:00",
-      "next": "배포 선택 시 public page 수동 확인"
+      "currentTask": "테스트 결제/실제 과금 구분 문구 회귀 테스트 검증 완료",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "next": "배포 선택 시 public checkout/result page 수동 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0017 신청/결제 폼 label 개선 기록 완료",
-      "updatedAt": "2026-06-07T03:54:14+09:00",
+      "currentTask": "AG-0018 제품/데모 결제 문구 정리 기록 완료",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "서비스 관점 다음 개발 후보 재정리 완료",
-      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "currentTask": "테스트 결제와 실제 과금 구분 문구 검토 완료",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
       "next": "다음 라운드 대기"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "최종 우선순위 분류 완료",
-      "updatedAt": "2026-06-07T02:43:32+09:00",
-      "next": "총괄 디렉터 취합 결과 보고"
+      "currentTask": "제품/데모 결제 문구 정리 승인 및 위험 문구 차단 완료",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "next": "다음 라운드 후보 재분류"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "폼 label/id/helper 문구 보안 검토 완료",
-      "updatedAt": "2026-06-07T03:54:14+09:00",
+      "currentTask": "결제 성공/오류 문구의 실결제 오해와 내부 설정 노출 검토 완료",
+      "updatedAt": "2026-06-07T04:08:22+09:00",
       "next": "다음 보안 태스크 대기"
     },
     {
@@ -96,6 +96,34 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T04:08:22+09:00",
+      "agent": "기획 Agent",
+      "level": "review",
+      "title": "테스트 결제 문구 기준 확정",
+      "body": "테스트 결제와 실제 과금을 혼동하게 만드는 단독 '결제 완료' 표현을 줄이고, 화면 확인용 데모/토스 테스트/Supabase 승인 함수 흐름을 분리해 설명하는 방향을 승인했습니다."
+    },
+    {
+      "time": "2026-06-07T04:08:22+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "결제 오류 문구 보안 검토",
+      "body": "결제 결과 화면이 내부 서버 설정 이름이나 원문 오류를 그대로 노출하지 않도록 일반 사용자용 안내로 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T04:08:22+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "결제 문구 회귀 테스트 통과",
+      "body": "문서와 공개 결제 화면이 테스트 모드와 실제 과금 전 준비를 구분하는지 확인하는 테스트를 추가했고 npm test 23개가 모두 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T04:08:22+09:00",
+      "agent": "총괄 디렉터",
+      "level": "review",
+      "title": "AG-0018 로컬 완료",
+      "body": "제품/데모 결제 문구와 설정 문서 정리를 완료했습니다. push와 deploy는 하지 않았고, live 반영은 사용자가 선택한 배포 묶음에 포함합니다."
+    },
     {
       "time": "2026-06-07T03:54:14+09:00",
       "agent": "UX/UI Agent",
