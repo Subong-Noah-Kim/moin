@@ -351,3 +351,35 @@
 - Next:
   - 다음 작은 안전망 후보는 결제 결과 식별자 노출 최소화 TD-012다.
   - 다음 핵심 서비스 후보는 TD-009/TD-010 정원 P0 패키지다.
+
+### AG-0015 - GitHub Pages workflow runtime 정리
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: GitHub Pages 배포 자동화가 GitHub Actions의 Node runtime 변화 때문에 갑자기 경고나 실패를 내지 않도록 workflow를 정리한다.
+- Changed files:
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - 이 작업은 사용자 화면을 바꾸는 기능 개발이 아니라, 배포 자동화가 앞으로도 안정적으로 돌아가게 하는 운영 정리 작업이다.
+  - 개발 방향은 action 버전 정책 확정, test/deploy job 권한 분리, 자동 테스트 가드 추가, 이후 실제 GitHub Actions 배포 로그 확인 순서다.
+  - 보안 관점에서는 배포 권한을 test job까지 넓게 주지 않고 deploy job에만 두는 방향이 좋다.
+  - QA 관점에서는 workflow에 적힌 action 버전과 테스트가 기대하는 action 버전이 반드시 같아야 한다.
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+- Risks:
+  - action major version을 올리면 GitHub-hosted runner에서는 보통 안전하지만, action별 새 요구 조건과 동작 변경을 확인해야 한다.
+  - artifact 업로드 action의 숨김 파일 처리 변화는 향후 `.nojekyll`이나 `.well-known` 배포가 필요해질 때 다시 확인해야 한다.
+  - runtime 경고 제거 여부는 로컬 테스트만으로 확정할 수 없고, 실제 GitHub Actions 실행 로그에서 확인해야 한다.
+- Verification:
+  - Development Agent가 workflow/test 정합성을 맞췄다.
+  - `npm test` passed: 18 tests.
+  - 실제 GitHub Actions fresh deploy warning 확인은 아직 하지 않았다.
+- Next:
+  - 사용자가 배포를 선택하면 fresh deploy run에서 runtime warning이 사라졌는지 확인한다.

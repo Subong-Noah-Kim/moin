@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-06-07T03:29:17+09:00",
+  "updatedAt": "2026-06-07T03:39:49+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 12,
-    "deployNeeded": 0
+    "doneLocal": 13,
+    "deployNeeded": 1
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0014 public localStorage 복원력 개발 완료",
+      "currentTask": "AG-0015 GitHub Pages workflow runtime 정리 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 개발 후보 선택"
+      "next": "사용자 선택 시 배포 검증 또는 다음 TODO 개발 배정"
     },
     {
       "name": "기획 Agent",
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public localStorage 안전 파싱 구현 완료",
+      "currentTask": "GitHub Pages workflow action/runtime 변경안 적용 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 개발 태스크 대기"
@@ -57,25 +57,25 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public localStorage 복원력 테스트 검증 완료",
+      "currentTask": "workflow runtime 테스트 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "구현 결과 검증 대기"
+      "next": "배포 선택 시 GitHub Actions 로그 검증"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "보안/데이터 무결성 후보 재검토 완료",
+      "currentTask": "workflow 권한 최소화와 운영 리스크 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "TD-009/TD-011/TD-013 구현 대기"
+      "next": "최종 workflow 변경안 재검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0014 localStorage 복원력 기록 완료",
+      "currentTask": "AG-0015 workflow runtime 문서화 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -337,6 +337,30 @@
           "TD-014 범위에서는 공개 UI용 세 키만 다루고, 관리자 세션이나 Toss 고객 키는 건드리지 않았습니다.",
           "빈 값, 너무 긴 값, 과도하게 많은 값은 저장 상태에서 제외합니다.",
           "현재 테스트 수는 17개로 늘었고 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0015",
+      "title": "GitHub Pages workflow runtime 정리",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "사용자가 배포를 선택하면 fresh deploy 로그에서 runtime warning 확인",
+      "details": {
+        "summary": "GitHub Pages 배포 자동화가 앞으로도 경고 없이 돌아가도록 GitHub Actions 실행 환경 변화에 맞추는 작업입니다.",
+        "what": "배포 workflow의 action 버전, Node 실행 버전, test/deploy job 권한 범위, 그리고 이를 지키는 테스트 가드를 정리합니다.",
+        "why": "지금 배포가 되더라도 GitHub Actions runtime 경고를 방치하면 나중에 배포가 갑자기 실패할 수 있습니다. 사용자 화면을 바꾸는 일은 아니지만 운영 안정성에 중요합니다.",
+        "developmentDirection": "개발 Agent가 workflow 변경안을 적용했고, QA Agent가 테스트 기대값을 workflow와 맞춘 뒤 npm test를 통과시켰습니다. 이후 사용자가 배포를 선택하면 실제 GitHub Actions 로그에서 runtime 경고가 사라졌는지 확인합니다.",
+        "notes": [
+          "이번 사이클에서 push와 deploy는 하지 않았습니다.",
+          "배포 권한은 test job까지 넓게 주지 않고 deploy job에만 두는 방향으로 정리합니다.",
+          "workflow에 적힌 action 버전과 테스트가 기대하는 action 버전이 다르면 로컬 테스트가 실패합니다.",
+          "artifact 업로드 action의 숨김 파일 처리 변화는 향후 .nojekyll 또는 .well-known 배포가 필요할 때 다시 확인해야 합니다.",
+          "로컬 테스트는 18개 모두 통과했습니다.",
+          "TODO.md의 최종 완료 조건은 fresh deploy 로그에서 runtime 경고가 사라진 것을 확인하는 것입니다."
         ]
       }
     }

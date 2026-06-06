@@ -246,3 +246,31 @@
 - 광범위한 frontend module split: 유용하지만 이번 사이클의 직접 사용자/운영 리스크 해소에는 덜 맞아 `deferred`.
 - GitHub Pages workflow runtime 정리: TODO 상단에 남아 있으나 실제 warning 제거 확인은 GitHub Actions 실행이 필요해 별도 배포/검증 사이클로 유지.
 - live region 전체 확대: 접근성 품질 개선으로 유지하되, 자동 갱신 모니터에는 과한 알림을 피한다.
+
+## Round 3 - 2026-06-07 03:37 KST
+
+### 요약
+
+이번 사이클은 새 기능 발굴보다 `TODO.md`의 현재 1순위인 GitHub Pages workflow runtime 정리를 실제 개발 대상으로 배정했습니다. 쉽게 말하면, GitHub가 Actions 실행 환경을 Node 24 쪽으로 옮기는 중이라 배포 자동화 파일도 그 변화에 맞춰 미리 손보는 작업입니다. 이 작업은 사이트 기능을 바꾸는 작업은 아니지만, 나중에 배포 버튼을 눌렀을 때 경고나 실패가 나지 않게 하는 운영 안정화 작업입니다.
+
+### TD-015 - GitHub Pages workflow runtime 정리
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Development, QA, Security, Ops Log
+- What: GitHub Pages 배포 workflow에서 오래된 action/runtime 조합을 최신 GitHub Actions 환경에 맞게 정리한다.
+- Why: 현재 배포는 성공하더라도 GitHub Actions Node runtime 경고가 쌓이면 어느 시점에 배포가 갑자기 실패할 수 있다.
+- First development unit:
+  - `checkout`, `setup-node`, `configure-pages`, `upload-pages-artifact`, `deploy-pages` action 버전 정책을 하나로 확정한다.
+  - 배포에 필요한 권한은 deploy job에만 두고, test job은 최소 권한으로 유지한다.
+  - workflow 버전 정책을 테스트로 고정해 다음에 오래된 action이 다시 들어오면 `npm test`에서 잡는다.
+- Development direction: 먼저 로컬 workflow/test 정합성을 맞추고, 사용자가 배포를 선택한 뒤 GitHub Actions 실제 실행 로그에서 runtime 경고가 사라졌는지 확인한다.
+- Risks:
+  - action major version을 올리면 GitHub-hosted runner에서는 대체로 안전하지만, 각 action의 새 요구 조건과 동작 변경을 확인해야 한다.
+  - `upload-pages-artifact` 계열은 숨김 파일 처리 변경이 있을 수 있어 `.nojekyll`이나 `.well-known`을 배포하게 될 때는 별도 확인이 필요하다.
+  - 배포 경고 제거 여부는 로컬 테스트만으로 확정할 수 없고, 실제 GitHub Actions 실행 로그를 봐야 한다.
+- Notes:
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+  - 로컬 구현과 `npm test`는 완료했다.
+  - TODO.md의 최종 완료 조건은 fresh deploy warning 확인까지 포함하므로 TODO 체크박스는 아직 열어둔다.
+  - QA와 보안 검토 결과를 반영해 action 버전 정책, 최소 권한, 테스트 기대값을 맞췄다.

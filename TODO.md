@@ -129,6 +129,7 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Problem: the latest successful Pages workflow reports GitHub Actions Node 20 deprecation warnings for checkout/setup/deploy actions, with forced Node 24 behavior coming soon.
   - Files: `.github/workflows/deploy-pages.yml`
   - Done when: the workflow uses action versions/settings compatible with the current GitHub runner runtime and a fresh deploy completes without deprecation warnings.
+  - Status: local workflow/test implementation is complete on `codex/overnight-task-discovery`; `npm test` passes. Push/deploy were not performed, so the final remaining check is one fresh GitHub Actions deploy run with no runtime warnings.
 
 - [ ] Add frontend tests for shipped flows
   - Problem: current tests cover selected payment, rendering, accessibility, and admin assertions mostly through source-text regex checks; shipped flows still need broader behavior coverage.

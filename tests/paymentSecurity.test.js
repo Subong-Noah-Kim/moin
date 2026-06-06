@@ -207,6 +207,36 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });
 
+test('GitHub Pages workflow uses Node 24 compatible action versions', async () => {
+  const workflow = await readProjectFile('../.github/workflows/deploy-pages.yml');
+  const actionUses = [...workflow.matchAll(/^\s*uses:\s*(actions\/[^\s#]+)/gm)].map((match) => match[1]);
+
+  assert.deepEqual(actionUses, [
+    'actions/checkout@v6',
+    'actions/setup-node@v6',
+    'actions/checkout@v6',
+    'actions/configure-pages@v6',
+    'actions/upload-pages-artifact@v5',
+    'actions/deploy-pages@v5',
+  ]);
+  assert.match(workflow, /node-version: 24/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /package-manager-cache: false/);
+  assert.match(workflow, /permissions:\s+contents: read\s+[\s\S]*?deploy:\s+needs: test\s+runs-on: ubuntu-latest\s+permissions:\s+contents: read\s+pages: write\s+id-token: write/);
+
+  assert.doesNotMatch(workflow, /uses: actions\/checkout@v4/);
+  assert.doesNotMatch(workflow, /uses: actions\/checkout@v5/);
+  assert.doesNotMatch(workflow, /uses: actions\/setup-node@v4/);
+  assert.doesNotMatch(workflow, /uses: actions\/setup-node@v5/);
+  assert.doesNotMatch(workflow, /node-version: 20/);
+  assert.doesNotMatch(workflow, /uses: actions\/configure-pages@v5/);
+  assert.doesNotMatch(workflow, /uses: actions\/upload-pages-artifact@v3/);
+  assert.doesNotMatch(workflow, /uses: actions\/upload-pages-artifact@v4/);
+  assert.doesNotMatch(workflow, /uses: actions\/deploy-pages@v4/);
+  assert.doesNotMatch(workflow, /actions: read/);
+  assert.doesNotMatch(workflow, /enablement: true/);
+});
+
 test('admin orders include payment record reconciliation', async () => {
   const [adminHtml, adminScript, supabaseClient] = await Promise.all([
     readProjectFile('../admin.html'),
@@ -265,7 +295,7 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.doesNotMatch(adminScript, /showDashboard\(\);\s+void loadAgenticStatus\(\);/);
   assert.match(adminScript, /agenticRefreshButton\.addEventListener\('click', loadAgenticStatus\)/);
   assert.match(status.branch, /^(main|codex\/[a-z0-9-]+)$/);
-  assert.equal(status.summary.deployNeeded, 0);
+  assert.equal(status.summary.deployNeeded, status.tasks.filter((task) => task.deployNeeded).length);
   assert.ok(Array.isArray(status.agents));
   assert.ok(Array.isArray(status.tasks));
   assert.ok(status.agents.some((agent) => agent.name === 'UX/UI Agent'));
