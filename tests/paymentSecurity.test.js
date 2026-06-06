@@ -23,6 +23,76 @@ function getAssetVersions(source) {
   return [...source.matchAll(/\?v=([^"'`\s)]+)/g)].map((match) => match[1]);
 }
 
+const sensitiveAgentStatusKeys = [
+  { name: 'access token field', pattern: /^(access[_-]?token|accessToken)$/i },
+  { name: 'refresh token field', pattern: /^(refresh[_-]?token|refreshToken)$/i },
+  { name: 'payment key field', pattern: /^paymentKey$/i },
+  { name: 'checkout token field', pattern: /^checkoutToken$/i },
+  { name: 'service role field', pattern: /^(service[_-]?role|serviceRole|serviceRoleKey)$/i },
+];
+
+const sensitiveAgentStatusValues = [
+  {
+    name: 'jwt-like token',
+    pattern: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/,
+  },
+  {
+    name: 'bearer token',
+    pattern: /\bBearer\s+[A-Za-z0-9._-]{20,}\b/i,
+  },
+  {
+    name: 'toss secret key',
+    pattern: /\b(?:test|live)_sk_[A-Za-z0-9_=-]{12,}\b/i,
+  },
+  {
+    name: 'checkout token value',
+    pattern: /\bmc_checkout_[A-Za-z0-9_-]{12,}\b/,
+  },
+  {
+    name: 'payment key assignment',
+    pattern: /\bpaymentKey\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}\b/,
+  },
+  {
+    name: 'checkout token assignment',
+    pattern: /\bcheckoutToken\s*[:=]\s*["']?[A-Za-z0-9_-]{12,}\b/,
+  },
+  {
+    name: 'service role assignment',
+    pattern: /\b(?:service[_-]?role|SUPABASE_SERVICE_ROLE_KEY)\s*[:=]\s*["']?[A-Za-z0-9._-]{12,}\b/i,
+  },
+];
+
+function collectSensitiveAgentStatusFindings(value, path = '$', findings = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => collectSensitiveAgentStatusFindings(item, `${path}[${index}]`, findings));
+    return findings;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.entries(value).forEach(([key, nested]) => {
+      const keyRule = sensitiveAgentStatusKeys.find((rule) => rule.pattern.test(key));
+      const nextPath = `${path}.${key}`;
+
+      if (keyRule) {
+        findings.push(`${nextPath}: ${keyRule.name}`);
+      }
+
+      collectSensitiveAgentStatusFindings(nested, nextPath, findings);
+    });
+    return findings;
+  }
+
+  if (typeof value === 'string') {
+    sensitiveAgentStatusValues.forEach((rule) => {
+      if (rule.pattern.test(value)) {
+        findings.push(`${path}: ${rule.name}`);
+      }
+    });
+  }
+
+  return findings;
+}
+
 test('getAmountFromMeetup prefers numeric price_amount over display price text', () => {
   assert.equal(
     getAmountFromMeetup({
@@ -228,6 +298,32 @@ test('local agent monitor polls live status without publishing it to Pages', asy
   assert.ok(status.monitor.pollIntervalMs >= 5000);
   assert.ok(Array.isArray(status.agents));
   assert.ok(Array.isArray(status.events));
+});
+
+test('agent status artifacts do not contain sensitive tokens or payment identifiers', async () => {
+  const statusFiles = [
+    '../AGENTIC_STATUS.json',
+    '../AGENTIC_LIVE_STATUS.json',
+  ];
+  const syntheticFindings = collectSensitiveAgentStatusFindings({
+    accessToken: 'stored-by-mistake',
+    nested: {
+      note: 'Bearer eyJaaaaaaaaaaaa.bbbbbbbbbbbbbbbb.cccccccccccccccc',
+    },
+  });
+  const findings = [];
+
+  assert.ok(syntheticFindings.some((finding) => finding.includes('access token field')));
+  assert.ok(syntheticFindings.some((finding) => finding.includes('bearer token')));
+
+  for (const pathname of statusFiles) {
+    const parsed = JSON.parse(await readProjectFile(pathname));
+    collectSensitiveAgentStatusFindings(parsed).forEach((finding) => {
+      findings.push(`${pathname} ${finding}`);
+    });
+  }
+
+  assert.deepEqual(findings, []);
 });
 
 test('public submissions route through an abuse-controlled Edge Function', async () => {

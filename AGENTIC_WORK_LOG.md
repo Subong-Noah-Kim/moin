@@ -297,3 +297,27 @@
 - Next:
   - 사용자가 작은 안전망 작업을 원하면 TD-013부터 구현한다.
   - 사용자가 핵심 서비스 리스크를 먼저 잡고 싶으면 TD-009/TD-010 설계와 구현을 시작한다.
+
+### AG-0013 - Agent status 민감정보 가드 테스트
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent
+- Purpose: 배포될 수 있는 Agentic 현황 JSON에 토큰, 결제 식별자, service role 같은 민감정보가 실수로 들어가면 테스트에서 막는다.
+- Changed files:
+  - `tests/paymentSecurity.test.js`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - JSON을 재귀적으로 훑어 민감한 필드명과 실제 값처럼 보이는 문자열 패턴을 검사한다.
+  - 설명 문장에 보안 개념을 언급하는 것은 허용하고, 실제 값처럼 보이는 패턴이나 민감한 구조 필드만 실패시킨다.
+  - 실패 메시지는 실제 매칭값을 출력하지 않고 JSON 경로와 규칙명만 보여준다.
+  - TD-013은 `done_local`로 갱신했다.
+- Verification:
+  - `npm test` passed: 16 tests.
+- Next:
+  - 다음 작은 안전망 후보는 TD-014 public localStorage 파싱 복원력이다.
+  - 다음 핵심 서비스 후보는 TD-009/TD-010 정원 P0 패키지다.

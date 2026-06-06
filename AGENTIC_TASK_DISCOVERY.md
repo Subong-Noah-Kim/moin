@@ -212,7 +212,7 @@
 ### TD-013 - Agent status 민감정보 denylist 테스트
 
 - Priority: `P1`
-- Status: `approved`
+- Status: `done_local`
 - Source agents: Security, QA
 - What: `AGENTIC_STATUS.json`, `AGENTIC_LIVE_STATUS.json`에 토큰/결제키/고객정보처럼 보이는 문자열이 들어가면 테스트에서 실패하게 한다.
 - Why: `AGENTIC_STATUS.json`은 GitHub Pages artifact에 포함되므로 작업 설명에 민감한 값이 실수로 들어가면 공개될 수 있다.
@@ -223,6 +223,7 @@
 - Development direction: 작은 보수적 denylist로 시작하고 오탐이 많으면 조정한다.
 - Notes:
   - 이 작업은 배포가 필요 없는 테스트 안전망이라 다음 작은 개발 단위로 적합하다.
+  - 2026-06-07 03:21 KST에 `tests/paymentSecurity.test.js`에 로컬 테스트를 추가했다.
 
 ### TD-014 - public localStorage 파싱 복원력
 

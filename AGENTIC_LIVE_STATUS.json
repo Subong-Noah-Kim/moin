@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T03:17:14+09:00",
-  "currentFocus": "수동 하트비트 사이클 2 완료",
+  "updatedAt": "2026-06-07T03:24:01+09:00",
+  "currentFocus": "Agent status 민감정보 가드 테스트 개발 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,23 +11,23 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "TD-009~TD-014 정리 완료"
+    "currentFocus": "TD-013 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "수동 하트비트 사이클 2 완료",
-      "updatedAt": "2026-06-07T03:17:14+09:00",
-      "next": "TD-009 pending 주문 만료 또는 TD-013 민감정보 가드 중 선택"
+      "currentTask": "AG-0013 민감정보 가드 테스트 개발 완료",
+      "updatedAt": "2026-06-07T03:24:01+09:00",
+      "next": "다음 개발 후보 선택"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "로컬 모니터 Task 상세 열림 상태 저장 구현 완료",
-      "updatedAt": "2026-06-07T03:09:28+09:00",
+      "currentTask": "Agent status 민감정보 denylist 테스트 구현 완료",
+      "updatedAt": "2026-06-07T03:24:01+09:00",
       "next": "다음 개발 태스크 대기"
     },
     {
@@ -42,16 +42,16 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "다음 구현 후보 테스트 전략 재검토 완료",
-      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "currentTask": "Agent status 민감정보 테스트 검증 완료",
+      "updatedAt": "2026-06-07T03:24:01+09:00",
       "next": "구현 결과 검증 대기"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0012 수동 사이클 기록 완료",
-      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "currentTask": "AG-0013 민감정보 가드 기록 완료",
+      "updatedAt": "2026-06-07T03:24:01+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T03:24:01+09:00",
+      "agent": "개발 Agent",
+      "level": "review",
+      "title": "민감정보 가드 테스트 구현",
+      "body": "AGENTIC_STATUS.json과 AGENTIC_LIVE_STATUS.json에 실제 토큰이나 결제 식별자처럼 보이는 값이 들어오면 npm test가 실패하도록 안전망을 추가했습니다."
+    },
+    {
+      "time": "2026-06-07T03:24:01+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "민감정보 가드 검증 완료",
+      "body": "테스트 수가 16개로 늘었고 전체 npm test가 통과했습니다. 실패 메시지는 실제 매칭값 대신 위치와 규칙명만 보여주도록 구성했습니다."
+    },
     {
       "time": "2026-06-07T03:17:14+09:00",
       "agent": "작업 정리 Agent",
