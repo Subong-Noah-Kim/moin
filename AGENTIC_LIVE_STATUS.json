@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T04:08:22+09:00",
-  "currentFocus": "제품/데모 결제 문구와 설정 문서 정리 로컬 완료",
+  "updatedAt": "2026-06-07T04:22:31+09:00",
+  "currentFocus": "결제 결과 식별자 노출 최소화 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,71 +11,71 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0018 done_local"
+    "currentFocus": "AG-0019 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0018 제품/데모 결제 문구와 설정 문서 정리 완료 검수",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "currentTask": "AG-0019 결제 결과 식별자 노출 최소화 완료 검수",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
       "next": "다음 TODO 개발 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "제품/데모 결제 문구와 설정 문서 정리 구현 완료",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "currentTask": "결제 결과 식별자 노출 최소화 구현 완료",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
       "next": "다음 개발 태스크 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "테스트 결제 결과/버튼 문구 사용자 오해 가능성 검토 완료",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
-      "next": "배포 선택 시 결제 모달과 결과 화면 문구 확인"
+      "currentTask": "결제키 숨김 상태에서 결과 화면이 이해되는지 검토 완료",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "next": "배포 선택 시 결제 결과 화면 확인"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "테스트 결제/실제 과금 구분 문구 회귀 테스트 검증 완료",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
-      "next": "배포 선택 시 public checkout/result page 수동 확인"
+      "currentTask": "paymentKey 화면/저장소/URL 최소화 테스트 검증 완료",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
+      "next": "배포 선택 시 payment-result callback 화면 수동 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0018 제품/데모 결제 문구 정리 기록 완료",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "currentTask": "AG-0019 결제 결과 식별자 노출 최소화 기록 완료",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "테스트 결제와 실제 과금 구분 문구 검토 완료",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "currentTask": "결제 결과 화면의 비개발자용 확인 문구 검토 완료",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
       "next": "다음 라운드 대기"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "제품/데모 결제 문구 정리 승인 및 위험 문구 차단 완료",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "currentTask": "결제 결과 식별자 노출 최소화 승인 및 리스크 검토 완료",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
       "next": "다음 라운드 후보 재분류"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "결제 성공/오류 문구의 실결제 오해와 내부 설정 노출 검토 완료",
-      "updatedAt": "2026-06-07T04:08:22+09:00",
+      "currentTask": "paymentKey 원문 노출과 referrer 리스크 검토 완료",
+      "updatedAt": "2026-06-07T04:22:31+09:00",
       "next": "다음 보안 태스크 대기"
     },
     {
@@ -96,6 +96,34 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T04:22:31+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "결제 인증값 노출 리스크 검토",
+      "body": "paymentKey는 Supabase 승인 호출에는 필요하지만 화면, 브라우저 저장소, 주소창에 오래 남기지 않는 방향을 승인했습니다. 초기 callback URL은 잠깐 존재할 수 있다는 한계도 기록했습니다."
+    },
+    {
+      "time": "2026-06-07T04:22:31+09:00",
+      "agent": "UX/UI Agent",
+      "level": "review",
+      "title": "결과 화면 문구 정리",
+      "body": "원문 결제키를 보여주지 않고도 사용자가 테스트 결제 인증이 도착했다는 점을 이해하도록 '테스트 결제 접수 상태' 문구로 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T04:22:31+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "식별자 최소화 테스트 통과",
+      "body": "paymentKey가 서버 승인에는 쓰이지만 화면/저장소에 원문으로 남지 않고 URL query가 캡처 후 정리되는지 확인하는 테스트를 추가했습니다. npm test 24개가 모두 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T04:22:31+09:00",
+      "agent": "총괄 디렉터",
+      "level": "review",
+      "title": "AG-0019 로컬 완료",
+      "body": "결제 결과 식별자 노출 최소화 작업을 완료했습니다. push와 deploy는 하지 않았고, live 반영은 사용자가 선택한 배포 묶음에 포함합니다."
+    },
     {
       "time": "2026-06-07T04:08:22+09:00",
       "agent": "기획 Agent",

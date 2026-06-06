@@ -489,3 +489,40 @@
   - `npm test` passed: 23 tests.
 - Next:
   - 사용자가 배포 묶음에 포함하면 public checkout modal, 데모 fallback 버튼, payment-result success/fail 화면을 직접 확인한다.
+
+### AG-0019 - 결제 결과 식별자 노출 최소화
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + UX/UI Agent + QA Agent + 보안/검토 Agent + 작업 정리 Agent
+- Purpose: 토스 테스트 결제 승인에 필요한 확인값이 화면, 주소창, 브라우저 저장소에 오래 남지 않게 줄인다.
+- Subagents:
+  - Security/Review Agent: Kuhn
+  - QA Agent: Darwin
+  - UX/UI Planning Agent: Tesla
+- Changed files:
+  - `payment-result.html`
+  - `payment-result.js`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - `paymentKey`는 `confirmTossPayment` 호출에는 계속 사용한다.
+  - 결제 결과 화면의 원문 결제키 행은 `테스트 결제 접수 상태`로 바꿨다.
+  - `momentclub:toss-last-auth`에는 `paymentKey`를 저장하지 않고 주문번호, 금액, 수신시각 요약만 저장한다.
+  - 성공/실패 callback query는 필요한 값을 모두 읽은 뒤 `history.replaceState`로 주소창에서 정리한다.
+  - `payment-result.html`에 `meta name="referrer" content="no-referrer"`를 추가했다.
+  - 이 작업은 노출을 줄이는 조치이며, 초기 callback URL이 브라우저에 도착하는 순간 자체를 없애는 것은 아니다.
+  - URL을 정리하므로 실패 후 새로고침으로 같은 승인 요청을 재시도하는 흐름은 약해질 수 있다.
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+- Verification:
+  - Security/Review Agent가 raw `paymentKey` 화면 표시, sessionStorage 저장, URL query 잔류를 blocker로 확인했다.
+  - UX/UI Agent가 원문 값을 숨긴 상태에서도 사용자가 이해할 수 있는 결과 화면 문구를 제안했다.
+  - QA Agent 제안에 따라 `paymentKey`가 서버 승인에는 쓰이지만 화면/저장소에는 원문으로 남지 않는 테스트를 추가했다.
+  - `npm test` passed: 24 tests.
+- Next:
+  - 사용자가 배포 묶음에 포함하면 payment-result success/fail callback 화면에서 인증값이 직접 보이지 않는지 확인한다.

@@ -87,6 +87,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Done when: public/admin copy clearly distinguishes real service behavior, Toss test mode, and remaining production setup work.
   - Status: local implementation is complete on `codex/overnight-task-discovery`; public checkout/result copy and setup docs now distinguish screen-only demo state, Toss test payment approval, Supabase Edge Function confirmation, and remaining live payment setup. `npm test` passes. Deploy is still needed before this affects the live public page.
 
+- [x] Minimize payment result identifier exposure
+  - Problem: Toss `paymentKey` was needed for approval, but the raw value also appeared on the result screen, stayed in the callback URL, and was saved in browser storage.
+  - Files: `payment-result.html`, `payment-result.js`, `tests/paymentSecurity.test.js`
+  - Done when: `paymentKey` is still sent to the confirmation Edge Function, but the raw value is not rendered, not stored in `sessionStorage`, and callback query values are cleaned after capture.
+  - Status: local implementation is complete on `codex/overnight-task-discovery`; the result page now shows receipt status instead of the raw payment key, stores only a summary, cleans callback URLs after reading them, and has regression tests. `npm test` passes. Deploy is still needed before this affects the live payment result page.
+
 ## P2 - Accessibility and Mobile UX
 
 - [x] Fix drawer and checkout modal focus management

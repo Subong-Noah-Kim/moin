@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
+    <meta name="referrer" content="no-referrer" />
     <title>moin 결제 테스트 결과</title>
     <link rel="stylesheet" href="./styles.css?v=__ASSET_VERSION__" />
   </head>
@@ -22,8 +23,8 @@
             <dd data-order-id>-</dd>
           </div>
           <div>
-            <dt>테스트 결제키</dt>
-            <dd data-payment-key>-</dd>
+            <dt>테스트 결제 접수 상태</dt>
+            <dd>인증 정보가 도착했어요</dd>
           </div>
           <div>
             <dt>금액</dt>
@@ -31,8 +32,9 @@
           </div>
         </dl>
         <p class="payment-result-note">
-          Supabase Edge Function이 이 값을 받아 테스트 키로 토스 결제 승인 API를 호출하고,
-          성공하면 주문 상태와 결제 기록을 업데이트합니다.
+          Supabase Edge Function이 결제 인증값을 서버에서 확인하고 주문 상태와 결제
+          기록을 업데이트합니다. 보안을 위해 결제 인증값은 화면과 브라우저 저장소에
+          남기지 않습니다.
         </p>
         <div class="payment-confirm-status" data-confirm-status>
           결제 승인을 준비하고 있습니다.

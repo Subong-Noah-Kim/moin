@@ -11,7 +11,7 @@
 ### TD-001 - 정원 데이터 모델 추가
 
 - Priority: `P0`
-- Status: `approved`
+- Status: `done_local`
 - Source agents: DB/Backend, UX/UI, QA, Review
 - What: `meetups`에 정원과 마감 상태를 저장할 필드를 추가한다.
 - Why: 현재는 정원을 저장할 곳이 없어서 잔여석을 실제 숫자로 계산할 수 없다.
@@ -208,6 +208,7 @@
 - Development direction: 요청 처리에는 필요한 값을 쓰되, 화면/저장소/로그에는 최소한만 남긴다.
 - Notes:
   - URL 정리 시 새로고침 재시도 UX가 약해질 수 있으므로 실패 안내 문구를 같이 확인한다.
+  - 2026-06-07 04:22 KST에 `payment-result.html`, `payment-result.js`, `tests/paymentSecurity.test.js`에 로컬 구현과 테스트를 추가했다.
 
 ### TD-013 - Agent status 민감정보 denylist 테스트
 
@@ -359,3 +360,33 @@
   - 이 사이클에서 push와 deploy는 하지 않았다.
   - `npm test` 23개가 모두 통과했다.
   - TODO.md의 해당 항목은 로컬 완료로 체크했다.
+
+## Round 7 - 2026-06-07 04:22 KST
+
+### 요약
+
+이번 사이클은 `TD-012 결제 결과 식별자 노출 최소화`를 개발했습니다. 쉽게 말하면, 토스 테스트 결제 승인에 필요한 확인값은 서버 승인 요청에만 쓰고, 사용자 화면이나 브라우저 저장소, 주소창에는 오래 남기지 않도록 줄인 작업입니다. 결제 기능을 바꾸기보다 민감할 수 있는 식별자가 덜 노출되게 정리했습니다.
+
+### TD-012 - 결제 결과 식별자 노출 최소화
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, UX/UI, Security/Review, QA, Ops Log
+- What: 결제 결과 화면에서 원문 `paymentKey` 표시를 제거하고, 승인 처리에 필요한 동안만 메모리에서 사용한다.
+- Why: `paymentKey`는 테스트 결제 승인에 필요한 식별자입니다. 테스트 환경이라도 화면, 주소창, 브라우저 저장소에 오래 남기면 공유/복사/로그 노출 위험이 커집니다.
+- First development unit:
+  - `payment-result.html`의 원문 결제키 행을 `테스트 결제 접수 상태`로 바꾼다.
+  - `payment-result.js`는 `paymentKey`를 `confirmTossPayment` 호출에만 사용하고 화면에는 쓰지 않는다.
+  - `momentclub:toss-last-auth` 저장값에서 `paymentKey`를 제거한다.
+  - 성공/실패 callback query는 필요한 값을 모두 읽은 뒤 `history.replaceState`로 정리한다.
+  - `payment-result.html`에 `referrer` no-referrer meta를 추가한다.
+  - 같은 회귀가 돌아오면 실패하는 테스트를 추가한다.
+- Development direction: 서버 승인 흐름은 그대로 두고, 화면/저장소/주소창 노출 면적만 줄인다.
+- Risks:
+  - 초기 Toss callback URL은 JS가 실행되기 전 잠깐 존재할 수 있어 모든 로그 노출을 완전히 없애는 것은 아니다.
+  - URL을 정리하면 실패 후 새로고침으로 같은 승인 요청을 재시도하는 UX는 약해진다.
+  - 운영 전에는 결제 식별자 마스킹/로그 정책을 서버 쪽에서도 다시 확인해야 한다.
+- Notes:
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+  - `npm test` 24개가 모두 통과했다.
+  - 배포 후에는 payment-result 성공/실패 callback 화면에서 인증값이 직접 노출되지 않는지 확인한다.

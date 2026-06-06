@@ -220,8 +220,9 @@ test('public payment copy separates Toss test mode from live payments', async ()
 
   assert.match(resultHtml, /TOSS TEST RESULT/);
   assert.match(resultHtml, /토스페이먼츠 테스트/);
-  assert.match(resultHtml, /테스트 키로 토스 결제 승인 API/);
-  assert.match(resultHtml, /주문 상태와 결제 기록/);
+  assert.match(resultHtml, /결제 인증값을 서버에서 확인/);
+  assert.match(resultHtml, /브라우저 저장소에\s+남기지 않습니다/);
+  assert.match(resultHtml, /주문 상태와 결제\s+기록/);
 
   assert.match(resultScript, /테스트 결제 승인이 완료됐어요/);
   assert.match(resultScript, /테스트 주문 상태가 결제완료로 변경되었습니다/);
@@ -229,6 +230,47 @@ test('public payment copy separates Toss test mode from live payments', async ()
   assert.doesNotMatch(resultScript, /결제가 완료됐어요/);
   assert.doesNotMatch(resultScript, /아직 배포되지 않았|아직 설정되지 않았/);
   assert.doesNotMatch(resultScript, /return message \|\| '결제 승인 처리에 실패했습니다\.'/);
+});
+
+test('payment result uses paymentKey for confirmation without exposing the raw identifier', async () => {
+  const [resultHtml, resultScript] = await Promise.all([
+    readProjectFile('../payment-result.html'),
+    readProjectFile('../payment-result.js'),
+  ]);
+  const successFlow = resultScript.slice(
+    resultScript.indexOf('async function handleSuccessResult'),
+    resultScript.indexOf("if (result === 'success')"),
+  );
+  const failureFlow = resultScript.slice(resultScript.indexOf("const code = params.get('code')"));
+  const sessionStorageWrites = [...resultScript.matchAll(/sessionStorage\.setItem\(([\s\S]*?)\);/g)]
+    .map((match) => match[0]);
+  const captureIndex = successFlow.indexOf("const paymentKey = params.get('paymentKey') || '';");
+  const cleanIndex = successFlow.indexOf('clearPaymentResultQuery();');
+  const confirmIndex = successFlow.indexOf('confirmTossPayment({ paymentKey, orderId, amount })');
+  const checkoutTokenIndex = failureFlow.indexOf("const checkoutToken = params.get('checkoutToken') || '';");
+  const failureCleanIndex = failureFlow.indexOf('clearPaymentResultQuery();');
+  const recordFailureIndex = failureFlow.indexOf('recordTossPaymentFailure({ orderId, checkoutToken, code, message })');
+
+  assert.match(resultHtml, /<meta name="referrer" content="no-referrer" \/>/);
+  assert.match(resultHtml, /테스트 결제 접수 상태/);
+  assert.match(resultHtml, /인증 정보가 도착했어요/);
+  assert.doesNotMatch(resultHtml, /data-payment-key|테스트 결제키/);
+
+  assert.match(resultScript, /const paymentKey = params\.get\('paymentKey'\) \|\| '';/);
+  assert.match(resultScript, /function clearPaymentResultQuery\(\)/);
+  assert.match(resultScript, /window\.history\.replaceState\(\{\}, document\.title, `\$\{window\.location\.pathname\}\$\{window\.location\.hash \|\| ''\}`\)/);
+  assert.match(resultScript, /function rememberTossAuthSummary\(\{ orderId, amount \}\)/);
+  assert.match(resultScript, /confirmTossPayment\(\{ paymentKey, orderId, amount \}\)/);
+  assert.doesNotMatch(resultScript, /setText\(\s*['"]\[data-payment-key\]['"]\s*,\s*paymentKey\s*\)/);
+  assert.doesNotMatch(resultScript, /(?:textContent|innerText|innerHTML)\s*=\s*paymentKey\b/);
+  assert.deepEqual(sessionStorageWrites.filter((write) => /\bpaymentKey\b/.test(write)), []);
+
+  assert.ok(captureIndex >= 0);
+  assert.ok(cleanIndex > captureIndex);
+  assert.ok(confirmIndex > cleanIndex);
+  assert.ok(checkoutTokenIndex >= 0);
+  assert.ok(failureCleanIndex > checkoutTokenIndex);
+  assert.ok(recordFailureIndex > failureCleanIndex);
 });
 
 test('public localStorage sets recover from corrupted saved state', async () => {

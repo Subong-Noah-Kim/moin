@@ -22,6 +22,29 @@ function setText(selector, value) {
   }
 }
 
+function clearPaymentResultQuery() {
+  try {
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash || ''}`);
+  } catch {
+    // URL cleanup is a privacy improvement, not a blocker for payment confirmation.
+  }
+}
+
+function rememberTossAuthSummary({ orderId, amount }) {
+  try {
+    sessionStorage.setItem(
+      'momentclub:toss-last-auth',
+      JSON.stringify({
+        orderId,
+        amount,
+        receivedAt: new Date().toISOString(),
+      }),
+    );
+  } catch {
+    // The confirmation flow should keep moving even if browser storage is unavailable.
+  }
+}
+
 function formatAmount(value) {
   const amount = Number(value || 0);
   if (!amount) return '-';
@@ -117,18 +140,10 @@ async function handleSuccessResult() {
   const orderId = params.get('orderId') || '';
   const amount = params.get('amount') || '';
 
-  sessionStorage.setItem(
-    'momentclub:toss-last-auth',
-    JSON.stringify({
-      paymentKey,
-      orderId,
-      amount,
-      receivedAt: new Date().toISOString(),
-    }),
-  );
+  rememberTossAuthSummary({ orderId, amount });
+  clearPaymentResultQuery();
 
   setText('[data-order-id]', orderId);
-  setText('[data-payment-key]', paymentKey);
   setText('[data-amount]', formatAmount(amount));
   successView.hidden = false;
 
@@ -152,7 +167,7 @@ async function handleSuccessResult() {
     console.error(error);
     if (successTitle) successTitle.textContent = '승인 처리가 필요해요';
     if (successDescription) successDescription.textContent =
-      '토스 결제 인증은 도착했지만 서버 승인 처리에서 문제가 생겼습니다.';
+      '토스 결제 인증은 도착했지만 서버 승인 처리에서 문제가 생겼습니다. 보안을 위해 인증 URL은 정리했습니다.';
     setConfirmStatus(getConfirmErrorMessage(error), 'fail');
   }
 }
@@ -164,6 +179,8 @@ if (result === 'success') {
   const message = params.get('message') || '';
   const orderId = params.get('orderId') || '';
   const checkoutToken = params.get('checkoutToken') || '';
+
+  clearPaymentResultQuery();
 
   setText('[data-error-code]', code);
   setText('[data-fail-order-id]', orderId);

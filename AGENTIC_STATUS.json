@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-06-07T04:08:22+09:00",
+  "updatedAt": "2026-06-07T04:22:31+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 16,
-    "deployNeeded": 4
+    "doneLocal": 17,
+    "deployNeeded": 5
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0018 제품/데모 결제 문구와 설정 문서 정리 완료 검수",
+      "currentTask": "AG-0019 결제 결과 식별자 노출 최소화 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 TODO 개발 배정"
@@ -21,7 +21,7 @@
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "테스트 결제와 실제 과금 구분 문구 검토 완료",
+      "currentTask": "결제 결과 화면의 비개발자용 확인 문구 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 라운드 대기"
@@ -30,7 +30,7 @@
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "테스트 결제 결과/버튼 문구 사용자 오해 가능성 검토 완료",
+      "currentTask": "결제키 숨김 상태에서 결과 화면이 이해되는지 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "배포 선택 시 결제 모달과 결과 화면 문구 확인"
@@ -39,7 +39,7 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "제품/데모 결제 문구 정리 승인 및 위험 문구 차단 완료",
+      "currentTask": "결제 결과 식별자 노출 최소화 승인 및 리스크 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 라운드 후보 재분류"
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "제품/데모 결제 문구와 설정 문서 정리 구현 완료",
+      "currentTask": "결제 결과 식별자 노출 최소화 구현 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 개발 태스크 대기"
@@ -57,7 +57,7 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "테스트 결제/실제 과금 구분 문구 회귀 테스트 검증 완료",
+      "currentTask": "paymentKey 화면/저장소/URL 최소화 테스트 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "배포 선택 시 public checkout/result page 수동 확인"
@@ -66,7 +66,7 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "결제 성공/오류 문구의 실결제 오해와 내부 설정 노출 검토 완료",
+      "currentTask": "paymentKey 원문 노출과 referrer 리스크 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 보안 태스크 대기"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0018 제품/데모 결제 문구 정리 기록 완료",
+      "currentTask": "AG-0019 결제 결과 식별자 노출 최소화 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -430,6 +430,29 @@
           "결제 결과 화면의 일반 오류는 내부 서버 원문을 그대로 보여주지 않고 운영자 문의 안내로 정리했습니다.",
           "로컬 테스트는 23개 모두 통과했습니다.",
           "배포 후에는 결제 모달, 화면 확인용 데모 fallback, payment-result.html 성공/실패 화면 문구를 직접 확인하면 됩니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0019",
+      "title": "결제 결과 식별자 노출 최소화",
+      "priority": "P1",
+      "owner": "개발 Agent + UX/UI Agent + QA Agent + 보안/검토 Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "배포 묶음에 포함하면 payment-result.html 성공/실패 콜백 화면 확인",
+      "details": {
+        "summary": "토스 테스트 결제 인증값이 화면, 브라우저 저장소, 주소창에 오래 남지 않도록 줄였습니다.",
+        "what": "결제 결과 화면에서 원문 결제키 표시를 없애고, 결제 인증값을 서버에서 확인 중이라는 상태만 보여줍니다. 결제 확인에 필요한 paymentKey는 Supabase Edge Function 호출에만 쓰고, sessionStorage에는 주문번호/금액/수신시각 요약만 남깁니다. 성공/실패 callback query는 값을 읽은 뒤 주소창에서 정리합니다.",
+        "why": "paymentKey는 테스트 결제 승인에 필요한 식별자입니다. 테스트 환경이라도 화면, 브라우저 저장소, 주소창에 오래 남기면 복사/공유/로그 노출 위험이 커집니다.",
+        "developmentDirection": "승인 로직은 유지하고 노출 면적만 줄였습니다. URL query는 값을 먼저 읽은 뒤 정리하고, 테스트가 이 순서를 지키도록 막아줍니다.",
+        "notes": [
+          "이번 사이클에서 push와 deploy는 하지 않았습니다.",
+          "초기 Toss callback URL은 브라우저에 도착하는 순간 잠깐 존재할 수 있으므로, 이 작업이 모든 로그 노출을 완전히 없애는 것은 아닙니다.",
+          "URL을 정리하면 실패 후 새로고침 재시도는 약해집니다. 그래서 실패 안내에는 인증 URL을 정리했다는 문구를 남겼습니다.",
+          "referrer 유출을 줄이기 위해 payment-result.html에 no-referrer meta를 추가했습니다.",
+          "로컬 테스트는 24개 모두 통과했습니다."
         ]
       }
     }
