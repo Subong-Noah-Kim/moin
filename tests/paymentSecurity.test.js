@@ -4,6 +4,25 @@ import assert from 'node:assert/strict';
 
 import { getAmountFromMeetup } from '../supabase-client.js';
 
+const assetVersionPlaceholder = '__ASSET_VERSION__';
+const cacheBustedSourceFiles = [
+  '../index.html',
+  '../admin.html',
+  '../payment-result.html',
+  '../main.js',
+  '../admin.js',
+  '../payment-result.js',
+  '../supabase-client.js',
+];
+
+async function readProjectFile(pathname) {
+  return readFile(new URL(pathname, import.meta.url), 'utf8');
+}
+
+function getAssetVersions(source) {
+  return [...source.matchAll(/\?v=([^"'`\s)]+)/g)].map((match) => match[1]);
+}
+
 test('getAmountFromMeetup prefers numeric price_amount over display price text', () => {
   assert.equal(
     getAmountFromMeetup({
@@ -34,10 +53,7 @@ test('getAmountFromMeetup falls back to display price for static demo meetups', 
 });
 
 test('payment hardening migration locks anonymous Toss orders to meetup price and checkout token', async () => {
-  const migration = await readFile(
-    new URL('../supabase/migrations/20260606070000_harden_toss_payment_security.sql', import.meta.url),
-    'utf8',
-  );
+  const migration = await readProjectFile('../supabase/migrations/20260606070000_harden_toss_payment_security.sql');
 
   assert.match(migration, /amount = coalesce/);
   assert.match(migration, /price_amount/);
@@ -46,10 +62,7 @@ test('payment hardening migration locks anonymous Toss orders to meetup price an
 });
 
 test('Toss confirmation function validates server amount and failure checkout token', async () => {
-  const edgeFunction = await readFile(
-    new URL('../supabase/functions/confirm-toss-payment/index.ts', import.meta.url),
-    'utf8',
-  );
+  const edgeFunction = await readProjectFile('../supabase/functions/confirm-toss-payment/index.ts');
 
   assert.match(edgeFunction, /assertServerAmount/);
   assert.match(edgeFunction, /findMeetupForOrder/);
@@ -58,7 +71,7 @@ test('Toss confirmation function validates server amount and failure checkout to
 });
 
 test('public meetup rendering escapes dynamic content before writing HTML templates', async () => {
-  const mainScript = await readFile(new URL('../main.js', import.meta.url), 'utf8');
+  const mainScript = await readProjectFile('../main.js');
 
   assert.match(mainScript, /function escapeHtml/);
   assert.match(mainScript, /function escapeAttribute/);
@@ -70,7 +83,7 @@ test('public meetup rendering escapes dynamic content before writing HTML templa
 });
 
 test('checkout waits for Toss SDK loading and prevents duplicate pending orders', async () => {
-  const mainScript = await readFile(new URL('../main.js', import.meta.url), 'utf8');
+  const mainScript = await readProjectFile('../main.js');
 
   assert.match(mainScript, /let tossSdkScriptPromise/);
   assert.match(mainScript, /await ensureTossSdkScript\(\)/);
@@ -81,10 +94,42 @@ test('checkout waits for Toss SDK loading and prevents duplicate pending orders'
   assert.match(mainScript, /shouldUnlockForm = false/);
 });
 
+test('static asset cache-busting uses one deploy version placeholder', async () => {
+  const [workflow, ...sources] = await Promise.all([
+    readProjectFile('../.github/workflows/deploy-pages.yml'),
+    ...cacheBustedSourceFiles.map(readProjectFile),
+  ]);
+  const versions = sources.flatMap(getAssetVersions);
+  const uniqueVersions = new Set(versions);
+
+  assert.ok(versions.length > 0);
+  assert.deepEqual([...uniqueVersions], [assetVersionPlaceholder]);
+  assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
+  assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
+});
+
+test('admin orders include payment record reconciliation', async () => {
+  const [adminHtml, adminScript, supabaseClient] = await Promise.all([
+    readProjectFile('../admin.html'),
+    readProjectFile('../admin.js'),
+    readProjectFile('../supabase-client.js'),
+  ]);
+
+  assert.match(supabaseClient, /const adminPaymentFields = \[/);
+  assert.match(supabaseClient, /selectRowsWithToken\(\s*'payments'/);
+  assert.match(supabaseClient, /payments: resolveAdminRows\('결제', paymentsResult, warnings\)/);
+  assert.doesNotMatch(supabaseClient, /실제 결제 연동 전/);
+  assert.match(adminHtml, /<th>결제 기록<\/th>/);
+  assert.match(adminScript, /function renderPaymentRecord/);
+  assert.match(adminScript, /getPaymentForOrder\(order\.id\)/);
+  assert.match(adminScript, /data-label="결제 기록"/);
+  assert.match(adminScript, /기록 없음/);
+});
+
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
   const [indexHtml, mainScript] = await Promise.all([
-    readFile(new URL('../index.html', import.meta.url), 'utf8'),
-    readFile(new URL('../main.js', import.meta.url), 'utf8'),
+    readProjectFile('../index.html'),
+    readProjectFile('../main.js'),
   ]);
 
   assert.match(indexHtml, /data-drawer hidden inert/);
@@ -102,13 +147,13 @@ test('drawer and checkout modal use inert focus traps with opener restoration', 
 
 test('mobile bottom navigation is visible and tracks active sections', async () => {
   const [indexHtml, styles, mainScript] = await Promise.all([
-    readFile(new URL('../index.html', import.meta.url), 'utf8'),
-    readFile(new URL('../styles.css', import.meta.url), 'utf8'),
-    readFile(new URL('../main.js', import.meta.url), 'utf8'),
+    readProjectFile('../index.html'),
+    readProjectFile('../styles.css'),
+    readProjectFile('../main.js'),
   ]);
 
-  assert.match(indexHtml, /styles\.css\?v=mobile-nav-5/);
-  assert.match(indexHtml, /main\.js\?v=mobile-nav-5/);
+  assert.match(indexHtml, /styles\.css\?v=__ASSET_VERSION__/);
+  assert.match(indexHtml, /main\.js\?v=__ASSET_VERSION__/);
   assert.match(indexHtml, /data-mobile-tabs/);
   assert.doesNotMatch(indexHtml, /data-mobile-apply/);
   assert.match(indexHtml, /data-mobile-nav="meetups"/);
@@ -128,18 +173,19 @@ test('mobile bottom navigation is visible and tracks active sections', async () 
 
 test('admin tables collapse into labeled mobile cards', async () => {
   const [adminHtml, adminStyles, adminScript] = await Promise.all([
-    readFile(new URL('../admin.html', import.meta.url), 'utf8'),
-    readFile(new URL('../admin.css', import.meta.url), 'utf8'),
-    readFile(new URL('../admin.js', import.meta.url), 'utf8'),
+    readProjectFile('../admin.html'),
+    readProjectFile('../admin.css'),
+    readProjectFile('../admin.js'),
   ]);
 
-  assert.match(adminHtml, /admin\.css\?v=admin-mobile-cards-1/);
-  assert.match(adminHtml, /admin\.js\?v=admin-mobile-cards-1/);
+  assert.match(adminHtml, /admin\.css\?v=__ASSET_VERSION__/);
+  assert.match(adminHtml, /admin\.js\?v=__ASSET_VERSION__/);
   assert.match(adminScript, /<td data-label="접수">/);
   assert.match(adminScript, /<td data-label="관심 이유">/);
   assert.match(adminScript, /<td data-label="일시">/);
   assert.match(adminScript, /<td data-label="구매자">/);
   assert.match(adminScript, /<td data-label="수단">/);
+  assert.match(adminScript, /<td data-label="결제 기록">/);
   assert.match(adminScript, /<td data-label="관리">/);
   assert.match(adminStyles, /\.table-section thead\s*\{\s*display: none;/);
   assert.match(adminStyles, /\.table-section tbody\s*\{\s*display: grid;/);

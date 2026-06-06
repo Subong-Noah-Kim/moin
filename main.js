@@ -6,8 +6,8 @@ import {
   getAmountFromMeetup,
   isSupabaseConfigured,
   recordTossPaymentFailure,
-} from './supabase-client.js?v=payment-secure-1';
-import { TOSS_CLIENT_KEY } from './toss-config.js?v=payment-secure-1';
+} from './supabase-client.js?v=__ASSET_VERSION__';
+import { TOSS_CLIENT_KEY } from './toss-config.js?v=__ASSET_VERSION__';
 
 function redirectInviteToAdmin() {
   const params = new URLSearchParams(window.location.search);
@@ -930,7 +930,7 @@ function openDrawer(itemId, opener = document.activeElement) {
       <form class="application-form" data-application-form="${escapeAttribute(item.id)}">
         <input name="name" type="text" placeholder="이름" required />
         <input name="interest" type="text" placeholder="이 모임에 끌린 이유" required />
-        <button class="drawer-cta" type="submit">신청서 임시 제출</button>
+        <button class="drawer-cta" type="submit">신청서 제출</button>
       </form>
     </div>
   `;

@@ -13,7 +13,7 @@ import {
   updateAdminMeetup,
   updateAdminOrderStatus,
   uploadMeetupImage,
-} from './supabase-client.js?v=payment-secure-1';
+} from './supabase-client.js?v=__ASSET_VERSION__';
 
 const loginView = document.querySelector('[data-login-view]');
 const dashboardView = document.querySelector('[data-dashboard-view]');
@@ -61,6 +61,13 @@ const orderStatusLabels = {
   paid: '결제완료',
   cancelled: '취소',
   failed: '실패',
+};
+const paymentStatusLabels = {
+  paid: '기록 있음',
+  cancelled: '취소 기록',
+  failed: '실패 기록',
+  refunded: '환불',
+  partial_refunded: '부분 환불',
 };
 
 let activeSession = getStoredAdminSession();
@@ -138,6 +145,10 @@ function getOrderStatusLabel(status) {
   return orderStatusLabels[status] || status || '-';
 }
 
+function getPaymentStatusLabel(status) {
+  return paymentStatusLabels[status] || status || '결제 기록';
+}
+
 function renderOrderStatusOptions(currentStatus) {
   return orderStatuses
     .map(
@@ -152,6 +163,48 @@ function renderOrderStatusOptions(currentStatus) {
 
 function canManuallyUpdateOrderStatus(status) {
   return orderStatuses.includes(status);
+}
+
+function getPaymentForOrder(orderId) {
+  return overview.payments.find((payment) => payment.order_id === orderId);
+}
+
+function formatPaymentKey(value) {
+  const key = String(value || '').trim();
+  if (!key) return '';
+  if (key.length <= 12) return key;
+  return `${key.slice(0, 6)}...${key.slice(-4)}`;
+}
+
+function renderPaymentRecord(order) {
+  const payment = getPaymentForOrder(order.id);
+
+  if (payment) {
+    const paidAt = formatDate(payment.paid_at || payment.created_at);
+    const key = formatPaymentKey(payment.provider_payment_key);
+
+    return `
+      <span class="pill is-paid">${escapeHtml(getPaymentStatusLabel(payment.status))}</span><br />
+      <span class="muted">${escapeHtml([paidAt, key].filter(Boolean).join(' · '))}</span>
+    `;
+  }
+
+  if (order.status === 'paid') {
+    return `
+      <span class="pill is-failed">기록 없음</span><br />
+      <span class="muted">확인 필요</span>
+    `;
+  }
+
+  if (order.status === 'pending' && order.provider === 'tosspayments') {
+    return '<span class="pill is-pending">승인 대기</span>';
+  }
+
+  if (order.status === 'demo_paid' || order.provider === 'demo') {
+    return '<span class="muted">데모 주문</span>';
+  }
+
+  return '<span class="muted">-</span>';
 }
 
 function splitList(value) {
@@ -432,17 +485,18 @@ function renderOrders() {
               }
             </td>
             <td data-label="수단">${escapeHtml(order.payment_method || order.provider || '-')}</td>
+            <td data-label="결제 기록">${renderPaymentRecord(order)}</td>
           </tr>
         `,
       )
-      .join('') || '<tr class="empty-row"><td colspan="6">주문 내역이 없습니다.</td></tr>';
+      .join('') || '<tr class="empty-row"><td colspan="7">주문 내역이 없습니다.</td></tr>';
 }
 
 function renderOrdersMessage(message, countLabel = '0건') {
   document.querySelector('[data-orders-count]').textContent = countLabel;
   document.querySelector('[data-orders-body]').innerHTML = `
     <tr class="empty-row">
-      <td colspan="6">${escapeHtml(message)}</td>
+      <td colspan="7">${escapeHtml(message)}</td>
     </tr>
   `;
 }
@@ -657,16 +711,22 @@ async function loadOrders() {
   renderOrdersMessage('주문 데이터를 따로 확인하고 있습니다.', '확인 중');
 
   try {
-    const orders = await fetchAdminOrders(activeSession.accessToken);
+    const data = await fetchAdminOrders(activeSession.accessToken);
 
     if (requestId !== ordersRequestId) {
       return;
     }
 
-    overview = { ...overview, orders };
+    overview = { ...overview, orders: data.orders, payments: data.payments };
     renderStats();
-    renderOrders();
-    syncStatus.textContent = `주문 업데이트 ${dateFormatter.format(new Date())}`;
+    if (!overview.orders.length && hasWarningFor('주문', data.warnings)) {
+      renderOrdersMessage('주문 데이터 조회가 지연되었습니다. 새로고침을 눌러 다시 확인해주세요.', '조회 지연');
+    } else {
+      renderOrders();
+    }
+    syncStatus.textContent = data.warnings?.length
+      ? `${data.warnings.join(' ')} 주문 데이터 확인 완료`
+      : `주문 업데이트 ${dateFormatter.format(new Date())}`;
   } catch (error) {
     console.error(error);
 
@@ -674,7 +734,7 @@ async function loadOrders() {
       return;
     }
 
-    overview = { ...overview, orders: [] };
+    overview = { ...overview, orders: [], payments: [] };
     renderStats();
     renderOrdersMessage(
       error.message.includes('timed out')

@@ -1,4 +1,4 @@
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabase-config.js?v=admin-10';
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabase-config.js?v=__ASSET_VERSION__';
 
 const supabaseUrl = SUPABASE_URL.replace(/\/$/, '');
 const supabaseAnonKey = SUPABASE_ANON_KEY;
@@ -45,6 +45,19 @@ const adminOrderFields = [
   'provider',
   'payment_method',
   'source',
+  'created_at',
+].join(',');
+const adminPaymentFields = [
+  'id',
+  'order_id',
+  'meetup_id',
+  'amount',
+  'currency',
+  'status',
+  'provider',
+  'payment_method',
+  'provider_payment_key',
+  'paid_at',
   'created_at',
 ].join(',');
 
@@ -557,16 +570,13 @@ async function resolveAdminMeetups(result, warnings) {
 }
 
 export async function fetchAdminOverview() {
-  const warnings = [];
-
-  const meetups = [];
-  const applications = [];
-  const orders = [];
-  const payments = [];
-  warnings.push('운영 데이터는 화면을 먼저 연 뒤 따로 불러오도록 분리했습니다.');
-  warnings.push('실제 결제 연동 전이라 결제 상세 데이터 조회는 건너뛰었습니다.');
-
-  return { meetups, applications, orders, payments, warnings };
+  return {
+    meetups: [],
+    applications: [],
+    orders: [],
+    payments: [],
+    warnings: [],
+  };
 }
 
 export async function fetchAdminOperationalData(accessToken) {
@@ -593,12 +603,27 @@ export async function fetchAdminOperationalData(accessToken) {
 }
 
 export async function fetchAdminOrders(accessToken) {
-  return selectRowsWithToken(
-    'orders',
-    `?select=${adminOrderFields}&order=created_at.desc&limit=200`,
-    accessToken,
-    optionalRequestTimeoutMs,
-  );
+  const warnings = [];
+  const [ordersResult, paymentsResult] = await Promise.allSettled([
+    selectRowsWithToken(
+      'orders',
+      `?select=${adminOrderFields}&order=created_at.desc&limit=200`,
+      accessToken,
+      optionalRequestTimeoutMs,
+    ),
+    selectRowsWithToken(
+      'payments',
+      `?select=${adminPaymentFields}&order=created_at.desc&limit=200`,
+      accessToken,
+      optionalRequestTimeoutMs,
+    ),
+  ]);
+
+  return {
+    orders: resolveAdminRows('주문', ordersResult, warnings),
+    payments: resolveAdminRows('결제', paymentsResult, warnings),
+    warnings,
+  };
 }
 
 export async function createAdminMeetup(accessToken, meetup) {

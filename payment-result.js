@@ -1,7 +1,7 @@
 import {
   confirmTossPayment,
   recordTossPaymentFailure,
-} from './supabase-client.js?v=payment-secure-1';
+} from './supabase-client.js?v=__ASSET_VERSION__';
 
 const params = new URLSearchParams(window.location.search);
 const result = params.get('result');

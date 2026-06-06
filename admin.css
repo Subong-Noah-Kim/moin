@@ -574,6 +574,12 @@ td strong {
   color: var(--amber);
 }
 
+.pill.is-cancelled,
+.pill.is-failed {
+  background: rgba(156, 59, 46, 0.13);
+  color: var(--red);
+}
+
 .status-select {
   min-width: 112px;
   border-radius: 999px;
