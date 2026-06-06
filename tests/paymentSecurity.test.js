@@ -148,10 +148,12 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.match(adminScript, /function renderAgenticStatus/);
   assert.match(adminScript, /function loadAgenticStatus/);
   assert.match(adminScript, /agenticRefreshButton\.addEventListener\('click', loadAgenticStatus\)/);
-  assert.equal(status.branch, 'codex/priority-roadmap-batch');
+  assert.equal(status.branch, 'main');
+  assert.equal(status.summary.deployNeeded, 0);
   assert.ok(Array.isArray(status.agents));
   assert.ok(Array.isArray(status.tasks));
   assert.ok(status.agents.some((agent) => agent.name === 'UX/UI Agent'));
+  assert.ok(status.tasks.some((task) => task.id === 'AG-0004' && task.status === 'deployed'));
 });
 
 test('public submissions route through an abuse-controlled Edge Function', async () => {

@@ -328,7 +328,7 @@ function renderAgenticStatus(data) {
             </header>
             <div class="task-meta">
               <span class="pill">${escapeHtml(task.priority || '-')}</span>
-              <span class="pill">${task.deployNeeded ? '배포 필요' : '로컬'}</span>
+              <span class="pill">${task.deployNeeded ? '배포 필요' : task.status === 'deployed' ? '배포 완료' : '로컬'}</span>
               ${task.commit ? `<span class="pill">${escapeHtml(task.commit)}</span>` : ''}
             </div>
             <p>${escapeHtml(task.next || '-')}</p>

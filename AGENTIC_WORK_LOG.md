@@ -72,11 +72,11 @@
 
 ### AG-0004 - Agentic 현황화면 선배포
 
-- Status: `in_progress`
-- Branch: `codex/priority-roadmap-batch`
+- Status: `deployed`
+- Branch: `main`
 - Director Agent: main Codex thread
 - Owner Agent: 총괄 디렉터
-- Purpose: `main`에 병합하지 않고 작업 브랜치 기준으로 관리자 Agentic 현황화면만 먼저 GitHub Pages에 배포해 실제 화면을 확인한다.
+- Purpose: 관리자 Agentic 현황화면을 먼저 GitHub Pages에 배포해 실제 화면을 확인한다.
 - Changed files:
   - `.github/workflows/deploy-pages.yml`
   - `AGENTIC_STATUS.json`
@@ -84,6 +84,12 @@
   - `tests/paymentSecurity.test.js`
 - Notes:
   - Pages artifact에 `AGENTIC_STATUS.json`을 포함해야 관리자 화면의 작업판 fetch가 성공한다.
-  - `main` 브랜치는 변경하지 않고, workflow_dispatch로 브랜치 배포를 시도한다.
+  - 브랜치 기준 workflow_dispatch 배포는 Pages deploy job이 실행 단계 없이 실패해 `main` 병합 배포로 전환했다.
+  - `main` 배포 workflow가 test/deploy 모두 성공했다.
+  - 배포된 `admin.html`, `admin.js`, `AGENTIC_STATUS.json`을 URL에서 직접 확인했다.
+- Verification:
+  - `npm test` passed: 14 tests.
+  - GitHub Actions deploy run passed: `27068780476`.
+  - Deployed admin page uses asset version `7f5941dd0a14`.
 - Next:
-  - `npm test` 실행 후 브랜치를 push하고 Pages workflow를 수동 실행한다.
+  - 기획/UX/UI/검토 Subagent를 투입해 다음 개발 후보를 분류한다.
