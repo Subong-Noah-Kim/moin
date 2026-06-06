@@ -105,6 +105,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.ok(versions.length > 0);
   assert.deepEqual([...uniqueVersions], [assetVersionPlaceholder]);
   assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
+  assert.match(workflow, /cp AGENTIC_STATUS\.json dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });
 

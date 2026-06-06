@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-06-07T01:28:00+09:00",
+  "updatedAt": "2026-06-07T01:40:00+09:00",
   "branch": "codex/priority-roadmap-batch",
   "summary": {
     "active": 2,
     "blocked": 0,
     "doneLocal": 3,
-    "deployNeeded": 0
+    "deployNeeded": 1
   },
   "agents": [
     {
@@ -126,9 +126,19 @@
       "priority": "P3",
       "owner": "총괄 디렉터",
       "status": "done_local",
-      "commit": "",
+      "commit": "397b9f4",
       "deployNeeded": false,
       "next": "기획/UX/UI/검토 Subagent 작업 착수"
+    },
+    {
+      "id": "AG-0004",
+      "title": "Agentic 현황화면 선배포",
+      "priority": "P2",
+      "owner": "총괄 디렉터",
+      "status": "in_progress",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "브랜치 workflow_dispatch 배포와 실제 URL 확인"
     }
   ]
 }

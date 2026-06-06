@@ -69,3 +69,21 @@
   - Agentic status JSON now includes `UX/UI Agent`.
 - Next:
   - 기획/UX/UI/검토 Subagent를 투입해 다음 개발 후보를 분류한다.
+
+### AG-0004 - Agentic 현황화면 선배포
+
+- Status: `in_progress`
+- Branch: `codex/priority-roadmap-batch`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터
+- Purpose: `main`에 병합하지 않고 작업 브랜치 기준으로 관리자 Agentic 현황화면만 먼저 GitHub Pages에 배포해 실제 화면을 확인한다.
+- Changed files:
+  - `.github/workflows/deploy-pages.yml`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - Pages artifact에 `AGENTIC_STATUS.json`을 포함해야 관리자 화면의 작업판 fetch가 성공한다.
+  - `main` 브랜치는 변경하지 않고, workflow_dispatch로 브랜치 배포를 시도한다.
+- Next:
+  - `npm test` 실행 후 브랜치를 push하고 Pages workflow를 수동 실행한다.
