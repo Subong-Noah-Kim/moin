@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-06-07T03:45:26+09:00",
+  "updatedAt": "2026-06-07T03:54:14+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 14,
-    "deployNeeded": 2
+    "doneLocal": 15,
+    "deployNeeded": 3
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0016 관리자 세션 저장소 축소 완료 검수",
+      "currentTask": "AG-0017 신청/결제 폼 label 접근성 개선 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 TODO 개발 배정"
@@ -30,10 +30,10 @@
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "모바일/관리자 UX 후보 재검토 완료",
+      "currentTask": "신청/결제 폼 label 문구와 화면 기준 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "정원/잔여석 UI 구현 대기"
+      "next": "배포 선택 시 모바일 화면 확인"
     },
     {
       "name": "검토 Agent",
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "관리자 세션 저장소 축소 구현 완료",
+      "currentTask": "신청/결제 폼 label 접근성 개선 구현 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 개발 태스크 대기"
@@ -57,16 +57,16 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "관리자 세션 저장소 테스트 검증 완료",
+      "currentTask": "폼 label 접근성 테스트 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 선택 시 live admin 수동 확인"
+      "next": "배포 선택 시 public page 수동 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "관리자 세션 저장소 보안 검토 완료",
+      "currentTask": "폼 label/id/helper 문구 보안 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 보안 태스크 대기"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0016 관리자 세션 저장소 기록 완료",
+      "currentTask": "AG-0017 신청/결제 폼 label 개선 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -384,6 +384,29 @@
           "초대/인증 토큰이 URL에 보이면 유효하지 않은 초대 링크라도 주소창에서 제거합니다.",
           "로컬 테스트는 20개 모두 통과했습니다.",
           "배포 후에는 브라우저 개발자도구 Application Storage에서 관리자 세션이 탭 단위 저장소에만 있는지 확인하면 됩니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0017",
+      "title": "신청/결제 폼 label 접근성 개선",
+      "priority": "P2",
+      "owner": "개발 Agent + UX/UI Agent + QA Agent + 보안/검토 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "배포 묶음에 포함하면 모바일 신청 drawer와 결제 modal label 간격 확인",
+      "details": {
+        "summary": "신청/결제 입력칸에 계속 보이는 이름표와 짧은 도움 문구를 붙였습니다.",
+        "what": "신청 폼의 이름/관심 이유 입력과 결제 폼의 결제자 이름 입력에 명시적인 label, helper text, aria-describedby 연결을 추가했습니다.",
+        "why": "placeholder는 입력을 시작하면 사라져서 사용자가 어떤 칸인지 다시 확인하기 어렵고, 접근성 도구에도 안정적인 이름표가 되지 못합니다.",
+        "developmentDirection": "큰 화면 개편 없이 기존 drawer와 checkout modal 구조 안에서 입력칸 이름표와 도움 문구만 보강했습니다.",
+        "notes": [
+          "이번 사이클에서 push와 deploy는 하지 않았습니다.",
+          "동적 id는 안전한 ASCII 조각으로 정규화하고 escapeAttribute를 거쳐 사용합니다.",
+          "기존 FormData 이름인 name, interest, payer, method는 유지했습니다.",
+          "로컬 테스트는 21개 모두 통과했습니다.",
+          "로컬 서버에서 index.html, 최신 main.js, 최신 styles.css 응답을 확인했습니다."
         ]
       }
     }

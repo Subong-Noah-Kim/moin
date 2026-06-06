@@ -100,11 +100,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Done when: dynamic statuses use `role="status"` or `aria-live` where appropriate.
   - Priority note: defer behind higher operational work; this is an accessibility quality improvement, not a launch blocker. Avoid noisy announcements and prefer `aria-live="polite"` only for states that affect the user's next action.
 
-- [ ] Add proper labels to application and checkout forms
+- [x] Add proper labels to application and checkout forms
   - Problem: some generated inputs rely on placeholders instead of explicit labels.
   - Files: `main.js`, `styles.css`
   - Done when: all form fields have visible labels or robust accessible names.
   - Priority note: this has broader everyday UX value than live regions because labels remain visible after typing and help all users recover context.
+  - Status: local implementation is complete on `codex/overnight-task-discovery`; application and checkout fields now have explicit labels, helper text, and `aria-describedby` connections. `npm test` passes. Deploy is still needed before this affects the live public page.
 
 - [x] Restore or remove mobile bottom navigation
   - Problem: mobile bottom nav markup exists but is hidden, while top navigation is also hidden on smaller screens.
@@ -148,10 +149,11 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Done when: non-hero dynamic images include `loading="lazy"` and `decoding="async"` where appropriate.
   - Status: meetup cards, waitlist cards, event rows, and small-group cards now include lazy loading and async decoding; drawer hero image remains eager because it is the active detail visual.
 
-- [ ] Make public localStorage parsing resilient
+- [x] Make public localStorage parsing resilient
   - Problem: corrupted `momentclub:*` localStorage values can throw during module initialization and prevent the public app from rendering.
   - Files: `main.js`, `payment-result.js`
   - Done when: saved/notified/paid state uses safe parsing with fallback cleanup, matching the defensive admin session parser.
+  - Status: completed in AG-0014; public saved/notified/paid state now uses defensive parsing, cleanup, and bounded Set persistence.
 
 ## Notes
 

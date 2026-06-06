@@ -1200,11 +1200,26 @@ h1 {
   margin-top: 16px;
 }
 
+.field-group {
+  display: grid;
+  gap: 7px;
+  color: var(--coal);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
 .application-form input {
   min-height: 46px;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0 12px;
+}
+
+.form-helper {
+  margin: -2px 0 2px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .toast {
@@ -1382,7 +1397,7 @@ h1 {
   margin-top: 20px;
 }
 
-.checkout-form label,
+.checkout-form label:not(.field-group),
 .checkout-form legend {
   color: var(--coal);
   font-size: 0.9rem;
@@ -1396,6 +1411,10 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0 12px;
+}
+
+.checkout-form .field-group input[type="text"] {
+  margin-top: 0;
 }
 
 .checkout-form fieldset {

@@ -736,6 +736,15 @@ function createTagMarkup(tags) {
   return tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('');
 }
 
+function createFieldId(...parts) {
+  return parts
+    .map((part) => String(part || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'field')
+    .join('-');
+}
+
 function getStatusClass(status) {
   const value = String(status || '');
   if (value.includes('마감')) return 'is-urgent';
@@ -894,6 +903,10 @@ function openDrawer(itemId, opener = document.activeElement) {
     : opener;
   const recommendations = meetups.filter((meetup) => meetup.id !== item.id).slice(0, 2);
   const isPaid = paid.has(item.id);
+  const applicationNameId = createFieldId('application', item.id, 'name');
+  const applicationNameHelpId = createFieldId(applicationNameId, 'help');
+  const applicationInterestId = createFieldId('application', item.id, 'interest');
+  const applicationInterestHelpId = createFieldId(applicationInterestId, 'help');
   const scheduleMarkup = item.schedule.length
     ? `
       <section class="drawer-section">
@@ -966,8 +979,29 @@ function openDrawer(itemId, opener = document.activeElement) {
       </section>
 
       <form class="application-form" data-application-form="${escapeAttribute(item.id)}">
-        <input name="name" type="text" placeholder="이름" required />
-        <input name="interest" type="text" placeholder="이 모임에 끌린 이유" required />
+        <label class="field-group" for="${escapeAttribute(applicationNameId)}">
+          <span>이름</span>
+          <input
+            id="${escapeAttribute(applicationNameId)}"
+            name="name"
+            type="text"
+            autocomplete="name"
+            aria-describedby="${escapeAttribute(applicationNameHelpId)}"
+            required
+          />
+        </label>
+        <p class="form-helper" id="${escapeAttribute(applicationNameHelpId)}">신청 확인에 사용할 이름을 적어주세요.</p>
+        <label class="field-group" for="${escapeAttribute(applicationInterestId)}">
+          <span>이 모임에 끌린 이유</span>
+          <input
+            id="${escapeAttribute(applicationInterestId)}"
+            name="interest"
+            type="text"
+            aria-describedby="${escapeAttribute(applicationInterestHelpId)}"
+            required
+          />
+        </label>
+        <p class="form-helper" id="${escapeAttribute(applicationInterestHelpId)}">모임에 끌린 이유를 한 줄로 적어주세요.</p>
         <button class="drawer-cta" type="submit">신청서 제출</button>
       </form>
     </div>
@@ -989,6 +1023,8 @@ function openCheckout(itemId, opener = document.activeElement) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
   const tossConfigured = isTossConfigured();
+  const checkoutPayerId = createFieldId('checkout', item.id, 'payer');
+  const checkoutPayerHelpId = createFieldId(checkoutPayerId, 'help');
 
   if (tossConfigured) {
     ensureTossSdkScript().catch((error) => {
@@ -1030,10 +1066,18 @@ function openCheckout(itemId, opener = document.activeElement) {
       </dl>
 
       <form class="checkout-form" data-checkout-form="${escapeAttribute(item.id)}">
-        <label>
-          이름 (선택)
-          <input name="payer" type="text" placeholder="선택 입력" />
+        <label class="field-group" for="${escapeAttribute(checkoutPayerId)}">
+          <span>결제자 이름 (선택)</span>
+          <input
+            id="${escapeAttribute(checkoutPayerId)}"
+            name="payer"
+            type="text"
+            autocomplete="name"
+            placeholder="입력하지 않아도 괜찮아요"
+            aria-describedby="${escapeAttribute(checkoutPayerHelpId)}"
+          />
         </label>
+        <p class="form-helper" id="${escapeAttribute(checkoutPayerHelpId)}">비워두어도 결제를 진행할 수 있습니다.</p>
         <fieldset>
           <legend>결제 수단</legend>
           <label><input type="radio" name="method" value="간편결제" checked /> 간편결제</label>

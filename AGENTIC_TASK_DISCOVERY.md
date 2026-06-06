@@ -302,3 +302,31 @@
   - 이 사이클에서 push와 deploy는 하지 않았다.
   - `npm test` 20개가 모두 통과했다.
   - live admin 페이지에 반영하려면 나중에 사용자가 선택한 배포 묶음에 포함해야 한다.
+
+## Round 5 - 2026-06-07 03:54 KST
+
+### 요약
+
+밤샘 자동화 재시작 후 1회차 사이클에서는 `신청/결제 폼 label 접근성 개선`을 개발했습니다. 쉽게 말하면, 입력칸 안의 흐린 안내 문구에만 의존하지 않고 입력칸 위에 계속 보이는 이름표를 붙인 작업입니다. 사용자가 입력을 시작해도 어떤 칸인지 계속 보이고, 접근성 도구도 입력칸의 의미를 더 정확히 알 수 있습니다.
+
+### TD-017 - 신청/결제 폼 label 접근성 개선
+
+- Priority: `P2`
+- Status: `done_local`
+- Source agents: Director, UX/UI, QA, Security/Review
+- What: 공개 모임 상세의 신청 폼과 결제 모달의 입력칸에 명시적인 label과 도움 문구를 추가한다.
+- Why: placeholder는 사용자가 입력을 시작하면 사라지고, 보조 기술에서도 실제 label만큼 안정적인 이름이 되지 못한다.
+- First development unit:
+  - 신청 폼 `이름`, `이 모임에 끌린 이유` 입력에 label을 추가한다.
+  - 각 신청 입력에 화면에 보이는 도움 문구를 추가하고 `aria-describedby`로 연결한다.
+  - 결제 폼 이름 입력 문구를 `결제자 이름 (선택)`으로 구체화한다.
+  - 동적 id는 안전한 ASCII 조각으로 정규화하고 `escapeAttribute`를 거쳐 사용한다.
+  - form field 스타일을 기존 drawer/checkout 디자인에 맞게 추가한다.
+- Development direction: 큰 UI 개편 없이 현재 폼 구조 안에서 accessible name과 helper text를 보강한다.
+- Risks:
+  - label이 추가되어 폼 높이가 조금 늘어난다. 모바일에서 겹침이 없는지 배포 전 화면 확인이 필요하다.
+  - 실서비스 결제 약관/환불/개인정보 고지 문구는 별도 product copy 작업으로 남긴다.
+- Notes:
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+  - `npm test` 21개가 모두 통과했다.
+  - 로컬 서버에서 `index.html`, 최신 `main.js`, 최신 `styles.css` 응답을 확인했다.

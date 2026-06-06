@@ -416,3 +416,38 @@
   - `npm test` passed: 20 tests.
 - Next:
   - 사용자가 배포 묶음에 포함하면 live 관리자 페이지에서 Application Storage를 확인한다.
+
+### AG-0017 - 신청/결제 폼 label 접근성 개선
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + UX/UI Agent + QA Agent + 보안/검토 Agent
+- Purpose: 공개 신청/결제 폼의 입력칸이 placeholder에만 의존하지 않게 만들어, 입력 후에도 어떤 칸인지 계속 보이고 접근성 도구가 의미를 정확히 읽을 수 있게 한다.
+- Subagents:
+  - UX/UI Agent: Popper
+  - QA Agent: Euler
+  - Security/Review Agent: Anscombe
+- Changed files:
+  - `main.js`
+  - `styles.css`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 신청 폼 `이름`, `이 모임에 끌린 이유` 입력에 명시적 label을 추가했다.
+  - 결제 폼 이름 입력은 `결제자 이름 (선택)`으로 문구를 구체화했다.
+  - 각 입력에 helper text를 화면에 보이게 두고 `aria-describedby`로 연결했다.
+  - 동적 id는 `createFieldId()`로 안전한 ASCII 조각으로 정규화하고 `escapeAttribute`를 거쳐 사용한다.
+  - 기존 `name="name"`, `name="interest"`, `name="payer"`, `name="method"` 흐름은 유지했다.
+- Verification:
+  - UX/UI Agent가 label 문구와 모바일 수동 확인 기준을 제안했다.
+  - QA Agent가 placeholder-only 회귀 방지 테스트 기준을 제안했다.
+  - Security/Review Agent가 동적 id escaping, 개인정보 과수집 문구 금지, 테스트 결제 오해 문구 금지를 확인했다.
+  - `npm test` passed: 21 tests.
+  - Local dev server returned HTTP 200 for `index.html` and served updated `main.js`/`styles.css`.
+- Next:
+  - 사용자가 배포 묶음에 포함하면 모바일에서 신청 drawer와 결제 modal의 label 간격을 직접 확인한다.

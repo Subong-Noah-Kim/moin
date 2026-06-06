@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T03:45:26+09:00",
-  "currentFocus": "관리자 세션 저장소 축소 로컬 완료",
+  "updatedAt": "2026-06-07T03:54:14+09:00",
+  "currentFocus": "신청/결제 폼 label 접근성 개선 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,47 +11,47 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0016 done_local"
+    "currentFocus": "AG-0017 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0016 관리자 세션 저장소 축소 완료 검수",
-      "updatedAt": "2026-06-07T03:45:26+09:00",
+      "currentTask": "AG-0017 신청/결제 폼 label 접근성 개선 완료 검수",
+      "updatedAt": "2026-06-07T03:54:14+09:00",
       "next": "다음 TODO 개발 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "관리자 세션 저장소 축소 구현 완료",
-      "updatedAt": "2026-06-07T03:45:26+09:00",
+      "currentTask": "신청/결제 폼 label 접근성 개선 구현 완료",
+      "updatedAt": "2026-06-07T03:54:14+09:00",
       "next": "다음 개발 태스크 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "모바일/관리자 UX 후보 재검토 완료",
-      "updatedAt": "2026-06-07T03:17:14+09:00",
-      "next": "정원/잔여석 UI 구현 대기"
+      "currentTask": "신청/결제 폼 label 문구와 화면 기준 검토 완료",
+      "updatedAt": "2026-06-07T03:54:14+09:00",
+      "next": "배포 선택 시 모바일 화면 확인"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "관리자 세션 저장소 테스트 검증 완료",
-      "updatedAt": "2026-06-07T03:45:26+09:00",
-      "next": "배포 선택 시 live admin 수동 확인"
+      "currentTask": "폼 label 접근성 테스트 검증 완료",
+      "updatedAt": "2026-06-07T03:54:14+09:00",
+      "next": "배포 선택 시 public page 수동 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0016 관리자 세션 저장소 기록 완료",
-      "updatedAt": "2026-06-07T03:45:26+09:00",
+      "currentTask": "AG-0017 신청/결제 폼 label 개선 기록 완료",
+      "updatedAt": "2026-06-07T03:54:14+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
@@ -74,8 +74,8 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "관리자 세션 저장소 보안 검토 완료",
-      "updatedAt": "2026-06-07T03:45:26+09:00",
+      "currentTask": "폼 label/id/helper 문구 보안 검토 완료",
+      "updatedAt": "2026-06-07T03:54:14+09:00",
       "next": "다음 보안 태스크 대기"
     },
     {
@@ -96,6 +96,27 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T03:54:14+09:00",
+      "agent": "UX/UI Agent",
+      "level": "review",
+      "title": "폼 label 문구 검토",
+      "body": "신청 폼에는 계속 보이는 이름표를 추가하고, 결제 폼 이름 문구는 결제자 이름 (선택)으로 구체화하는 방향을 승인했습니다."
+    },
+    {
+      "time": "2026-06-07T03:54:14+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "폼 label 테스트 통과",
+      "body": "신청/결제 입력이 placeholder-only로 돌아가지 않도록 테스트를 추가했고 npm test 21개가 모두 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T03:54:14+09:00",
+      "agent": "총괄 디렉터",
+      "level": "review",
+      "title": "AG-0017 로컬 완료",
+      "body": "신청/결제 폼 label 접근성 개선을 완료했습니다. push와 deploy는 하지 않았고, live 반영은 사용자가 선택한 배포 묶음에 포함합니다."
+    },
     {
       "time": "2026-06-07T03:45:26+09:00",
       "agent": "보안 Agent",

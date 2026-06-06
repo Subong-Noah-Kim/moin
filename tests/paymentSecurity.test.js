@@ -534,6 +534,36 @@ test('drawer and checkout modal use inert focus traps with opener restoration', 
   assert.match(mainScript, /closeModal\(checkoutModal, 'checkout-open', checkoutRestoreFocusElement/);
 });
 
+test('public application and checkout forms have explicit labels', async () => {
+  const [mainScript, styles] = await Promise.all([
+    readProjectFile('../main.js'),
+    readProjectFile('../styles.css'),
+  ]);
+
+  assert.match(mainScript, /function createFieldId\(\.\.\.parts\)/);
+  assert.match(mainScript, /const applicationNameId = createFieldId\('application', item\.id, 'name'\)/);
+  assert.match(mainScript, /const applicationNameHelpId = createFieldId\(applicationNameId, 'help'\)/);
+  assert.match(mainScript, /const applicationInterestId = createFieldId\('application', item\.id, 'interest'\)/);
+  assert.match(mainScript, /const applicationInterestHelpId = createFieldId\(applicationInterestId, 'help'\)/);
+  assert.match(mainScript, /<label class="field-group" for="\$\{escapeAttribute\(applicationNameId\)\}">[\s\S]*<span>이름<\/span>[\s\S]*id="\$\{escapeAttribute\(applicationNameId\)\}"[\s\S]*name="name"[\s\S]*aria-describedby="\$\{escapeAttribute\(applicationNameHelpId\)\}"/);
+  assert.match(mainScript, /id="\$\{escapeAttribute\(applicationNameHelpId\)\}">신청 확인에 사용할 이름을 적어주세요\./);
+  assert.match(mainScript, /<label class="field-group" for="\$\{escapeAttribute\(applicationInterestId\)\}">[\s\S]*<span>이 모임에 끌린 이유<\/span>[\s\S]*id="\$\{escapeAttribute\(applicationInterestId\)\}"[\s\S]*name="interest"[\s\S]*aria-describedby="\$\{escapeAttribute\(applicationInterestHelpId\)\}"/);
+  assert.match(mainScript, /id="\$\{escapeAttribute\(applicationInterestHelpId\)\}">모임에 끌린 이유를 한 줄로 적어주세요\./);
+  assert.doesNotMatch(mainScript, /<input name="name" type="text" placeholder="이름"/);
+  assert.doesNotMatch(mainScript, /<input name="interest" type="text" placeholder=/);
+
+  assert.match(mainScript, /const checkoutPayerId = createFieldId\('checkout', item\.id, 'payer'\)/);
+  assert.match(mainScript, /const checkoutPayerHelpId = createFieldId\(checkoutPayerId, 'help'\)/);
+  assert.match(mainScript, /<label class="field-group" for="\$\{escapeAttribute\(checkoutPayerId\)\}">[\s\S]*<span>결제자 이름 \(선택\)<\/span>[\s\S]*id="\$\{escapeAttribute\(checkoutPayerId\)\}"[\s\S]*name="payer"[\s\S]*aria-describedby="\$\{escapeAttribute\(checkoutPayerHelpId\)\}"/);
+  assert.match(mainScript, /id="\$\{escapeAttribute\(checkoutPayerHelpId\)\}">비워두어도 결제를 진행할 수 있습니다\./);
+  assert.match(mainScript, /<fieldset>[\s\S]*<legend>결제 수단<\/legend>[\s\S]*name="method"/);
+  assert.doesNotMatch(mainScript, /<label>\s+이름 \(선택\)/);
+
+  assert.match(styles, /\.field-group\s*\{/);
+  assert.match(styles, /\.form-helper\s*\{/);
+  assert.match(styles, /\.checkout-form \.field-group input\[type="text"\]/);
+});
+
 test('mobile bottom navigation is visible and tracks active sections', async () => {
   const [indexHtml, styles, mainScript] = await Promise.all([
     readProjectFile('../index.html'),
