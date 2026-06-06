@@ -1,81 +1,81 @@
 {
-  "updatedAt": "2026-06-07T04:26:15+09:00",
+  "updatedAt": "2026-06-07T04:36:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 18,
-    "deployNeeded": 5
+    "doneLocal": 19,
+    "deployNeeded": 6
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0020 정원/잔여석 P0 롤아웃 명세 완료 검수",
+      "currentTask": "AG-0021 정원/잔여석 DB 계약 1단계 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 TODO 개발 배정"
+      "next": "Edge Function sold-out/expired-pending guard 배정"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정원/잔여석 P0 구현 순서와 운영 정책 검토 완료",
+      "currentTask": "정원/잔여석 P0 우선순위 유지 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 라운드 대기"
+      "next": "공개/관리자 UI 구현 전 운영 문구 재검토"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "잔여석/마감/신청 종료 공개·관리자 UX 기준 검토 완료",
+      "currentTask": "live region 후보 검토 후 P0 DB 계약 우선 결정 지원",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 선택 시 결제 모달과 결과 화면 문구 확인"
+      "next": "정원 UI 구현 시 잔여석/마감 문구 검토"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "정원/잔여석 P0 보안·데이터 무결성 리스크 검토 완료",
+      "currentTask": "정원 DB 계약의 보안 리스크 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 라운드 후보 재분류"
+      "next": "Edge Function 변경 전 expiry/late Toss success 재검토"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "정원/잔여석 P0 롤아웃 명세 문서화 완료",
+      "currentTask": "정원/잔여석 DB 계약 migration과 테스트 로컬 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 개발 태스크 대기"
+      "next": "create-public-submission 409 매핑과 confirm-toss-payment expiry guard 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "정원/잔여석 P0 테스트·검증 기준 정리 완료",
+      "currentTask": "정원 DB 계약 회귀 테스트 추가 및 npm test 25개 통과",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 선택 시 public checkout/result page 수동 확인"
+      "next": "Edge Function 변경 시 sold-out/closed/expired-pending 테스트 추가"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "pending 만료와 늦은 Toss success 리스크 검토 완료",
+      "currentTask": "status_label 미사용, pending 만료, seat lock 기준 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 보안 태스크 대기"
+      "next": "Toss 승인 전 expired pending 차단 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0020 정원/잔여석 롤아웃 명세 기록 완료",
+      "currentTask": "AG-0021 정원/잔여석 DB 계약 1단계 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -476,6 +476,29 @@
           "가장 큰 리스크는 만료된 Toss pending 주문이 좌석을 풀었는데 늦게 결제 성공으로 돌아오는 경우입니다.",
           "빠른 기능 롤백은 새 컬럼을 drop하는 것이 아니라 meetups.capacity를 null로 되돌려 무제한처럼 운영하는 방식입니다.",
           "기존 status_label은 홍보 문구로 남기되 신청/결제 가능 여부 판단에는 쓰지 않는 방향입니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0021",
+      "title": "정원/잔여석 DB 계약 1단계",
+      "priority": "P0",
+      "owner": "개발 Agent + 보안 Agent + QA Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "원격 적용 전 Edge Function guard와 409 에러 매핑을 같은 배포 묶음으로 준비",
+      "details": {
+        "summary": "정원 초과 신청/결제를 막기 위한 DB 기반 작업의 첫 번째 조각을 로컬에 만들었습니다.",
+        "what": "Supabase migration 초안에 모임 정원, 수동 신청 종료 상태, 주문 만료 시각, 잔여석 계산 함수, 신청 가능 여부 확인 함수, 오래된 pending 주문 만료 함수를 추가했습니다. 이 계약을 지키는 회귀 테스트도 추가했습니다.",
+        "why": "지금은 관리자가 적는 상태 문구와 실제 신청/결제 수가 달라질 수 있습니다. 정원보다 많은 사람이 결제하거나, 결제창을 열고 이탈한 주문이 자리를 계속 붙잡는 상황을 막기 위한 기반입니다.",
+        "developmentDirection": "sold-out은 사람이 직접 저장하지 않고 정원과 유효 주문 수로 계산합니다. 유효 주문은 paid, demo_paid, 만료되지 않은 pending만 포함합니다. 실제 신청/결제 생성 RPC와 Edge Function은 다음 조각에서 이 DB 계약을 호출하게 만듭니다.",
+        "notes": [
+          "이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "이 migration은 아직 기존 public 신청/주문 생성 함수에 연결되지 않았습니다. 다음 사이클에서 Edge Function guard와 409 매핑을 함께 붙여야 실제 차단 효과가 완성됩니다.",
+          "만료된 pending 주문의 늦은 Toss success는 가장 중요한 리스크입니다. confirm-toss-payment가 Toss 승인 API를 호출하기 전에 expires_at을 먼저 확인해야 합니다.",
+          "기존 status_label은 홍보 문구로만 남기고 신청/결제 가능 여부 판단에는 사용하지 않는 방향을 테스트로 고정했습니다.",
+          "로컬 테스트는 25개 모두 통과했습니다."
         ]
       }
     }

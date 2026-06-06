@@ -610,6 +610,34 @@ test('public submissions route through an abuse-controlled Edge Function', async
   assert.match(lockMigration, /revoke insert on public\.orders from anon/);
 });
 
+test('capacity controls migration defines remaining spot and pending expiry contract', async () => {
+  const migration = await readProjectFile('../supabase/migrations/20260607000000_capacity_remaining_spots.sql');
+
+  assert.match(migration, /add column if not exists capacity integer/);
+  assert.match(migration, /meetups_capacity_positive/);
+  assert.match(migration, /add column if not exists registration_status text not null default 'open'/);
+  assert.match(migration, /registration_status in \('open', 'closed'\)/);
+  assert.match(migration, /add column if not exists expires_at timestamptz/);
+  assert.match(migration, /created_at \+ interval '30 minutes'/);
+  assert.match(migration, /orders_active_seat_holds_idx/);
+  assert.match(migration, /create or replace function public\.get_meetup_seat_snapshot/);
+  assert.match(migration, /remaining_spots/);
+  assert.match(migration, /effective_registration_status/);
+  assert.match(migration, /status in \('paid', 'demo_paid'\)/);
+  assert.match(migration, /status = 'pending'[\s\S]*expires_at > now\(\)/);
+  assert.match(migration, /create or replace function public\.assert_meetup_can_register/);
+  assert.match(migration, /for update/);
+  assert.match(migration, /MEETUP_REGISTRATION_CLOSED/);
+  assert.match(migration, /MEETUP_SOLD_OUT/);
+  assert.match(migration, /create or replace function public\.expire_stale_pending_orders/);
+  assert.match(migration, /for update skip locked/);
+  assert.match(migration, /grant execute on function public\.get_meetup_seat_snapshot\(text\) to service_role/);
+  assert.match(migration, /grant execute on function public\.assert_meetup_can_register\(text\) to service_role/);
+  assert.doesNotMatch(migration, /status_label/);
+  assert.doesNotMatch(migration, /grant execute on function public\.get_meetup_seat_snapshot\(text\) to authenticated/);
+  assert.doesNotMatch(migration, /registration_status in \('open', 'sold_out', 'closed'\)/);
+});
+
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
   const [indexHtml, mainScript] = await Promise.all([
     readProjectFile('../index.html'),

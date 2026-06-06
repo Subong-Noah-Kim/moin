@@ -445,3 +445,36 @@
   - 이번 사이클에서 기능 코드, 원격 DB, Edge Function 배포, push는 하지 않았다.
   - TODO.md에 P0 실제 구현 항목을 추가했다.
   - AGENTIC_STATUS.json에는 AG-0020 문서화 작업으로 기록한다.
+
+## Round 9 - 2026-06-07 04:36 KST
+
+### 요약
+
+이번 사이클은 `정원/잔여석/자동 마감` P0 패키지의 첫 번째 실제 개발 조각을 만들었습니다. 쉽게 말하면, “몇 명까지 받을 수 있는지”와 “결제창을 열고 이탈한 주문이 언제 자리를 놓아주는지”를 Supabase DB가 이해할 수 있게 하는 기초 공사입니다. 아직 사용자가 보는 화면이나 실제 원격 Supabase에는 반영하지 않았고, 다음 단계에서 Edge Function이 이 계약을 사용하도록 연결해야 합니다.
+
+### TD-020 - 정원/잔여석 DB 계약 1단계
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, Security/Review, UX/UI, QA, Ops Log
+- What: 정원/잔여석 계산에 필요한 DB 컬럼과 보조 함수를 Supabase migration 초안으로 추가한다.
+- Why: 현재 `status_label`은 사람이 적는 문구라 실제 결제 수와 다를 수 있습니다. 정원을 안전하게 막으려면 화면 문구가 아니라 DB가 계산하는 기준이 먼저 있어야 합니다.
+- First development unit:
+  - `meetups.capacity`: 정원, `NULL`이면 무제한.
+  - `meetups.registration_status`: 사람이 직접 닫는 신청 상태. `open`, `closed`만 저장하고 `sold_out`은 계산한다.
+  - `meetups.closed_at`, `meetups.close_reason`: 운영자가 신청을 닫은 이유 기록.
+  - `orders.expires_at`: Toss `pending` 주문이 자리를 붙잡는 만료 시각.
+  - 기존 Toss `pending` 주문은 `created_at + interval '30 minutes'`로 backfill한다.
+  - `get_meetup_seat_snapshot`: 정원, 유효 주문 수, 잔여석, 계산된 신청 상태를 돌려주는 함수.
+  - `assert_meetup_can_register`: 모임 row를 `FOR UPDATE`로 잠그고 `MEETUP_SOLD_OUT`, `MEETUP_REGISTRATION_CLOSED`를 발생시키는 함수.
+  - `expire_stale_pending_orders`: 오래된 pending 주문을 정리하는 보조 함수.
+- Development direction: 실제 신청/결제 생성 RPC와 Edge Function은 다음 단계에서 `assert_meetup_can_register`를 호출하도록 연결한다.
+- Risks:
+  - 이 migration만 원격 적용해도 아직 공개 화면이나 Edge Function은 새 상태를 사용하지 않습니다.
+  - `confirm-toss-payment`는 다음 단계에서 Toss 승인 API를 호출하기 전에 `expires_at`을 먼저 확인해야 합니다.
+  - `sold_out`을 DB에 저장하지 않는 이유는 주문 취소/실패/만료 후 상태가 낡을 수 있기 때문입니다.
+- Notes:
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `TODO.md`의 Current Priority Queue를 현재 상태에 맞게 다시 정렬했다.
+  - `tests/paymentSecurity.test.js`에 migration 계약 테스트를 추가했다.
+  - `npm test` 25개가 모두 통과했다.

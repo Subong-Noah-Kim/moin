@@ -561,3 +561,37 @@
 - Next:
   - 사용자가 승인하면 다음 구현 사이클은 DB migration 초안부터 시작한다.
   - 원격 적용 전에는 SQL/RPC smoke test 시나리오를 먼저 준비한다.
+
+### AG-0021 - 정원/잔여석 DB 계약 1단계
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + 보안 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 정원보다 많은 신청/결제가 들어오는 사고를 막기 위한 DB 기반을 로컬에 먼저 만든다.
+- Subagents:
+  - Security/Review Agent: Beauvoir
+  - UX/UI Planning Agent: Boole
+- Changed files:
+  - `supabase/migrations/20260607000000_capacity_remaining_spots.sql`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - `meetups.capacity`는 정원이고, `NULL`이면 무제한으로 봅니다.
+  - `meetups.registration_status`에는 사람이 직접 닫는 `open`/`closed`만 저장합니다. `sold_out`은 실제 주문 수로 계산합니다.
+  - `orders.expires_at`은 Toss 결제창을 열고 이탈한 pending 주문이 자리를 계속 붙잡지 않게 하기 위한 만료 시각입니다.
+  - 좌석 점유는 `paid`, `demo_paid`, 만료되지 않은 `pending` 주문만 계산합니다.
+  - 이번 migration은 아직 기존 public 신청/주문 RPC에 연결하지 않았습니다. 다음 단계에서 `create-public-submission`과 `confirm-toss-payment`를 같이 다뤄야 합니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Security/Review Agent가 `status_label`을 상태 기준으로 쓰지 말 것, expired pending과 late Toss success를 조심할 것, anon direct insert lock을 되열지 말 것을 확인했습니다.
+  - UX/UI Agent는 live region 작업이 더 작지만, 사용자가 보류했던 항목이므로 이번 사이클에서는 P0 DB 계약을 우선하는 판단을 보조했습니다.
+  - `tests/paymentSecurity.test.js`에 migration 계약 테스트를 추가했습니다.
+  - `npm test` passed: 25 tests.
+- Next:
+  - 다음 구현 조각은 `create-public-submission`의 sold-out/closed 409 매핑과 `confirm-toss-payment`의 expired pending 사전 차단입니다.
+  - 원격 적용 전에는 DB migration 적용 후 Edge Function deploy 순서를 다시 확인해야 합니다.
