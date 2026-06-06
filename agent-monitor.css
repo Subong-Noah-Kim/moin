@@ -1,0 +1,286 @@
+:root {
+  color-scheme: light;
+  --ink: #171717;
+  --muted: #6f6a60;
+  --line: #ded8cc;
+  --paper: #f6f3ed;
+  --panel: #fffdfa;
+  --green: #1f6a53;
+  --red: #9c3b2e;
+  --amber: #a36b11;
+  --blue: #245f8f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family:
+    Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button {
+  min-height: 42px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  padding: 0 14px;
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.ghost-button {
+  border-color: var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.monitor-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 44px;
+}
+
+.monitor-header,
+.panel-head,
+.monitor-footer,
+.monitor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.monitor-header {
+  margin-bottom: 18px;
+}
+
+.monitor-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+h1,
+h2 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1;
+}
+
+h2 {
+  font-size: 1.1rem;
+}
+
+.status-pill,
+.panel-head span,
+.monitor-footer span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--panel);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.summary-grid article,
+.panel,
+.agent-card,
+.event-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.summary-grid article {
+  min-width: 0;
+  padding: 16px;
+}
+
+.summary-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.summary-grid strong {
+  display: block;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+  font-size: 1.5rem;
+  line-height: 1.05;
+}
+
+.monitor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 12px;
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.panel-head {
+  min-height: 58px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 16px;
+}
+
+.agent-list,
+.activity-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.agent-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.agent-card,
+.event-item {
+  min-width: 0;
+  padding: 12px;
+}
+
+.agent-card header,
+.event-item header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agent-card strong,
+.event-item strong {
+  display: block;
+  min-width: 0;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.agent-card small,
+.event-item small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.agent-card p,
+.event-item p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.pill {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #fbf7ef;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.pill.is-running {
+  border-color: rgba(31, 106, 83, 0.28);
+  background: rgba(31, 106, 83, 0.1);
+  color: var(--green);
+}
+
+.pill.is-blocked {
+  border-color: rgba(156, 59, 46, 0.28);
+  background: rgba(156, 59, 46, 0.1);
+  color: var(--red);
+}
+
+.pill.is-paused {
+  border-color: rgba(163, 107, 17, 0.28);
+  background: rgba(163, 107, 17, 0.12);
+  color: var(--amber);
+}
+
+.pill.is-review {
+  border-color: rgba(36, 95, 143, 0.28);
+  background: rgba(36, 95, 143, 0.1);
+  color: var(--blue);
+}
+
+.monitor-footer {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: var(--panel);
+}
+
+@media (max-width: 860px) {
+  .monitor-header,
+  .panel-head,
+  .monitor-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .monitor-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .monitor-actions button,
+  .status-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .summary-grid,
+  .monitor-layout,
+  .agent-list {
+    grid-template-columns: 1fr;
+  }
+}

@@ -118,3 +118,53 @@
   - Deployed `admin.html` contains the `작업판` tab and hides the Agentic panel by default.
 - Next:
   - 기획/UX/UI/검토 Subagent를 투입해 다음 개발 후보를 분류한다.
+
+### AG-0006 - 로컬 Agent Live Monitor 추가
+
+- Status: `done_local`
+- Branch: `main`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + 개발 Agent
+- Purpose: 배포된 관리자 작업판과 별도로, localhost에서 현재 Agent 작업 흐름을 볼 수 있는 로컬 전용 모니터를 만든다.
+- Changed files:
+  - `agent-monitor.html`
+  - `agent-monitor.css`
+  - `agent-monitor.js`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `server.js`
+  - `AGENTIC_WORKFLOW.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - `agent-monitor.html`은 `npm run dev`로 연 로컬 서버에서 확인한다.
+  - `AGENTIC_LIVE_STATUS.json`은 브라우저가 보이는 동안만 주기적으로 다시 읽는다.
+  - GitHub Pages workflow에는 로컬 모니터 파일을 복사하지 않는다.
+- Verification:
+  - `npm test` passed: 15 tests.
+  - Local dev server served `agent-monitor.html`, `agent-monitor.js`, and `AGENTIC_LIVE_STATUS.json` with HTTP 200.
+- Next:
+  - 장시간 작업을 시작할 때 총괄 디렉터 Agent가 live status를 단계별로 갱신한다.
+
+### AG-0007 - 현황판 Task 상세 설명 추가
+
+- Status: `done_local`
+- Branch: `main`
+- Director Agent: main Codex thread
+- Owner Agent: 작업 정리 Agent + 개발 Agent
+- Purpose: Agentic 현황판의 Task를 눌렀을 때 비개발자도 작업의 의미, 필요성, 개발 방향, 주의사항을 이해할 수 있게 한다.
+- Changed files:
+  - `admin.js`
+  - `admin.css`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_WORKFLOW.md`
+  - `AGENTIC_WORK_LOG.md`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - Task 상세 데이터는 `details.summary`, `details.what`, `details.why`, `details.developmentDirection`, `details.notes` 형식으로 기록한다.
+  - 내용이 길어질 때는 `summary`를 먼저 읽을 수 있게 작성한다.
+  - 비밀값, 토큰, 고객 개인정보는 기록하지 않는다.
+- Verification:
+  - `npm test` passed: 15 tests.
+- Next:
+  - 앞으로 작업 정리 Agent가 새 Task를 추가할 때 같은 상세 설명 형식을 함께 채운다.

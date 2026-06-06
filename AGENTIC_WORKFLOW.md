@@ -19,6 +19,24 @@
 - Supabase SQL/Edge Function/Pages 배포가 필요한 작업은 코드 완료와 실제 배포 단계를 분리해서 기록한다.
 - 검증용 데이터가 생성되면 가능한 한 정확한 row ID 기준으로 정리한다.
 
+## 실행 모드
+
+- `role_mode`: 총괄 디렉터 Agent가 여러 역할 관점을 직접 수행한다. 빠른 단일 작업이나 작은 수정에 사용한다.
+- `subagent_mode`: 실제 subagent를 띄워 기획, UX/UI, 보안, QA, 개발 등 독립적인 작업을 병렬로 맡긴다.
+- 현황판과 live monitor에는 실제 subagent가 떠 있는 경우에만 `subagent_mode` 또는 `실제 subagent`로 기록한다.
+- 파일 수정이 필요한 작업은 write scope가 겹치지 않을 때만 worker subagent에게 맡긴다.
+- 조사/검토/우선순위 분류처럼 읽기 전용으로 병렬화하기 쉬운 작업은 explorer subagent를 우선 사용한다.
+- 총괄 디렉터 Agent는 subagent 결과를 그대로 배포하지 않고 취합, 충돌 제거, 우선순위 판단을 거친다.
+
+## 로컬 Live Monitor
+
+- 실시간에 가까운 Agent 작업 관찰은 배포 관리자 페이지가 아니라 로컬 전용 `agent-monitor.html`에서 확인한다.
+- 로컬 실행 URL은 `npm run dev` 기준 `http://localhost:5173/agent-monitor.html`이다.
+- 모니터 데이터 소스는 `AGENTIC_LIVE_STATUS.json`이다.
+- 총괄 디렉터 Agent는 장시간 작업 중 의미 있는 단계가 바뀔 때 `AGENTIC_LIVE_STATUS.json`을 갱신한다.
+- 로컬 모니터 파일은 GitHub Pages 배포 artifact에 포함하지 않는다.
+- 비밀값, 토큰, 고객 개인정보, Supabase service role key, 결제 승인값은 live status에 기록하지 않는다.
+
 ## 역할
 
 ### 1. 총괄 디렉터 Agent
@@ -74,6 +92,9 @@
 - 각 Task의 상태 변경을 `AGENTIC_WORK_LOG.md`에 기록한다.
 - 커밋, 테스트, 배포 필요 여부, 보류 사유, 질문을 정리한다.
 - `TODO.md`를 직접 대체하지 않고 필요한 경우 TODO 업데이트 제안만 남긴다.
+- Agentic 현황판의 각 Task에는 사용자가 눌러 볼 수 있는 상세 설명을 남긴다.
+- 상세 설명은 비개발자도 이해할 수 있도록 `요약`, `무슨 작업인가요?`, `왜 필요한가요?`, `간단한 개발 방향`, `알아둘 점`을 우선 채운다.
+- 내용이 길어질 때는 `요약`을 먼저 쓰고, 민감한 값이나 고객 개인정보는 기록하지 않는다.
 
 ### 9. 보조 Agent
 

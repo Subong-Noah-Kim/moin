@@ -268,6 +268,59 @@ function renderAgenticMessage(message) {
   agenticTaskCount.textContent = '0개';
 }
 
+function renderTaskDetailSection(label, value) {
+  if (!value) {
+    return '';
+  }
+
+  if (Array.isArray(value)) {
+    const items = value
+      .filter(Boolean)
+      .map((item) => `<li>${escapeHtml(item)}</li>`)
+      .join('');
+
+    if (!items) {
+      return '';
+    }
+
+    return `
+      <section>
+        <h4>${escapeHtml(label)}</h4>
+        <ul>${items}</ul>
+      </section>
+    `;
+  }
+
+  return `
+    <section>
+      <h4>${escapeHtml(label)}</h4>
+      <p>${escapeHtml(value)}</p>
+    </section>
+  `;
+}
+
+function renderTaskDetails(task) {
+  const details = task.details || {};
+  const sections = [
+    renderTaskDetailSection('요약', details.summary),
+    renderTaskDetailSection('무슨 작업인가요?', details.what),
+    renderTaskDetailSection('왜 필요한가요?', details.why),
+    renderTaskDetailSection('간단한 개발 방향', details.developmentDirection),
+    renderTaskDetailSection('알아둘 점', details.notes),
+  ].join('');
+
+  if (!sections) {
+    return '';
+  }
+
+  return `
+    <details class="task-detail">
+      <summary>상세 보기</summary>
+      <div>${sections}</div>
+    </details>
+  `;
+}
+
 function renderAgenticStatus(data) {
   const summary = data.summary || {};
   const agents = Array.isArray(data.agents) ? data.agents : [];
@@ -332,6 +385,7 @@ function renderAgenticStatus(data) {
               ${task.commit ? `<span class="pill">${escapeHtml(task.commit)}</span>` : ''}
             </div>
             <p>${escapeHtml(task.next || '-')}</p>
+            ${renderTaskDetails(task)}
           </article>
         `,
       )

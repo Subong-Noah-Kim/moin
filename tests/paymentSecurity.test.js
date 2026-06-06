@@ -146,9 +146,15 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.match(adminStyles, /\.agentic-board/);
   assert.match(adminStyles, /\.agent-grid/);
   assert.match(adminStyles, /\.task-list/);
+  assert.match(adminStyles, /\.task-detail/);
   assert.match(adminScript, /AGENTIC_STATUS\.json\?v=__ASSET_VERSION__/);
   assert.match(adminScript, /function renderAgenticStatus/);
   assert.match(adminScript, /function loadAgenticStatus/);
+  assert.match(adminScript, /function renderTaskDetails/);
+  assert.match(adminScript, /상세 보기/);
+  assert.match(adminScript, /무슨 작업인가요\?/);
+  assert.match(adminScript, /왜 필요한가요\?/);
+  assert.match(adminScript, /간단한 개발 방향/);
   assert.match(adminScript, /if \(getActiveTab\(\) === 'agentic'\)/);
   assert.match(adminScript, /if \(target === 'agentic'\)/);
   assert.doesNotMatch(adminScript, /showDashboard\(\);\s+void loadAgenticStatus\(\);/);
@@ -159,6 +165,45 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.ok(Array.isArray(status.tasks));
   assert.ok(status.agents.some((agent) => agent.name === 'UX/UI Agent'));
   assert.ok(status.tasks.some((task) => task.id === 'AG-0004' && task.status === 'deployed'));
+  assert.ok(
+    status.tasks.some(
+      (task) =>
+        task.id === 'AG-0007' &&
+        task.details?.summary &&
+        task.details?.what &&
+        task.details?.why &&
+        task.details?.developmentDirection &&
+        Array.isArray(task.details?.notes),
+    ),
+  );
+});
+
+test('local agent monitor polls live status without publishing it to Pages', async () => {
+  const [workflow, server, monitorHtml, monitorStyles, monitorScript, liveStatus] = await Promise.all([
+    readProjectFile('../.github/workflows/deploy-pages.yml'),
+    readProjectFile('../server.js'),
+    readProjectFile('../agent-monitor.html'),
+    readProjectFile('../agent-monitor.css'),
+    readProjectFile('../agent-monitor.js'),
+    readProjectFile('../AGENTIC_LIVE_STATUS.json'),
+  ]);
+  const status = JSON.parse(liveStatus);
+
+  assert.match(server, /\.json': 'application\/json; charset=utf-8'/);
+  assert.match(monitorHtml, /data-monitor-root/);
+  assert.match(monitorHtml, /data-agent-list/);
+  assert.match(monitorHtml, /data-event-list/);
+  assert.match(monitorHtml, /agent-monitor\.js/);
+  assert.match(monitorStyles, /\.monitor-layout/);
+  assert.match(monitorScript, /AGENTIC_LIVE_STATUS\.json/);
+  assert.match(monitorScript, /document\.visibilityState !== 'visible'/);
+  assert.match(monitorScript, /window\.setTimeout\(loadLiveStatus, state\.pollIntervalMs\)/);
+  assert.doesNotMatch(workflow, /cp agent-monitor\./);
+  assert.doesNotMatch(workflow, /cp AGENTIC_LIVE_STATUS\.json/);
+  assert.equal(status.monitor.mode, 'local');
+  assert.ok(status.monitor.pollIntervalMs >= 5000);
+  assert.ok(Array.isArray(status.agents));
+  assert.ok(Array.isArray(status.events));
 });
 
 test('public submissions route through an abuse-controlled Edge Function', async () => {

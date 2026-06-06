@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T02:24:08+09:00",
+  "updatedAt": "2026-06-07T02:35:33+09:00",
   "branch": "main",
   "summary": {
     "active": 2,
     "blocked": 0,
-    "doneLocal": 3,
+    "doneLocal": 5,
     "deployNeeded": 0
   },
   "agents": [
@@ -12,7 +12,7 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "Agentic 작업판 탭 분리 배포 확인",
+      "currentTask": "현황판 Task 상세 설명 규격 추가",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "기획/검토 Agent 작업 후보 분리"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "running",
-      "currentTask": "작업판 탭 분리 기록",
+      "currentTask": "Task 상세 설명 형식 정리",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "Task 진행 상태 기록"
@@ -149,6 +149,48 @@
       "commit": "",
       "deployNeeded": false,
       "next": "관리자 첫 화면은 운영 지표와 기본 관리 탭 중심으로 유지"
+    },
+    {
+      "id": "AG-0006",
+      "title": "로컬 Agent Live Monitor 추가",
+      "priority": "P2",
+      "owner": "총괄 디렉터 + 개발 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "localhost에서 실시간 작업 상태 확인",
+      "details": {
+        "summary": "배포된 관리자 화면이 아니라 로컬에서만 현재 Agent 진행 상황을 볼 수 있는 모니터를 추가했습니다.",
+        "what": "localhost 페이지가 별도 JSON 파일을 주기적으로 읽어서 어떤 Agent가 무엇을 하고 있는지 보여줍니다.",
+        "why": "GitHub Pages 작업판은 배포 후 기록용이라 실제 작업 중 상태를 보기에는 늦습니다. 로컬 모니터가 있으면 긴 작업 중에도 진행 흐름을 더 빨리 확인할 수 있습니다.",
+        "developmentDirection": "기존 서버에 JSON 응답 타입을 추가하고, 로컬 전용 HTML/CSS/JS가 AGENTIC_LIVE_STATUS.json을 5초마다 읽도록 만들었습니다.",
+        "notes": [
+          "GitHub Pages 배포 artifact에는 포함하지 않습니다.",
+          "Agent 내부 상태를 자동으로 훔쳐보는 방식은 아니며, 작업 단계가 바뀔 때 live status 파일을 갱신해야 합니다.",
+          "비밀값, 토큰, 고객 개인정보는 live status에 기록하지 않습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0007",
+      "title": "현황판 Task 상세 설명 추가",
+      "priority": "P2",
+      "owner": "작업 정리 Agent + 개발 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "앞으로 새 Task는 비개발자용 상세 설명을 함께 기록",
+      "details": {
+        "summary": "작업판에서 Task를 눌렀을 때 작업의 의미와 개발 방향을 이해할 수 있게 상세 설명 영역을 추가합니다.",
+        "what": "각 작업 카드에 상세 보기를 추가하고, 작업 데이터에 요약, 작업 내용, 필요한 이유, 개발 방향, 알아둘 점을 저장합니다.",
+        "why": "작업 제목만 보면 비개발자는 어떤 변화인지, 왜 필요한지, 운영상 무엇을 알아야 하는지 파악하기 어렵습니다.",
+        "developmentDirection": "AGENTIC_STATUS.json의 tasks 항목에 details 객체를 추가하고, 관리자 작업판 렌더러가 details를 접이식 영역으로 보여주게 합니다.",
+        "notes": [
+          "내용이 길어지면 summary를 먼저 읽으면 됩니다.",
+          "고객 개인정보나 보안 키 같은 민감한 정보는 상세 설명에도 남기지 않습니다.",
+          "기존 작업 로그 AGENTIC_WORK_LOG.md는 계속 원문 기록 역할을 유지합니다."
+        ]
+      }
     }
   ]
 }

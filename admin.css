@@ -402,6 +402,58 @@ input[readonly] {
   margin-top: 10px;
 }
 
+.task-detail {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.task-detail summary {
+  width: fit-content;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: #fbf7ef;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.task-detail div {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.task-detail section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+
+.task-detail h4 {
+  margin: 0;
+  color: var(--green);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.task-detail p,
+.task-detail ul {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.task-detail ul {
+  padding-left: 18px;
+}
+
 .agentic-status {
   min-height: 22px;
   margin: 0;

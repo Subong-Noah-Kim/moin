@@ -1,0 +1,163 @@
+{
+  "updatedAt": "2026-06-07T02:43:32+09:00",
+  "currentFocus": "실제 subagent 우선순위 조사 완료",
+  "monitor": {
+    "mode": "local",
+    "pollIntervalMs": 5000,
+    "source": "AGENTIC_LIVE_STATUS.json",
+    "note": "이 파일은 localhost 모니터링 전용입니다. GitHub Pages 배포 artifact에는 포함하지 않습니다."
+  },
+  "summary": {
+    "activeAgents": 1,
+    "waitingAgents": 9,
+    "blockedAgents": 0,
+    "currentFocus": "다음 1순위는 정원/잔여석/자동 마감"
+  },
+  "agents": [
+    {
+      "name": "총괄 디렉터",
+      "role": "Director",
+      "status": "running",
+      "currentTask": "subagent 결과 요약 및 다음 개발 제안",
+      "updatedAt": "2026-06-07T02:43:32+09:00",
+      "next": "사용자 승인 시 정원/잔여석/자동 마감 개발 착수"
+    },
+    {
+      "name": "개발 Agent",
+      "role": "Development",
+      "status": "idle",
+      "currentTask": "현황판 상세 보기 렌더링 추가 완료",
+      "updatedAt": "2026-06-07T02:36:44+09:00",
+      "next": "승인 Task 대기"
+    },
+    {
+      "name": "UX/UI Agent",
+      "role": "UX/UI",
+      "status": "done",
+      "currentTask": "UX/UI 개선 후보 제출 완료",
+      "updatedAt": "2026-06-07T02:41:28+09:00",
+      "next": "검토 Agent 판단 대기"
+    },
+    {
+      "name": "QA Agent",
+      "role": "QA",
+      "status": "idle",
+      "currentTask": "npm test와 localhost 응답 확인 완료",
+      "updatedAt": "2026-06-07T02:33:03+09:00",
+      "next": "추가 수동 확인 대기"
+    },
+    {
+      "name": "작업 정리 Agent",
+      "role": "Ops Log",
+      "status": "idle",
+      "currentTask": "AG-0007 상세 설명 기록 완료",
+      "updatedAt": "2026-06-07T02:36:44+09:00",
+      "next": "작업 로그와 현황판 기록"
+    },
+    {
+      "name": "기획 Agent",
+      "role": "Planning",
+      "status": "done",
+      "currentTask": "서비스 관점 개발 후보 제출 완료",
+      "updatedAt": "2026-06-07T02:41:28+09:00",
+      "next": "검토 Agent 판단 대기"
+    },
+    {
+      "name": "검토 Agent",
+      "role": "Review",
+      "status": "done",
+      "currentTask": "최종 우선순위 분류 완료",
+      "updatedAt": "2026-06-07T02:43:32+09:00",
+      "next": "총괄 디렉터 취합 결과 보고"
+    },
+    {
+      "name": "보안 Agent",
+      "role": "Security",
+      "status": "done",
+      "currentTask": "보안 리스크와 개선 후보 제출 완료",
+      "updatedAt": "2026-06-07T02:41:28+09:00",
+      "next": "검토 Agent 판단 대기"
+    },
+    {
+      "name": "보조 Agent",
+      "role": "Support",
+      "status": "idle",
+      "currentTask": "미할당",
+      "updatedAt": "2026-06-07T02:33:03+09:00",
+      "next": "필요 시 조사/문서/테스트 보조"
+    },
+    {
+      "name": "질문 Agent",
+      "role": "Questions",
+      "status": "idle",
+      "currentTask": "질문 없음",
+      "updatedAt": "2026-06-07T02:33:03+09:00",
+      "next": "사용자 결정 필요 질문 정리"
+    }
+  ],
+  "events": [
+    {
+      "time": "2026-06-07T02:43:32+09:00",
+      "agent": "검토 Agent",
+      "level": "review",
+      "title": "다음 1순위 확정",
+      "body": "정원/잔여석/자동 마감을 P0 승인으로 분류했습니다. 10명 정원 모임에 12명이 결제되는 과판매 사고를 막는 작업입니다."
+    },
+    {
+      "time": "2026-06-07T02:41:28+09:00",
+      "agent": "검토 Agent",
+      "level": "running",
+      "title": "최종 우선순위 분류 시작",
+      "body": "기획, UX/UI, 보안 Agent 결과를 받아 승인/보류/폐기와 다음 개발 1순위를 판단합니다."
+    },
+    {
+      "time": "2026-06-07T02:41:28+09:00",
+      "agent": "총괄 디렉터",
+      "level": "review",
+      "title": "3개 조사 결과 수신",
+      "body": "기획 Agent는 정원/마감 자동화, UX/UI Agent는 결제 문구와 모바일 CTA, 보안 Agent는 관리자 토큰 저장 개선을 핵심 후보로 제안했습니다."
+    },
+    {
+      "time": "2026-06-07T02:38:48+09:00",
+      "agent": "총괄 디렉터",
+      "level": "running",
+      "title": "실제 subagent 모드 시작",
+      "body": "기획 Agent(Singer), UX/UI Agent(Hypatia), 보안 Agent(Pauli)를 읽기 전용 조사 작업에 투입했습니다."
+    },
+    {
+      "time": "2026-06-07T02:36:44+09:00",
+      "agent": "작업 정리 Agent",
+      "level": "review",
+      "title": "Task 상세 설명 규격 반영",
+      "body": "현황판 Task에 요약, 작업 내용, 필요한 이유, 개발 방향, 알아둘 점을 기록하고 상세 보기로 열 수 있게 했습니다."
+    },
+    {
+      "time": "2026-06-07T02:33:03+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "로컬 검증 완료",
+      "body": "npm test 15개 통과, localhost에서 monitor HTML/JS/JSON HTTP 200 응답을 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T02:32:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "running",
+      "title": "로컬 모니터 구현 시작",
+      "body": "배포 관리자 작업판과 별개로 localhost에서만 볼 수 있는 Agent Live Monitor를 구성합니다."
+    },
+    {
+      "time": "2026-06-07T02:32:00+09:00",
+      "agent": "개발 Agent",
+      "level": "running",
+      "title": "주기적 JSON 폴링 방식 선택",
+      "body": "브라우저가 보이는 동안만 AGENTIC_LIVE_STATUS.json을 5초마다 다시 읽도록 구현합니다."
+    },
+    {
+      "time": "2026-06-07T02:32:00+09:00",
+      "agent": "UX/UI Agent",
+      "level": "review",
+      "title": "운영 관리자 화면과 분리",
+      "body": "실시간 작업 모니터는 관리자 배포 화면이 아니라 로컬 전용 페이지로 분리합니다."
+    }
+  ]
+}

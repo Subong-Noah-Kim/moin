@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>moin Agent Live Monitor</title>
+    <link rel="stylesheet" href="./agent-monitor.css" />
+  </head>
+  <body>
+    <main class="monitor-shell" data-monitor-root>
+      <header class="monitor-header">
+        <div>
+          <p class="eyebrow">LOCAL AGENT MONITOR</p>
+          <h1>Agent Live Monitor</h1>
+        </div>
+        <div class="monitor-actions">
+          <span class="status-pill" data-monitor-state>연결 준비</span>
+          <button type="button" data-refresh-live>새로고침</button>
+          <button class="ghost-button" type="button" data-toggle-polling>자동 갱신 중지</button>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="Agent 요약" data-live-summary></section>
+
+      <section class="monitor-layout">
+        <section class="panel" aria-labelledby="agentStatusTitle">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">AGENTS</p>
+              <h2 id="agentStatusTitle">현재 역할 상태</h2>
+            </div>
+            <span data-agent-count>0명</span>
+          </div>
+          <div class="agent-list" data-agent-list></div>
+        </section>
+
+        <section class="panel" aria-labelledby="activityTitle">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">ACTIVITY</p>
+              <h2 id="activityTitle">최근 작업 흐름</h2>
+            </div>
+            <span data-event-count>0개</span>
+          </div>
+          <div class="activity-list" data-event-list></div>
+        </section>
+      </section>
+
+      <footer class="monitor-footer">
+        <span data-updated-at>확인 전</span>
+        <span data-polling-note>작업 중일 때만 로컬 JSON을 갱신합니다.</span>
+      </footer>
+    </main>
+
+    <script type="module" src="./agent-monitor.js"></script>
+  </body>
+</html>
