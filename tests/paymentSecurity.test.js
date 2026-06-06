@@ -126,6 +126,32 @@ test('admin orders include payment record reconciliation', async () => {
   assert.match(adminScript, /기록 없음/);
 });
 
+test('admin dashboard renders agentic status from a static JSON board', async () => {
+  const [adminHtml, adminStyles, adminScript, agenticStatus] = await Promise.all([
+    readProjectFile('../admin.html'),
+    readProjectFile('../admin.css'),
+    readProjectFile('../admin.js'),
+    readProjectFile('../AGENTIC_STATUS.json'),
+  ]);
+  const status = JSON.parse(agenticStatus);
+
+  assert.match(adminHtml, /data-agentic-board/);
+  assert.match(adminHtml, /data-agentic-summary/);
+  assert.match(adminHtml, /data-agentic-agents/);
+  assert.match(adminHtml, /data-agentic-tasks/);
+  assert.match(adminHtml, /data-agentic-refresh/);
+  assert.match(adminStyles, /\.agentic-board/);
+  assert.match(adminStyles, /\.agent-grid/);
+  assert.match(adminStyles, /\.task-list/);
+  assert.match(adminScript, /AGENTIC_STATUS\.json\?v=__ASSET_VERSION__/);
+  assert.match(adminScript, /function renderAgenticStatus/);
+  assert.match(adminScript, /function loadAgenticStatus/);
+  assert.match(adminScript, /agenticRefreshButton\.addEventListener\('click', loadAgenticStatus\)/);
+  assert.equal(status.branch, 'codex/priority-roadmap-batch');
+  assert.ok(Array.isArray(status.agents));
+  assert.ok(Array.isArray(status.tasks));
+});
+
 test('public submissions route through an abuse-controlled Edge Function', async () => {
   const [config, supabaseClient, edgeFunction, setupMigration, lockMigration] = await Promise.all([
     readProjectFile('../supabase/config.toml'),

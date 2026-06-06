@@ -1,0 +1,115 @@
+{
+  "updatedAt": "2026-06-07T01:20:00+09:00",
+  "branch": "codex/priority-roadmap-batch",
+  "summary": {
+    "active": 2,
+    "blocked": 0,
+    "doneLocal": 2,
+    "deployNeeded": 0
+  },
+  "agents": [
+    {
+      "name": "총괄 디렉터",
+      "role": "Director",
+      "status": "running",
+      "currentTask": "작업판 체계 정리 및 다음 Subagent 투입 준비",
+      "lastUpdate": "2026-06-07",
+      "blocker": "",
+      "next": "기획/검토 Agent 작업 후보 분리"
+    },
+    {
+      "name": "기획 Agent",
+      "role": "Planning",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "총괄 할당 대기",
+      "next": "유저/관리자 개선 후보 정의"
+    },
+    {
+      "name": "검토 Agent",
+      "role": "Review",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "기획 결과 대기",
+      "next": "후보 우선순위 분류"
+    },
+    {
+      "name": "개발 Agent",
+      "role": "Development",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "승인 Task 대기",
+      "next": "승인 Task 구현"
+    },
+    {
+      "name": "QA Agent",
+      "role": "QA",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "개발 결과 대기",
+      "next": "로컬 검증"
+    },
+    {
+      "name": "보안 Agent",
+      "role": "Security",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "검토 완료 후보 대기",
+      "next": "고위험 후보 보안 검토"
+    },
+    {
+      "name": "작업 정리 Agent",
+      "role": "Ops Log",
+      "status": "running",
+      "currentTask": "Agentic 작업 로그와 현황판 동기화",
+      "lastUpdate": "2026-06-07",
+      "blocker": "",
+      "next": "Task 진행 상태 기록"
+    },
+    {
+      "name": "보조 Agent",
+      "role": "Support",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "요청 없음",
+      "next": "필요 시 조사/문서/테스트 보조"
+    },
+    {
+      "name": "질문 Agent",
+      "role": "Questions",
+      "status": "idle",
+      "currentTask": "미할당",
+      "lastUpdate": "2026-06-07",
+      "blocker": "질문 없음",
+      "next": "사용자 결정 필요 질문 정리"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "AG-0001",
+      "title": "Agentic 작업 체계 초기화",
+      "priority": "P3",
+      "owner": "총괄 디렉터",
+      "status": "done_local",
+      "commit": "c11fba3",
+      "deployNeeded": false,
+      "next": "현황판 추가"
+    },
+    {
+      "id": "AG-0002",
+      "title": "관리자 Agentic 현황판 추가",
+      "priority": "P2",
+      "owner": "개발 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "Subagent 기획/검토 작업 착수"
+    }
+  ]
+}
