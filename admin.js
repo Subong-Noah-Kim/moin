@@ -367,9 +367,13 @@ function renderAgenticStatus(data) {
       .join('') || '<article class="agent-card"><p>Agent 상태가 없습니다.</p></article>';
   agenticTasks.innerHTML =
     tasks
-      .map(
-        (task) => `
-          <article class="task-item">
+      .map((task) => {
+        const detailsMarkup = renderTaskDetails(task);
+        const detailClass = detailsMarkup ? ' has-detail' : '';
+        const detailTabIndex = detailsMarkup ? ' tabindex="0"' : '';
+
+        return `
+          <article class="task-item${detailClass}"${detailTabIndex}>
             <header>
               <div>
                 <strong>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</strong>
@@ -385,12 +389,55 @@ function renderAgenticStatus(data) {
               ${task.commit ? `<span class="pill">${escapeHtml(task.commit)}</span>` : ''}
             </div>
             <p>${escapeHtml(task.next || '-')}</p>
-            ${renderTaskDetails(task)}
+            ${detailsMarkup}
           </article>
-        `,
-      )
+        `;
+      })
       .join('') || '<article class="task-item"><p>Task 상태가 없습니다.</p></article>';
   agenticStatus.textContent = `작업판 확인 완료 · ${escapeHtml(data.branch || '-')}`;
+}
+
+function toggleTaskDetail(taskItem) {
+  const detail = taskItem?.querySelector('.task-detail');
+
+  if (!detail) {
+    return;
+  }
+
+  detail.open = !detail.open;
+}
+
+function isTaskDetailInteractiveTarget(target) {
+  return Boolean(target.closest('.task-detail, button, a, input, select, textarea, label'));
+}
+
+function handleTaskItemClick(event) {
+  if (isTaskDetailInteractiveTarget(event.target)) {
+    return;
+  }
+
+  const taskItem = event.target.closest('.task-item.has-detail');
+
+  if (!taskItem) {
+    return;
+  }
+
+  toggleTaskDetail(taskItem);
+}
+
+function handleTaskItemKeydown(event) {
+  if (event.key !== 'Enter' && event.key !== ' ') {
+    return;
+  }
+
+  const taskItem = event.target.closest('.task-item.has-detail');
+
+  if (!taskItem || event.target !== taskItem) {
+    return;
+  }
+
+  event.preventDefault();
+  toggleTaskDetail(taskItem);
 }
 
 function splitList(value) {
@@ -1087,6 +1134,10 @@ inviteForm.addEventListener('submit', async (event) => {
 refreshButton.addEventListener('click', loadOverview);
 
 agenticRefreshButton.addEventListener('click', loadAgenticStatus);
+
+agenticTasks.addEventListener('click', handleTaskItemClick);
+
+agenticTasks.addEventListener('keydown', handleTaskItemKeydown);
 
 signOutButton.addEventListener('click', async () => {
   await signOutAdmin();

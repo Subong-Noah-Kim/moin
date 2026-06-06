@@ -395,6 +395,15 @@ input[readonly] {
   gap: 8px;
 }
 
+.task-item.has-detail {
+  cursor: pointer;
+}
+
+.task-item.has-detail:focus-visible {
+  outline: 3px solid rgba(20, 115, 90, 0.28);
+  outline-offset: 2px;
+}
+
 .task-meta {
   display: flex;
   flex-wrap: wrap;
@@ -406,6 +415,7 @@ input[readonly] {
   margin-top: 12px;
   border-top: 1px solid var(--line);
   padding-top: 10px;
+  cursor: auto;
 }
 
 .task-detail summary {

@@ -147,10 +147,17 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.match(adminStyles, /\.agent-grid/);
   assert.match(adminStyles, /\.task-list/);
   assert.match(adminStyles, /\.task-detail/);
+  assert.match(adminStyles, /\.task-item\.has-detail/);
+  assert.match(adminStyles, /\.task-item\.has-detail:focus-visible/);
   assert.match(adminScript, /AGENTIC_STATUS\.json\?v=__ASSET_VERSION__/);
   assert.match(adminScript, /function renderAgenticStatus/);
   assert.match(adminScript, /function loadAgenticStatus/);
   assert.match(adminScript, /function renderTaskDetails/);
+  assert.match(adminScript, /const detailsMarkup = renderTaskDetails\(task\)/);
+  assert.match(adminScript, /function toggleTaskDetail/);
+  assert.match(adminScript, /agenticTasks\.addEventListener\('click', handleTaskItemClick\)/);
+  assert.match(adminScript, /agenticTasks\.addEventListener\('keydown', handleTaskItemKeydown\)/);
+  assert.match(adminScript, /event\.key !== 'Enter' && event\.key !== ' '/);
   assert.match(adminScript, /상세 보기/);
   assert.match(adminScript, /무슨 작업인가요\?/);
   assert.match(adminScript, /왜 필요한가요\?/);

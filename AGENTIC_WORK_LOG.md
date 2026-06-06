@@ -191,3 +191,26 @@
   - `npm test` passed: 15 tests.
 - Next:
   - 다음 라운드에서는 TD-001~TD-008 중 구현 순서와 첫 커밋 단위를 더 좁힌다.
+
+### AG-0009 - 현황판 Task 카드 클릭 상세 보기 수정
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + UX/UI Agent + 작업 정리 Agent
+- Purpose: 현황판 Task 카드에서 작은 `상세 보기` 문구만 눌러야 설명이 열리던 문제를 고쳐, 카드 자체를 눌러도 상세 설명을 볼 수 있게 한다.
+- Changed files:
+  - `admin.js`
+  - `admin.css`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - 상세 데이터가 있는 Task 카드에만 클릭 가능한 상태와 키보드 포커스를 부여한다.
+  - 카드 클릭, Enter, Space로 상세 설명을 열고 닫을 수 있게 한다.
+  - 펼쳐진 상세 설명 내부를 읽거나 선택할 때는 불필요하게 다시 접히지 않게 한다.
+- Verification:
+  - `npm test` passed: 15 tests.
+- Next:
+  - 로컬 관리자 작업판에서 카드 클릭 동작을 확인한다.

@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T02:52:59+09:00",
+  "updatedAt": "2026-06-07T03:00:35+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 6,
+    "doneLocal": 7,
     "deployNeeded": 0
   },
   "agents": [
@@ -12,10 +12,10 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "밤샘 태스크 발굴 결과 정리",
+      "currentTask": "AG-0009 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "기획/검토 Agent 작업 후보 분리"
+      "next": "다음 heartbeat에서 태스크 발굴 계속"
     },
     {
       "name": "기획 Agent",
@@ -48,10 +48,10 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "DB/Backend 세부 태스크 분해 완료",
+      "currentTask": "Task 카드 전체 클릭 상세 보기 구현 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 승인 시 구현 착수"
+      "next": "QA 검증 대기"
     },
     {
       "name": "QA Agent",
@@ -74,11 +74,11 @@
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
-      "status": "running",
-      "currentTask": "AG-0008과 발굴 문서 정리",
+      "status": "done",
+      "currentTask": "AG-0009 클릭 UX 수정 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "Task 진행 상태 기록"
+      "next": "다음 Task 기록 대기"
     },
     {
       "name": "보조 Agent",
@@ -210,6 +210,27 @@
           "배포와 원격 push는 하지 않았습니다.",
           "다음 1순위 후보는 TD-001/TD-002 정원 데이터 모델과 정원 초과 차단입니다.",
           "Toss pending 주문 회수, 취소/환불 자동 재오픈, CAPTCHA는 후속 라운드로 보류했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0009",
+      "title": "현황판 Task 카드 클릭 상세 보기 수정",
+      "priority": "P2",
+      "owner": "개발 Agent + UX/UI Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "로컬 관리자 작업판에서 카드 클릭 동작 확인",
+      "details": {
+        "summary": "작업판 Task 카드에서 작은 '상세 보기' 글자만 눌러야 열리던 문제를 카드 전체 클릭으로 열리게 고쳤습니다.",
+        "what": "상세 설명이 있는 Task 카드에 클릭 가능한 상태를 붙이고, 카드 클릭 또는 키보드 Enter/Space로 상세 내용을 열고 닫을 수 있게 했습니다.",
+        "why": "현황판은 한눈에 작업 의미를 확인하려는 화면인데, 사용자가 카드 자체를 눌렀을 때 아무 반응이 없으면 상세 설명이 없는 것처럼 느껴집니다.",
+        "developmentDirection": "관리자 작업판 렌더러에서 상세 데이터가 있는 카드에 표시 상태를 추가하고, 이벤트 위임으로 카드 전체 클릭을 details 토글과 연결했습니다.",
+        "notes": [
+          "상세 설명 내부를 읽거나 선택할 때는 카드 토글이 다시 실행되지 않게 했습니다.",
+          "키보드 사용자도 카드에 포커스를 둔 뒤 Enter 또는 Space로 열 수 있습니다.",
+          "배포는 하지 않고 로컬 브랜치에만 반영합니다."
         ]
       }
     }
