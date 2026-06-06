@@ -1,4 +1,5 @@
 const liveStatusUrl = './AGENTIC_LIVE_STATUS.json';
+const boardStatusUrl = './AGENTIC_STATUS.json';
 const fallbackPollIntervalMs = 5000;
 
 const state = {
@@ -14,8 +15,10 @@ const togglePollingButton = document.querySelector('[data-toggle-polling]');
 const liveSummary = document.querySelector('[data-live-summary]');
 const agentList = document.querySelector('[data-agent-list]');
 const eventList = document.querySelector('[data-event-list]');
+const taskList = document.querySelector('[data-task-list]');
 const agentCount = document.querySelector('[data-agent-count]');
 const eventCount = document.querySelector('[data-event-count]');
+const taskCount = document.querySelector('[data-task-count]');
 const updatedAt = document.querySelector('[data-updated-at]');
 const pollingNote = document.querySelector('[data-polling-note]');
 
@@ -67,13 +70,95 @@ function renderMessage(message) {
   liveSummary.innerHTML = '';
   agentList.innerHTML = `<article class="agent-card"><p>${escapeHtml(message)}</p></article>`;
   eventList.innerHTML = '';
+  taskList.innerHTML = '';
   agentCount.textContent = '0명';
   eventCount.textContent = '0개';
+  taskCount.textContent = '0개';
 }
 
-function renderLiveStatus(data) {
+function renderTaskDetailSection(label, value) {
+  if (!value) {
+    return '';
+  }
+
+  if (Array.isArray(value)) {
+    const items = value.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+
+    return `
+      <section>
+        <h3>${escapeHtml(label)}</h3>
+        <ul>${items}</ul>
+      </section>
+    `;
+  }
+
+  return `
+    <section>
+      <h3>${escapeHtml(label)}</h3>
+      <p>${escapeHtml(value)}</p>
+    </section>
+  `;
+}
+
+function renderTaskDetails(task) {
+  const details = task.details || {};
+  const sections = [
+    renderTaskDetailSection('요약', details.summary),
+    renderTaskDetailSection('무슨 작업인가요?', details.what),
+    renderTaskDetailSection('왜 필요한가요?', details.why),
+    renderTaskDetailSection('간단한 개발 방향', details.developmentDirection),
+    renderTaskDetailSection('알아둘 점', details.notes),
+  ].join('');
+
+  if (!sections) {
+    return '';
+  }
+
+  return `
+    <details class="task-detail">
+      <summary>상세 보기</summary>
+      <div>${sections}</div>
+    </details>
+  `;
+}
+
+function renderTaskList(tasks) {
+  taskCount.textContent = `${tasks.length}개`;
+  taskList.innerHTML =
+    tasks
+      .map((task) => {
+        const detailMarkup = renderTaskDetails(task);
+        const detailClass = detailMarkup ? ' has-detail' : '';
+        const detailTabIndex = detailMarkup ? ' tabindex="0"' : '';
+
+        return `
+          <article class="task-item${detailClass}"${detailTabIndex}>
+            <header>
+              <div>
+                <strong>${escapeHtml(task.id || '-')} · ${escapeHtml(task.title || '-')}</strong>
+                <small>${escapeHtml(task.owner || '-')}</small>
+              </div>
+              <span class="pill is-${escapeHtml(getStatusClass(task.status))}">
+                ${escapeHtml(task.status || '대기')}
+              </span>
+            </header>
+            <div class="task-meta">
+              <span class="pill">${escapeHtml(task.priority || '-')}</span>
+              <span class="pill">${task.deployNeeded ? '배포 필요' : task.status === 'deployed' ? '배포 완료' : '로컬'}</span>
+              ${task.commit ? `<span class="pill">${escapeHtml(task.commit)}</span>` : ''}
+            </div>
+            <p>${escapeHtml(task.next || '-')}</p>
+            ${detailMarkup}
+          </article>
+        `;
+      })
+      .join('') || '<article class="task-item"><p>Task 상태가 없습니다.</p></article>';
+}
+
+function renderLiveStatus(data, boardData = {}) {
   const agents = Array.isArray(data.agents) ? data.agents : [];
   const events = Array.isArray(data.events) ? data.events : [];
+  const tasks = Array.isArray(boardData.tasks) ? boardData.tasks : [];
   const summary = data.summary || {};
   const activeAgents = summary.activeAgents ?? agents.filter((agent) => agent.status === 'running').length;
   const blockedAgents = summary.blockedAgents ?? agents.filter((agent) => agent.status === 'blocked').length;
@@ -141,6 +226,8 @@ function renderLiveStatus(data) {
         `,
       )
       .join('') || '<article class="event-item"><p>최근 작업 기록이 없습니다.</p></article>';
+
+  renderTaskList(tasks);
 }
 
 async function fetchLiveStatus() {
@@ -155,19 +242,37 @@ async function fetchLiveStatus() {
   return response.json();
 }
 
+async function fetchBoardStatus() {
+  const response = await fetch(`${boardStatusUrl}?t=${Date.now()}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Board status fetch failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 async function loadLiveStatus() {
   const requestId = ++state.requestId;
   refreshButton.disabled = true;
   monitorState.textContent = '확인 중';
 
   try {
-    const data = await fetchLiveStatus();
+    const [data, boardData] = await Promise.all([
+      fetchLiveStatus(),
+      fetchBoardStatus().catch((error) => {
+        console.warn(error);
+        return {};
+      }),
+    ]);
 
     if (requestId !== state.requestId) {
       return;
     }
 
-    renderLiveStatus(data);
+    renderLiveStatus(data, boardData);
     monitorState.textContent = state.isPaused ? '자동 갱신 일시중지' : '자동 갱신 중';
   } catch (error) {
     console.error(error);
@@ -206,9 +311,56 @@ function schedulePolling() {
   state.timerId = window.setTimeout(loadLiveStatus, state.pollIntervalMs);
 }
 
+function toggleTaskDetail(taskItem) {
+  const detail = taskItem?.querySelector('.task-detail');
+
+  if (!detail) {
+    return;
+  }
+
+  detail.open = !detail.open;
+}
+
+function isTaskDetailInteractiveTarget(target) {
+  return Boolean(target.closest('.task-detail, button, a, input, select, textarea, label'));
+}
+
+function handleTaskItemClick(event) {
+  if (isTaskDetailInteractiveTarget(event.target)) {
+    return;
+  }
+
+  const taskItem = event.target.closest('.task-item.has-detail');
+
+  if (!taskItem) {
+    return;
+  }
+
+  toggleTaskDetail(taskItem);
+}
+
+function handleTaskItemKeydown(event) {
+  if (event.key !== 'Enter' && event.key !== ' ') {
+    return;
+  }
+
+  const taskItem = event.target.closest('.task-item.has-detail');
+
+  if (!taskItem || event.target !== taskItem) {
+    return;
+  }
+
+  event.preventDefault();
+  toggleTaskDetail(taskItem);
+}
+
 refreshButton.addEventListener('click', () => {
   void loadLiveStatus();
 });
+
+taskList.addEventListener('click', handleTaskItemClick);
+
+taskList.addEventListener('keydown', handleTaskItemKeydown);
 
 togglePollingButton.addEventListener('click', () => {
   state.isPaused = !state.isPaused;

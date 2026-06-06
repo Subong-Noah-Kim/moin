@@ -43,6 +43,7 @@ const server = http.createServer((req, res) => {
 
     const ext = path.extname(target);
     res.setHeader('Content-Type', types[ext] || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'no-store');
     createReadStream(target).pipe(res);
   } catch {
     res.statusCode = 404;

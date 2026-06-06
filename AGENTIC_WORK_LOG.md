@@ -214,3 +214,32 @@
   - `npm test` passed: 15 tests.
 - Next:
   - 로컬 관리자 작업판에서 카드 클릭 동작을 확인한다.
+
+### AG-0010 - 로컬 현황판 Task 상세 패널 추가
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 휴대폰으로 보는 로컬 `agent-monitor.html`에서도 Task를 눌러 작업 설명을 확인할 수 있게 한다.
+- Changed files:
+  - `agent-monitor.html`
+  - `agent-monitor.css`
+  - `agent-monitor.js`
+  - `server.js`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - 이전 수정은 관리자 페이지 안의 작업판에만 적용되어 있었다.
+  - 로컬 모니터는 `AGENTIC_LIVE_STATUS.json`만 읽고 있었기 때문에 Task 상세 설명을 보여줄 데이터가 없었다.
+  - 로컬 모니터가 `AGENTIC_STATUS.json`도 함께 읽어 `작업 상세` 패널을 만들고, Task 카드 클릭/Enter/Space로 상세 설명을 열게 했다.
+  - 휴대폰 브라우저가 오래된 파일을 계속 쓰는 문제를 줄이기 위해 로컬 dev 서버 응답에 `Cache-Control: no-store`를 추가했다.
+- Verification:
+  - `npm test` passed: 15 tests.
+  - Local dev server returned HTTP 200 for `agent-monitor.js`.
+  - Local dev server response included `Cache-Control: no-store`.
+  - Local dev server served the new `작업 상세` panel and Task click handler code.
+- Next:
+  - 휴대폰에서 `agent-monitor.html`을 새로고침한 뒤 `작업 상세` 섹션의 Task 카드를 눌러 확인한다.

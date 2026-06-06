@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T03:00:35+09:00",
+  "updatedAt": "2026-06-07T03:06:22+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 7,
+    "doneLocal": 8,
     "deployNeeded": 0
   },
   "agents": [
@@ -12,10 +12,10 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0009 검증 완료",
+      "currentTask": "AG-0010 로컬 모바일 현황판 Task 패널 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 heartbeat에서 태스크 발굴 계속"
+      "next": "휴대폰에서 agent-monitor 새로고침 확인"
     },
     {
       "name": "기획 Agent",
@@ -48,10 +48,10 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "Task 카드 전체 클릭 상세 보기 구현 완료",
+      "currentTask": "로컬 모니터 Task 패널과 클릭 상세 보기 구현 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "QA 검증 대기"
+      "next": "다음 개발 태스크 대기"
     },
     {
       "name": "QA Agent",
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0009 클릭 UX 수정 기록 완료",
+      "currentTask": "AG-0010 로컬 모니터 수정 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -231,6 +231,27 @@
           "상세 설명 내부를 읽거나 선택할 때는 카드 토글이 다시 실행되지 않게 했습니다.",
           "키보드 사용자도 카드에 포커스를 둔 뒤 Enter 또는 Space로 열 수 있습니다.",
           "배포는 하지 않고 로컬 브랜치에만 반영합니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0010",
+      "title": "로컬 현황판 Task 상세 패널 추가",
+      "priority": "P2",
+      "owner": "개발 Agent + QA Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "휴대폰에서 agent-monitor.html 새로고침 후 Task 카드 클릭 확인",
+      "details": {
+        "summary": "휴대폰 로컬 현황판에는 Task 상세 카드가 없어서 클릭해도 설명이 나올 수 없는 문제를 고쳤습니다.",
+        "what": "로컬 Agent Live Monitor가 AGENTIC_STATUS.json도 함께 읽어 '작업 상세' 패널을 보여주고, Task 카드 클릭 또는 Enter/Space로 상세 설명을 열게 했습니다.",
+        "why": "실시간 모니터를 휴대폰으로 볼 때도 어떤 작업인지, 왜 필요한지, 개발 방향이 무엇인지 바로 확인할 수 있어야 합니다.",
+        "developmentDirection": "agent-monitor.html에 Task 패널을 추가하고, agent-monitor.js에서 live status와 board status를 함께 읽은 뒤 Task details를 접이식 카드로 렌더링했습니다.",
+        "notes": [
+          "로컬 dev 서버에 Cache-Control: no-store를 추가해 휴대폰 브라우저가 오래된 JS/CSS를 계속 보는 문제를 줄였습니다.",
+          "기존 GitHub Pages 배포 artifact에는 로컬 모니터 파일을 포함하지 않는 정책을 유지합니다.",
+          "이미 열려 있던 휴대폰 화면은 새로고침해야 새 패널과 클릭 코드가 적용됩니다."
         ]
       }
     }

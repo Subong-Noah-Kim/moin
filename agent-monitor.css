@@ -122,7 +122,8 @@ h2 {
 .summary-grid article,
 .panel,
 .agent-card,
-.event-item {
+.event-item,
+.task-item {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -158,6 +159,10 @@ h2 {
   overflow: hidden;
 }
 
+.task-panel {
+  grid-column: 1 / -1;
+}
+
 .panel-head {
   min-height: 58px;
   border-bottom: 1px solid var(--line);
@@ -165,7 +170,8 @@ h2 {
 }
 
 .agent-list,
-.activity-list {
+.activity-list,
+.task-list {
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -176,13 +182,15 @@ h2 {
 }
 
 .agent-card,
-.event-item {
+.event-item,
+.task-item {
   min-width: 0;
   padding: 12px;
 }
 
 .agent-card header,
-.event-item header {
+.event-item header,
+.task-item header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -190,7 +198,8 @@ h2 {
 }
 
 .agent-card strong,
-.event-item strong {
+.event-item strong,
+.task-item strong {
   display: block;
   min-width: 0;
   font-size: 0.92rem;
@@ -198,7 +207,8 @@ h2 {
 }
 
 .agent-card small,
-.event-item small {
+.event-item small,
+.task-item small {
   display: block;
   margin-top: 3px;
   color: var(--muted);
@@ -208,12 +218,82 @@ h2 {
 }
 
 .agent-card p,
-.event-item p {
+.event-item p,
+.task-item p {
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 800;
   line-height: 1.45;
+}
+
+.task-item.has-detail {
+  cursor: pointer;
+}
+
+.task-item.has-detail:focus-visible {
+  outline: 3px solid rgba(31, 106, 83, 0.28);
+  outline-offset: 2px;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.task-detail {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  cursor: auto;
+}
+
+.task-detail summary {
+  width: fit-content;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: #fbf7ef;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.task-detail div {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.task-detail section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+}
+
+.task-detail h3 {
+  margin: 0;
+  color: var(--green);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.task-detail p,
+.task-detail ul {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.task-detail ul {
+  padding-left: 18px;
 }
 
 .pill {

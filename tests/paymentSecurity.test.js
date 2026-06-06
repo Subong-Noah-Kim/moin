@@ -197,12 +197,23 @@ test('local agent monitor polls live status without publishing it to Pages', asy
   const status = JSON.parse(liveStatus);
 
   assert.match(server, /\.json': 'application\/json; charset=utf-8'/);
+  assert.match(server, /Cache-Control', 'no-store'/);
   assert.match(monitorHtml, /data-monitor-root/);
   assert.match(monitorHtml, /data-agent-list/);
   assert.match(monitorHtml, /data-event-list/);
+  assert.match(monitorHtml, /data-task-list/);
+  assert.match(monitorHtml, /data-task-count/);
   assert.match(monitorHtml, /agent-monitor\.js/);
   assert.match(monitorStyles, /\.monitor-layout/);
+  assert.match(monitorStyles, /\.task-panel/);
+  assert.match(monitorStyles, /\.task-item\.has-detail/);
+  assert.match(monitorStyles, /\.task-detail/);
   assert.match(monitorScript, /AGENTIC_LIVE_STATUS\.json/);
+  assert.match(monitorScript, /AGENTIC_STATUS\.json/);
+  assert.match(monitorScript, /function renderTaskDetails/);
+  assert.match(monitorScript, /function toggleTaskDetail/);
+  assert.match(monitorScript, /taskList\.addEventListener\('click', handleTaskItemClick\)/);
+  assert.match(monitorScript, /taskList\.addEventListener\('keydown', handleTaskItemKeydown\)/);
   assert.match(monitorScript, /document\.visibilityState !== 'visible'/);
   assert.match(monitorScript, /window\.setTimeout\(loadLiveStatus, state\.pollIntervalMs\)/);
   assert.doesNotMatch(workflow, /cp agent-monitor\./);

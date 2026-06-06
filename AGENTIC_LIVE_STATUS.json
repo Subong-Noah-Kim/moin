@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T03:00:35+09:00",
-  "currentFocus": "현황판 Task 카드 클릭 UX 수정 검증 완료",
+  "updatedAt": "2026-06-07T03:06:22+09:00",
+  "currentFocus": "로컬 모바일 현황판 Task 상세 패널 추가 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,24 +11,24 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0009 로컬 검증 완료"
+    "currentFocus": "AG-0010 로컬 검증 완료"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0009 검증 완료",
-      "updatedAt": "2026-06-07T03:00:35+09:00",
-      "next": "다음 heartbeat에서 태스크 발굴 계속"
+      "currentTask": "AG-0010 로컬 모바일 현황판 검증 완료",
+      "updatedAt": "2026-06-07T03:06:22+09:00",
+      "next": "휴대폰에서 새로고침 확인"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "Task 카드 전체 클릭 상세 보기 구현 완료",
-      "updatedAt": "2026-06-07T02:58:18+09:00",
-      "next": "QA 검증 대기"
+      "currentTask": "로컬 모니터 Task 패널과 클릭 상세 보기 구현 완료",
+      "updatedAt": "2026-06-07T03:06:22+09:00",
+      "next": "다음 개발 태스크 대기"
     },
     {
       "name": "UX/UI Agent",
@@ -50,8 +50,8 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0009 클릭 UX 수정 기록 완료",
-      "updatedAt": "2026-06-07T03:00:35+09:00",
+      "currentTask": "AG-0010 로컬 모니터 수정 기록 완료",
+      "updatedAt": "2026-06-07T03:06:22+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T03:06:22+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "로컬 모바일 현황판 수정 검증",
+      "body": "agent-monitor.html에 작업 상세 패널을 추가했고, dev 서버에서 HTML/JS/CSS와 Cache-Control: no-store 응답을 확인했습니다. 휴대폰 화면은 새로고침이 필요합니다."
+    },
+    {
+      "time": "2026-06-07T03:06:22+09:00",
+      "agent": "개발 Agent",
+      "level": "review",
+      "title": "Task 상세 패널 추가",
+      "body": "로컬 모니터가 AGENTIC_STATUS.json도 함께 읽어 Task 카드와 상세 설명을 보여주도록 수정했습니다."
+    },
     {
       "time": "2026-06-07T03:00:35+09:00",
       "agent": "QA Agent",
