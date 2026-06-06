@@ -159,7 +159,7 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.match(adminScript, /if \(target === 'agentic'\)/);
   assert.doesNotMatch(adminScript, /showDashboard\(\);\s+void loadAgenticStatus\(\);/);
   assert.match(adminScript, /agenticRefreshButton\.addEventListener\('click', loadAgenticStatus\)/);
-  assert.equal(status.branch, 'main');
+  assert.match(status.branch, /^(main|codex\/[a-z0-9-]+)$/);
   assert.equal(status.summary.deployNeeded, 0);
   assert.ok(Array.isArray(status.agents));
   assert.ok(Array.isArray(status.tasks));

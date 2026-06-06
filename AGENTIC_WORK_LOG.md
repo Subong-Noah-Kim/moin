@@ -168,3 +168,26 @@
   - `npm test` passed: 15 tests.
 - Next:
   - 앞으로 작업 정리 Agent가 새 Task를 추가할 때 같은 상세 설명 형식을 함께 채운다.
+
+### AG-0008 - 밤샘 태스크 발굴 라운드 1
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + 실제 subagents
+- Purpose: 배포 없이 아침에 고를 수 있는 다음 개발 후보를 실제 subagent로 계속 발굴한다.
+- Changed files:
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_WORKFLOW.md`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+- Notes:
+  - DB/Backend Agent는 정원/잔여석/자동 마감의 DB/RPC/Edge Function 단위를 분해했다.
+  - 보안 Agent는 관리자 세션 저장, Toss 승인값 노출 최소화, Agent status 민감정보 가드를 분해했다.
+  - UX/UI Agent는 잔여석 표시, 마감 CTA, 관리자 정원 입력, 모바일 CTA를 분해했다.
+  - QA Agent는 정규식 테스트를 넘어 실제 데이터 전이와 DOM 결과 검증이 필요하다고 제안했다.
+- Verification:
+  - `npm test` passed: 15 tests.
+- Next:
+  - 다음 라운드에서는 TD-001~TD-008 중 구현 순서와 첫 커밋 단위를 더 좁힌다.

@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T02:35:33+09:00",
-  "branch": "main",
+  "updatedAt": "2026-06-07T02:52:59+09:00",
+  "branch": "codex/overnight-task-discovery",
   "summary": {
-    "active": 2,
+    "active": 1,
     "blocked": 0,
-    "doneLocal": 5,
+    "doneLocal": 6,
     "deployNeeded": 0
   },
   "agents": [
@@ -12,7 +12,7 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "현황판 Task 상세 설명 규격 추가",
+      "currentTask": "밤샘 태스크 발굴 결과 정리",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "기획/검토 Agent 작업 후보 분리"
@@ -20,17 +20,17 @@
     {
       "name": "기획 Agent",
       "role": "Planning",
-      "status": "idle",
-      "currentTask": "미할당",
+      "status": "done",
+      "currentTask": "정원/마감 자동화 우선순위 후보 제출 완료",
       "lastUpdate": "2026-06-07",
-      "blocker": "총괄 할당 대기",
-      "next": "유저/관리자 개선 후보 정의"
+      "blocker": "",
+      "next": "다음 라운드 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
-      "status": "idle",
-      "currentTask": "관리자 첫 화면 노출 부담 완화 검토 완료",
+      "status": "done",
+      "currentTask": "정원/결제 문구/모바일 CTA 화면 태스크 제출 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "화면 흐름, 모바일 사용성, 접근성 검토"
@@ -38,44 +38,44 @@
     {
       "name": "검토 Agent",
       "role": "Review",
-      "status": "idle",
-      "currentTask": "미할당",
+      "status": "done",
+      "currentTask": "정원/잔여석/자동 마감 P0 승인 완료",
       "lastUpdate": "2026-06-07",
-      "blocker": "기획 결과 대기",
-      "next": "후보 우선순위 분류"
+      "blocker": "",
+      "next": "다음 라운드 후보 재분류"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
-      "status": "idle",
-      "currentTask": "미할당",
+      "status": "done",
+      "currentTask": "DB/Backend 세부 태스크 분해 완료",
       "lastUpdate": "2026-06-07",
-      "blocker": "승인 Task 대기",
-      "next": "승인 Task 구현"
+      "blocker": "",
+      "next": "사용자 승인 시 구현 착수"
     },
     {
       "name": "QA Agent",
       "role": "QA",
-      "status": "idle",
-      "currentTask": "미할당",
+      "status": "done",
+      "currentTask": "P0/P1 테스트 전략 제출 완료",
       "lastUpdate": "2026-06-07",
-      "blocker": "개발 결과 대기",
-      "next": "로컬 검증"
+      "blocker": "",
+      "next": "구현 결과 검증 대기"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
-      "status": "idle",
-      "currentTask": "미할당",
+      "status": "done",
+      "currentTask": "관리자 세션/Toss/Agent status 보안 태스크 제출 완료",
       "lastUpdate": "2026-06-07",
-      "blocker": "검토 완료 후보 대기",
-      "next": "고위험 후보 보안 검토"
+      "blocker": "",
+      "next": "구현 전 보안 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "running",
-      "currentTask": "Task 상세 설명 형식 정리",
+      "currentTask": "AG-0008과 발굴 문서 정리",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "Task 진행 상태 기록"
@@ -189,6 +189,27 @@
           "내용이 길어지면 summary를 먼저 읽으면 됩니다.",
           "고객 개인정보나 보안 키 같은 민감한 정보는 상세 설명에도 남기지 않습니다.",
           "기존 작업 로그 AGENTIC_WORK_LOG.md는 계속 원문 기록 역할을 유지합니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0008",
+      "title": "밤샘 태스크 발굴 라운드 1",
+      "priority": "P1",
+      "owner": "총괄 디렉터 + 실제 subagents",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "TD-001~TD-008 중 첫 구현 단위 선택",
+      "details": {
+        "summary": "실제 subagent를 병렬로 사용해 다음 개발 후보를 더 작고 실행 가능한 태스크로 분해했습니다.",
+        "what": "DB/Backend, 보안, UX/UI, QA Agent가 각각 정원/자동 마감, 관리자 세션, Toss 승인값, 테스트 전략을 조사했고 결과를 AGENTIC_TASK_DISCOVERY.md에 모았습니다.",
+        "why": "아침에 배포하거나 개발할 작업을 고를 때 제목만 보는 대신, 어떤 작업이 왜 필요한지와 첫 개발 단위를 빠르게 판단할 수 있어야 합니다.",
+        "developmentDirection": "TD-001~TD-008로 태스크를 나누고, 특히 P0 정원/잔여석/자동 마감은 DB/RPC에서 먼저 막는 방향으로 정리했습니다.",
+        "notes": [
+          "배포와 원격 push는 하지 않았습니다.",
+          "다음 1순위 후보는 TD-001/TD-002 정원 데이터 모델과 정원 초과 차단입니다.",
+          "Toss pending 주문 회수, 취소/환불 자동 재오픈, CAPTCHA는 후속 라운드로 보류했습니다."
         ]
       }
     }

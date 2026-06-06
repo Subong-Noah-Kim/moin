@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T02:43:32+09:00",
-  "currentFocus": "실제 subagent 우선순위 조사 완료",
+  "updatedAt": "2026-06-07T02:52:59+09:00",
+  "currentFocus": "밤샘 개발 태스크 발굴 라운드 1 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,40 +11,40 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "다음 1순위는 정원/잔여석/자동 마감"
+    "currentFocus": "TD-001~TD-008 정리 완료"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "subagent 결과 요약 및 다음 개발 제안",
-      "updatedAt": "2026-06-07T02:43:32+09:00",
-      "next": "사용자 승인 시 정원/잔여석/자동 마감 개발 착수"
+      "currentTask": "라운드 1 결과 정리와 다음 라운드 준비",
+      "updatedAt": "2026-06-07T02:52:59+09:00",
+      "next": "다음 heartbeat에서 구현 순서/첫 커밋 단위 추가 분해"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
-      "status": "idle",
-      "currentTask": "현황판 상세 보기 렌더링 추가 완료",
-      "updatedAt": "2026-06-07T02:36:44+09:00",
-      "next": "승인 Task 대기"
+      "status": "done",
+      "currentTask": "DB/Backend 세부 태스크 분해 완료",
+      "updatedAt": "2026-06-07T02:52:59+09:00",
+      "next": "TD-001/TD-002 구현 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "UX/UI 개선 후보 제출 완료",
-      "updatedAt": "2026-06-07T02:41:28+09:00",
-      "next": "검토 Agent 판단 대기"
+      "currentTask": "화면 태스크 분해 완료",
+      "updatedAt": "2026-06-07T02:52:59+09:00",
+      "next": "TD-003/TD-004 구현 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
-      "status": "idle",
-      "currentTask": "npm test와 localhost 응답 확인 완료",
-      "updatedAt": "2026-06-07T02:33:03+09:00",
-      "next": "추가 수동 확인 대기"
+      "status": "done",
+      "currentTask": "P0/P1 테스트 전략 제출 완료",
+      "updatedAt": "2026-06-07T02:52:59+09:00",
+      "next": "테스트 보강 구현 대기"
     },
     {
       "name": "작업 정리 Agent",
@@ -74,9 +74,9 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "보안 리스크와 개선 후보 제출 완료",
-      "updatedAt": "2026-06-07T02:41:28+09:00",
-      "next": "검토 Agent 판단 대기"
+      "currentTask": "보안 세부 태스크 분해 완료",
+      "updatedAt": "2026-06-07T02:52:59+09:00",
+      "next": "TD-005~TD-007 구현 대기"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T02:52:59+09:00",
+      "agent": "작업 정리 Agent",
+      "level": "review",
+      "title": "라운드 1 발굴 문서화",
+      "body": "TD-001~TD-008을 AGENTIC_TASK_DISCOVERY.md에 정리했습니다. 다음 1순위는 정원 데이터 모델과 정원 초과 차단입니다."
+    },
+    {
+      "time": "2026-06-07T02:50:14+09:00",
+      "agent": "총괄 디렉터",
+      "level": "running",
+      "title": "밤샘 발굴 라운드 1 시작",
+      "body": "DB/Backend(Descartes), 보안(Epicurus), UX/UI(Einstein), QA(Godel) Agent를 읽기 전용 세부 태스크 분해 작업에 투입했습니다."
+    },
     {
       "time": "2026-06-07T02:43:32+09:00",
       "agent": "검토 Agent",
