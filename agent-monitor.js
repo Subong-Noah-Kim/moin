@@ -1,6 +1,7 @@
 const liveStatusUrl = './AGENTIC_LIVE_STATUS.json';
 const boardStatusUrl = './AGENTIC_STATUS.json';
 const fallbackPollIntervalMs = 5000;
+const openTaskStorageKey = 'moin:agent-monitor:open-task-ids';
 
 const state = {
   requestId: 0,
@@ -66,6 +67,45 @@ function getStatusClass(status) {
   return 'idle';
 }
 
+function readOpenTaskIds() {
+  try {
+    const rawValue = window.localStorage?.getItem(openTaskStorageKey);
+    const values = JSON.parse(rawValue || '[]');
+
+    if (!Array.isArray(values)) {
+      return new Set();
+    }
+
+    return new Set(values.map((value) => String(value)));
+  } catch {
+    return new Set();
+  }
+}
+
+function writeOpenTaskIds(openTaskIds) {
+  try {
+    window.localStorage?.setItem(openTaskStorageKey, JSON.stringify([...openTaskIds]));
+  } catch {
+    // Local monitor should keep working even when browser storage is unavailable.
+  }
+}
+
+function setTaskDetailOpen(taskId, isOpen) {
+  if (!taskId) {
+    return;
+  }
+
+  const openTaskIds = readOpenTaskIds();
+
+  if (isOpen) {
+    openTaskIds.add(taskId);
+  } else {
+    openTaskIds.delete(taskId);
+  }
+
+  writeOpenTaskIds(openTaskIds);
+}
+
 function renderMessage(message) {
   liveSummary.innerHTML = '';
   agentList.innerHTML = `<article class="agent-card"><p>${escapeHtml(message)}</p></article>`;
@@ -100,7 +140,7 @@ function renderTaskDetailSection(label, value) {
   `;
 }
 
-function renderTaskDetails(task) {
+function renderTaskDetails(task, isOpen = false) {
   const details = task.details || {};
   const sections = [
     renderTaskDetailSection('요약', details.summary),
@@ -115,7 +155,7 @@ function renderTaskDetails(task) {
   }
 
   return `
-    <details class="task-detail">
+    <details class="task-detail"${isOpen ? ' open' : ''}>
       <summary>상세 보기</summary>
       <div>${sections}</div>
     </details>
@@ -123,16 +163,19 @@ function renderTaskDetails(task) {
 }
 
 function renderTaskList(tasks) {
+  const openTaskIds = readOpenTaskIds();
+
   taskCount.textContent = `${tasks.length}개`;
   taskList.innerHTML =
     tasks
       .map((task) => {
-        const detailMarkup = renderTaskDetails(task);
+        const taskId = String(task.id || '');
+        const detailMarkup = renderTaskDetails(task, openTaskIds.has(taskId));
         const detailClass = detailMarkup ? ' has-detail' : '';
         const detailTabIndex = detailMarkup ? ' tabindex="0"' : '';
 
         return `
-          <article class="task-item${detailClass}"${detailTabIndex}>
+          <article class="task-item${detailClass}"${detailTabIndex} data-task-id="${escapeHtml(taskId)}">
             <header>
               <div>
                 <strong>${escapeHtml(task.id || '-')} · ${escapeHtml(task.title || '-')}</strong>
@@ -319,6 +362,7 @@ function toggleTaskDetail(taskItem) {
   }
 
   detail.open = !detail.open;
+  setTaskDetailOpen(taskItem.dataset.taskId, detail.open);
 }
 
 function isTaskDetailInteractiveTarget(target) {
@@ -354,6 +398,20 @@ function handleTaskItemKeydown(event) {
   toggleTaskDetail(taskItem);
 }
 
+function handleTaskDetailToggle(event) {
+  if (!event.target.matches('.task-detail')) {
+    return;
+  }
+
+  const taskItem = event.target.closest('.task-item.has-detail');
+
+  if (!taskItem) {
+    return;
+  }
+
+  setTaskDetailOpen(taskItem.dataset.taskId, event.target.open);
+}
+
 refreshButton.addEventListener('click', () => {
   void loadLiveStatus();
 });
@@ -361,6 +419,8 @@ refreshButton.addEventListener('click', () => {
 taskList.addEventListener('click', handleTaskItemClick);
 
 taskList.addEventListener('keydown', handleTaskItemKeydown);
+
+taskList.addEventListener('toggle', handleTaskDetailToggle, true);
 
 togglePollingButton.addEventListener('click', () => {
   state.isPaused = !state.isPaused;

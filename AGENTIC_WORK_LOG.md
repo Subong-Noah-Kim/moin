@@ -243,3 +243,27 @@
   - Local dev server served the new `작업 상세` panel and Task click handler code.
 - Next:
   - 휴대폰에서 `agent-monitor.html`을 새로고침한 뒤 `작업 상세` 섹션의 Task 카드를 눌러 확인한다.
+
+### AG-0011 - 로컬 현황판 Task 펼침 상태 유지
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 휴대폰 로컬 현황판에서 펼쳐둔 작업 상세가 새로고침 후에도 다시 접히지 않게 한다.
+- Changed files:
+  - `agent-monitor.js`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `tests/paymentSecurity.test.js`
+- Notes:
+  - Task 상세가 열리거나 닫힐 때 해당 Task id를 브라우저 `localStorage`에 저장한다.
+  - 현황판이 다시 렌더링될 때 저장된 Task id에 해당하는 상세 영역은 `open` 상태로 복원한다.
+  - 카드 전체 클릭뿐 아니라 `상세 보기` summary를 직접 눌러도 저장되도록 `toggle` 이벤트를 감지한다.
+  - 브라우저 저장소를 사용할 수 없는 환경에서도 현황판은 계속 동작하며, 그 경우에만 펼침 상태가 유지되지 않는다.
+- Verification:
+  - `npm test` passed: 15 tests.
+  - Local dev server served `agent-monitor.js` with the open task storage key and toggle handler.
+- Next:
+  - 휴대폰에서 작업 상세를 펼친 뒤 새로고침해 열린 상태가 유지되는지 확인한다.

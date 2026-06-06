@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T03:06:22+09:00",
-  "currentFocus": "로컬 모바일 현황판 Task 상세 패널 추가 완료",
+  "updatedAt": "2026-06-07T03:09:28+09:00",
+  "currentFocus": "로컬 현황판 작업 상세 펼침 상태 유지 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,23 +11,23 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0010 로컬 검증 완료"
+    "currentFocus": "AG-0011 로컬 검증 완료"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0010 로컬 모바일 현황판 검증 완료",
-      "updatedAt": "2026-06-07T03:06:22+09:00",
-      "next": "휴대폰에서 새로고침 확인"
+      "currentTask": "AG-0011 작업 상세 열림 상태 유지 검증 완료",
+      "updatedAt": "2026-06-07T03:09:28+09:00",
+      "next": "휴대폰에서 펼친 Task 새로고침 유지 확인"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "로컬 모니터 Task 패널과 클릭 상세 보기 구현 완료",
-      "updatedAt": "2026-06-07T03:06:22+09:00",
+      "currentTask": "로컬 모니터 Task 상세 열림 상태 저장 구현 완료",
+      "updatedAt": "2026-06-07T03:09:28+09:00",
       "next": "다음 개발 태스크 대기"
     },
     {
@@ -50,8 +50,8 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0010 로컬 모니터 수정 기록 완료",
-      "updatedAt": "2026-06-07T03:06:22+09:00",
+      "currentTask": "AG-0011 열림 상태 유지 기록 완료",
+      "updatedAt": "2026-06-07T03:09:28+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T03:09:28+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "작업 상세 펼침 상태 유지 검증",
+      "body": "agent-monitor.js가 열린 Task id를 localStorage에 저장하고, 렌더링 시 details open 상태로 복원하는지 테스트와 로컬 서버 응답으로 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T03:09:28+09:00",
+      "agent": "개발 Agent",
+      "level": "review",
+      "title": "Task 펼침 상태 저장",
+      "body": "작업 상세를 열거나 닫을 때 Task id를 저장해 새로고침 후에도 같은 상세 카드가 열린 상태로 유지되게 했습니다."
+    },
     {
       "time": "2026-06-07T03:06:22+09:00",
       "agent": "QA Agent",

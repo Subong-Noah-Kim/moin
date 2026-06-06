@@ -210,10 +210,16 @@ test('local agent monitor polls live status without publishing it to Pages', asy
   assert.match(monitorStyles, /\.task-detail/);
   assert.match(monitorScript, /AGENTIC_LIVE_STATUS\.json/);
   assert.match(monitorScript, /AGENTIC_STATUS\.json/);
+  assert.match(monitorScript, /moin:agent-monitor:open-task-ids/);
+  assert.match(monitorScript, /window\.localStorage\?\.getItem\(openTaskStorageKey\)/);
+  assert.match(monitorScript, /window\.localStorage\?\.setItem\(openTaskStorageKey/);
   assert.match(monitorScript, /function renderTaskDetails/);
   assert.match(monitorScript, /function toggleTaskDetail/);
+  assert.match(monitorScript, /data-task-id="\$\{escapeHtml\(taskId\)\}"/);
+  assert.match(monitorScript, /<details class="task-detail"\$\{isOpen \? ' open' : ''\}>/);
   assert.match(monitorScript, /taskList\.addEventListener\('click', handleTaskItemClick\)/);
   assert.match(monitorScript, /taskList\.addEventListener\('keydown', handleTaskItemKeydown\)/);
+  assert.match(monitorScript, /taskList\.addEventListener\('toggle', handleTaskDetailToggle, true\)/);
   assert.match(monitorScript, /document\.visibilityState !== 'visible'/);
   assert.match(monitorScript, /window\.setTimeout\(loadLiveStatus, state\.pollIntervalMs\)/);
   assert.doesNotMatch(workflow, /cp agent-monitor\./);

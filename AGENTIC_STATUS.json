@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T03:06:22+09:00",
+  "updatedAt": "2026-06-07T03:09:28+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 8,
+    "doneLocal": 9,
     "deployNeeded": 0
   },
   "agents": [
@@ -12,10 +12,10 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0010 로컬 모바일 현황판 Task 패널 검증 완료",
+      "currentTask": "AG-0011 작업 상세 열림 상태 유지 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "휴대폰에서 agent-monitor 새로고침 확인"
+      "next": "휴대폰에서 펼친 Task 새로고침 유지 확인"
     },
     {
       "name": "기획 Agent",
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "로컬 모니터 Task 패널과 클릭 상세 보기 구현 완료",
+      "currentTask": "로컬 모니터 Task 상세 열림 상태 저장 구현 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 개발 태스크 대기"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0010 로컬 모니터 수정 기록 완료",
+      "currentTask": "AG-0011 열림 상태 유지 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -252,6 +252,27 @@
           "로컬 dev 서버에 Cache-Control: no-store를 추가해 휴대폰 브라우저가 오래된 JS/CSS를 계속 보는 문제를 줄였습니다.",
           "기존 GitHub Pages 배포 artifact에는 로컬 모니터 파일을 포함하지 않는 정책을 유지합니다.",
           "이미 열려 있던 휴대폰 화면은 새로고침해야 새 패널과 클릭 코드가 적용됩니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0011",
+      "title": "로컬 현황판 Task 펼침 상태 유지",
+      "priority": "P3",
+      "owner": "개발 Agent + QA Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "휴대폰에서 Task를 펼친 뒤 새로고침해 열린 상태가 유지되는지 확인",
+      "details": {
+        "summary": "로컬 현황판에서 펼쳐둔 작업 상세가 새로고침 후에도 다시 열린 상태로 유지되게 했습니다.",
+        "what": "Task 상세가 열리거나 닫힐 때 Task id를 브라우저 localStorage에 저장하고, 화면을 다시 그릴 때 저장된 id의 상세 영역을 open 상태로 복원합니다.",
+        "why": "휴대폰으로 작업 흐름을 보다가 새로고침되면 읽던 상세 설명이 접혀서 다시 찾아 눌러야 하는 불편이 있었습니다.",
+        "developmentDirection": "agent-monitor.js에 open task id 저장/복원 함수를 추가하고, details toggle 이벤트까지 감지해 직접 클릭과 summary 클릭 모두 저장되게 했습니다.",
+        "notes": [
+          "저장 위치는 현재 브라우저의 localStorage라서 같은 휴대폰/브라우저에서만 유지됩니다.",
+          "브라우저 저장소가 막혀 있어도 현황판 자체는 계속 동작합니다.",
+          "Task id가 바뀌거나 삭제되면 해당 펼침 상태는 자연스럽게 사라집니다."
         ]
       }
     }
