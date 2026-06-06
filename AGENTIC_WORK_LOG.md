@@ -267,3 +267,33 @@
   - Local dev server served `agent-monitor.js` with the open task storage key and toggle handler.
 - Next:
   - 휴대폰에서 작업 상세를 펼친 뒤 새로고침해 열린 상태가 유지되는지 확인한다.
+
+### AG-0012 - 수동 하트비트 사이클 2
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + 실제 subagents
+- Purpose: 10분 하트비트 규칙으로 한 사이클을 즉시 실행해 다음 개발 후보를 다시 발굴하고 우선순위를 정리한다.
+- Subagents:
+  - Planning Agent: Newton
+  - UX/UI Agent: Averroes
+  - Security Agent: Hubble
+  - QA Agent: Rawls
+- Changed files:
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - Round 1의 `정원/잔여석/자동 마감` P0 판단은 유지한다.
+  - 보안/QA Agent가 `pending` 주문을 좌석 점유로 계산할 경우 결제창 이탈자가 좌석을 계속 붙잡을 수 있다는 리스크를 추가로 확인했다.
+  - Round 2에 TD-009 pending 주문 만료 정책, TD-010 정원 P0 구현 패키지 순서, TD-013 Agent status 민감정보 denylist 테스트를 새 후보로 정리했다.
+  - 작은 다음 구현 후보는 배포 없이 가능한 TD-013이다.
+  - 큰 다음 구현 후보는 Supabase SQL/Edge Function 배포 계획이 필요한 TD-009/TD-010이다.
+- Verification:
+  - Subagents completed read-only analysis.
+  - `npm test` passed: 15 tests.
+- Next:
+  - 사용자가 작은 안전망 작업을 원하면 TD-013부터 구현한다.
+  - 사용자가 핵심 서비스 리스크를 먼저 잡고 싶으면 TD-009/TD-010 설계와 구현을 시작한다.

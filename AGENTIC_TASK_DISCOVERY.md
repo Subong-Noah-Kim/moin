@@ -136,3 +136,111 @@
 - 취소/환불 시 자동 재오픈 정책: 취소/환불 운영 플로우와 함께 설계한다.
 - CAPTCHA/Turnstile: 실제 스팸 징후가 생기면 붙인다.
 - 정식 admin refresh token lifecycle: sessionStorage 축소 이후 별도 보안 작업으로 분리한다.
+
+## Round 2 - 2026-06-07 03:14 KST
+
+### 요약
+
+이번 수동 하트비트 사이클의 결론은 Round 1의 `정원/잔여석/자동 마감` 우선순위를 유지하되, 구현 전에 `pending 주문 만료`를 함께 설계해야 한다는 것입니다. `pending` 주문을 좌석 점유로 계산하면 Toss 결제창을 열고 이탈한 주문이 좌석을 계속 붙잡아 거짓 마감을 만들 수 있습니다. 따라서 첫 개발 패키지는 `정원 필드 + 좌석 점유 기준 + pending 만료 + sold-out 에러 매핑`을 한 묶음으로 잡는 것이 안전합니다.
+
+### TD-009 - pending 주문 만료 정책 추가
+
+- Priority: `P0`
+- Status: `approved`
+- Source agents: Security, QA, Review
+- What: Toss 결제창 이탈로 남은 `pending` 주문이 좌석을 영구 점유하지 않도록 만료 시간을 둔다.
+- Why: 정원 차단에서 `pending` 주문을 좌석 점유로 보면, 결제하지 않은 주문이 모임을 마감 상태로 만들 수 있다.
+- First development unit:
+  - `orders.expires_at` 추가 후보: pending Toss 주문 만료 시각.
+  - `create_public_order` RPC가 새 pending 주문에 만료 시각을 저장한다.
+  - 정원 계산은 `paid`, `demo_paid`, 만료되지 않은 `pending`만 좌석 점유로 계산한다.
+- Development direction: 정원 초과를 안전하게 막되, 결제창 이탈자가 좌석을 과도하게 붙잡지 않도록 한다.
+- Notes:
+  - 만료 시간은 운영 정책이다. 첫 값은 15~30분 후보가 현실적이다.
+  - 만료된 pending 주문을 즉시 삭제하지 않아도 되지만, 좌석 계산에서는 제외해야 한다.
+  - Toss 실패/취소 콜백이 들어오면 기존처럼 failed/cancelled로 정리한다.
+
+### TD-010 - 정원 P0 구현 패키지 순서 확정
+
+- Priority: `P0`
+- Status: `approved`
+- Source agents: Planning, UX/UI, Security, QA, Review
+- What: TD-001~TD-003과 TD-009를 실제 구현 순서로 묶는다.
+- Why: DB 정원 필드만 추가하거나 화면 배지만 먼저 추가하면 실제 과판매 방지 효과가 부족하다.
+- First development unit:
+  - 1단계: DB migration으로 `capacity`, `registration_status`, `closed_at`, `close_reason`, `orders.expires_at` 추가.
+  - 2단계: `create_public_application`, `create_public_order` RPC에서 row lock과 좌석 계산을 적용.
+  - 3단계: Edge Function이 `MEETUP_SOLD_OUT`을 HTTP 409와 사용자용 메시지로 변환.
+  - 4단계: 공개 카드/상세/결제 진입 UI가 `remaining_spots`와 `registration_status`를 반영.
+  - 5단계: 관리자 모임 폼과 목록에 정원/잔여석/마감 상태를 표시.
+- Development direction: 서버 차단을 먼저 만들고, 화면은 그 결과를 사용자에게 이해시키는 순서로 붙인다.
+- Notes:
+  - Supabase 원격 SQL 적용과 Edge Function 배포가 필요하므로 코드 커밋과 실제 배포/적용은 분리한다.
+  - 로컬 테스트는 정규식 가드로 시작하되, 가능하면 Supabase local DB 시나리오 테스트로 확장한다.
+
+### TD-011 - 관리자 세션 저장소 축소 구현
+
+- Priority: `P0`
+- Status: `approved_needs_user_ack`
+- Source agents: Planning, Security, QA
+- What: 관리자 토큰을 오래 남는 `localStorage`에서 더 짧은 `sessionStorage`로 옮기고, 쓰지 않는 refresh token 저장을 제거한다.
+- Why: 관리자 토큰은 관리자 권한을 가진 열쇠라 브라우저에 오래 남길수록 위험하다.
+- First development unit:
+  - `supabase-client.js`의 admin session 저장소를 `sessionStorage`로 전환.
+  - refresh flow를 구현하지 않는 한 저장 객체에서 `refreshToken` 제거.
+  - 만료되거나 깨진 세션을 읽으면 즉시 저장소를 정리.
+- Development direction: 탭/브라우저를 닫으면 다시 로그인하는 쪽으로 보안을 높인다.
+- Notes:
+  - 운영 UX가 바뀐다. 관리자는 브라우저를 닫은 뒤 다시 로그인해야 할 수 있다.
+  - 사용자가 이 UX 변화를 승인하면 바로 구현하기 좋은 작은 작업이다.
+
+### TD-012 - 결제 결과 식별자 노출 최소화
+
+- Priority: `P1`
+- Status: `approved`
+- Source agents: Planning, UX/UI, Security, QA
+- What: 결제 결과 화면과 브라우저 저장소에서 원문 `paymentKey` 노출을 줄인다.
+- Why: 결제 승인 식별자는 확인 요청에는 필요하지만, 사용자 화면이나 sessionStorage에 오래 남길 이유는 적다.
+- First development unit:
+  - `payment-result.js`에서 confirm 요청 이후 `history.replaceState`로 URL query 정리.
+  - 화면의 결제키 원문 표시 제거 또는 마스킹.
+  - sessionStorage 저장 객체에서 `paymentKey` 제거.
+- Development direction: 요청 처리에는 필요한 값을 쓰되, 화면/저장소/로그에는 최소한만 남긴다.
+- Notes:
+  - URL 정리 시 새로고침 재시도 UX가 약해질 수 있으므로 실패 안내 문구를 같이 확인한다.
+
+### TD-013 - Agent status 민감정보 denylist 테스트
+
+- Priority: `P1`
+- Status: `approved`
+- Source agents: Security, QA
+- What: `AGENTIC_STATUS.json`, `AGENTIC_LIVE_STATUS.json`에 토큰/결제키/고객정보처럼 보이는 문자열이 들어가면 테스트에서 실패하게 한다.
+- Why: `AGENTIC_STATUS.json`은 GitHub Pages artifact에 포함되므로 작업 설명에 민감한 값이 실수로 들어가면 공개될 수 있다.
+- First development unit:
+  - JSON을 재귀적으로 훑는 테스트 helper 추가.
+  - `access_token`, `refresh_token`, `paymentKey`, `checkoutToken`, `service_role`, JWT 형태, Toss secret 형태를 denylist로 시작.
+  - 실패 메시지는 매칭값 원문이 아니라 경로와 규칙명만 보여준다.
+- Development direction: 작은 보수적 denylist로 시작하고 오탐이 많으면 조정한다.
+- Notes:
+  - 이 작업은 배포가 필요 없는 테스트 안전망이라 다음 작은 개발 단위로 적합하다.
+
+### TD-014 - public localStorage 파싱 복원력
+
+- Priority: `P1`
+- Status: `approved`
+- Source agents: QA
+- What: public 페이지의 `momentclub:*` localStorage 값이 깨져도 앱이 렌더링되게 한다.
+- Why: 잘못된 저장값 하나 때문에 공개 페이지가 초기화 중 멈추면 일반 사용자가 모임 목록을 못 볼 수 있다.
+- First development unit:
+  - `readStringSet(storage, key)` 같은 작은 helper를 추가한다.
+  - invalid JSON, 배열이 아닌 값, storage throw 상황에서 빈 Set으로 복구한다.
+  - 깨진 값은 가능하면 정리한다.
+- Development direction: 관리자 세션 parser처럼 방어적으로 읽고 실패 시 앱은 계속 보여준다.
+- Notes:
+  - 결제/신청 핵심 흐름보다 낮지만, 코드 변경 범위가 작고 테스트하기 좋다.
+
+### Round 2 보류/폐기 판단
+
+- 광범위한 frontend module split: 유용하지만 이번 사이클의 직접 사용자/운영 리스크 해소에는 덜 맞아 `deferred`.
+- GitHub Pages workflow runtime 정리: TODO 상단에 남아 있으나 실제 warning 제거 확인은 GitHub Actions 실행이 필요해 별도 배포/검증 사이클로 유지.
+- live region 전체 확대: 접근성 품질 개선으로 유지하되, 자동 갱신 모니터에는 과한 알림을 피한다.

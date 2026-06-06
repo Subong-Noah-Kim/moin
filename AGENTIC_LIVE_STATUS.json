@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T03:09:28+09:00",
-  "currentFocus": "로컬 현황판 작업 상세 펼침 상태 유지 완료",
+  "updatedAt": "2026-06-07T03:17:14+09:00",
+  "currentFocus": "수동 하트비트 사이클 2 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,16 +11,16 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0011 로컬 검증 완료"
+    "currentFocus": "TD-009~TD-014 정리 완료"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0011 작업 상세 열림 상태 유지 검증 완료",
-      "updatedAt": "2026-06-07T03:09:28+09:00",
-      "next": "휴대폰에서 펼친 Task 새로고침 유지 확인"
+      "currentTask": "수동 하트비트 사이클 2 완료",
+      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "next": "TD-009 pending 주문 만료 또는 TD-013 민감정보 가드 중 선택"
     },
     {
       "name": "개발 Agent",
@@ -34,33 +34,33 @@
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "화면 태스크 분해 완료",
-      "updatedAt": "2026-06-07T02:52:59+09:00",
-      "next": "TD-003/TD-004 구현 대기"
+      "currentTask": "모바일/관리자 UX 후보 재검토 완료",
+      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "next": "정원/잔여석 UI 구현 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "P0/P1 테스트 전략 제출 완료",
-      "updatedAt": "2026-06-07T02:52:59+09:00",
-      "next": "테스트 보강 구현 대기"
+      "currentTask": "다음 구현 후보 테스트 전략 재검토 완료",
+      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "next": "구현 결과 검증 대기"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0011 열림 상태 유지 기록 완료",
-      "updatedAt": "2026-06-07T03:09:28+09:00",
+      "currentTask": "AG-0012 수동 사이클 기록 완료",
+      "updatedAt": "2026-06-07T03:17:14+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "서비스 관점 개발 후보 제출 완료",
-      "updatedAt": "2026-06-07T02:41:28+09:00",
-      "next": "검토 Agent 판단 대기"
+      "currentTask": "서비스 관점 다음 개발 후보 재정리 완료",
+      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "next": "다음 라운드 대기"
     },
     {
       "name": "검토 Agent",
@@ -74,9 +74,9 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "보안 세부 태스크 분해 완료",
-      "updatedAt": "2026-06-07T02:52:59+09:00",
-      "next": "TD-005~TD-007 구현 대기"
+      "currentTask": "보안/데이터 무결성 후보 재검토 완료",
+      "updatedAt": "2026-06-07T03:17:14+09:00",
+      "next": "TD-009/TD-011/TD-013 구현 대기"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,27 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T03:17:14+09:00",
+      "agent": "작업 정리 Agent",
+      "level": "review",
+      "title": "수동 사이클 2 문서화",
+      "body": "Round 2 결과를 AGENTIC_TASK_DISCOVERY.md에 TD-009~TD-014로 정리했습니다. 핵심 추가점은 pending 주문 만료 정책과 Agent status 민감정보 가드입니다."
+    },
+    {
+      "time": "2026-06-07T03:17:14+09:00",
+      "agent": "검토 Agent",
+      "level": "review",
+      "title": "다음 구현 후보 분류",
+      "body": "큰 작업은 TD-009/TD-010 정원 P0 패키지, 작은 작업은 TD-013 Agent status 민감정보 denylist 테스트가 적합하다고 분류했습니다."
+    },
+    {
+      "time": "2026-06-07T03:14:12+09:00",
+      "agent": "총괄 디렉터",
+      "level": "running",
+      "title": "수동 하트비트 사이클 시작",
+      "body": "기획(Newton), UX/UI(Averroes), 보안(Hubble), QA(Rawls) subagent를 읽기 전용 조사에 투입했습니다. 배포와 push는 하지 않습니다."
+    },
     {
       "time": "2026-06-07T03:09:28+09:00",
       "agent": "QA Agent",
