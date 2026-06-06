@@ -4,11 +4,10 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 ## Current Priority Queue - 2026-06-07 Audit
 
-1. Deploy and verify public submission abuse controls before treating anonymous applications/orders as production traffic.
-2. Update the GitHub Pages workflow for the upcoming GitHub Actions Node runtime change.
-3. Tighten admin session lifecycle and token storage.
-4. Improve application/checkout form labels and user-facing copy.
-5. Expand behavior-oriented frontend tests after the cache/versioning cleanup.
+1. Update the GitHub Pages workflow for the upcoming GitHub Actions Node runtime change.
+2. Tighten admin session lifecycle and token storage.
+3. Improve application/checkout form labels and user-facing copy.
+4. Expand behavior-oriented frontend tests after the cache/versioning cleanup.
 
 ## P0 - Before Real Payment Use
 
@@ -69,12 +68,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Done when: the initial admin load has accurate status text, paid orders can be reconciled against payment rows or an explicit payment-detail view, and outdated "before real payment" copy is removed.
   - Status: admin overview no longer emits stale pre-payment warnings, order loading fetches `payments` alongside `orders`, the order table shows a payment-record column, and tests verify the reconciliation path.
 
-- [ ] Add public submission abuse controls
+- [x] Add public submission abuse controls
   - Problem: anonymous visitors can insert applications and valid demo/pending orders directly through public Supabase policies, so a public launch can be spammed even though payment amount tampering is blocked.
   - Files: `supabase-client.js`, `supabase/functions/create-public-submission`, `supabase/migrations/20260606080000_public_submission_abuse_controls.sql`, `supabase/migrations/20260606090000_lock_public_direct_inserts.sql`
   - Done when: application/order creation has a practical spam-control path such as CAPTCHA/Turnstile, rate limits through an Edge Function, or another server-side abuse throttle appropriate for production.
-  - Status: local implementation prepared. Public writes now route through `create-public-submission`; the setup migration adds rate-limit RPCs and the lock migration removes anonymous direct inserts.
-  - Deployment caution: apply `20260606080000_public_submission_abuse_controls.sql`, deploy `create-public-submission`, deploy the frontend, verify application/demo/Toss order creation, then apply `20260606090000_lock_public_direct_inserts.sql`. Running the lock migration too early can temporarily break public submissions.
+  - Status: deployed and verified on `jqnnolsyvynrhjvfmege`. Public writes route through `create-public-submission`, the setup migration adds rate-limit RPCs, the lock migration removes anonymous direct inserts, Edge Function creation still works after the lock, and direct anon inserts now fail with permission errors.
+  - Deployment note: the safe order was `20260606080000_public_submission_abuse_controls.sql`, `create-public-submission` deploy, frontend deploy, application/demo/Toss order verification, then `20260606090000_lock_public_direct_inserts.sql`.
 
 - [ ] Tighten admin session lifecycle and token storage
   - Problem: admin access and refresh tokens are stored in `localStorage`, while refresh is not actually used; this increases token persistence without improving the operator experience.
@@ -156,4 +155,4 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 - Payment hardening migration and Edge Function deploy were applied after the SQL migration and function deployment steps. Keep using test keys until business/live payment setup is intentional.
 - Supabase Edge Function deploy may require running locally from the terminal because the CLI can pause on macOS keychain/auth prompts.
-- Public submission abuse controls intentionally have a two-step migration path. The lock migration should run only after the new Edge Function path is live and verified.
+- Public submission abuse controls were applied with the two-step migration path. Keep that same order for future environments: setup migration, Edge Function deploy, frontend deploy/verification, then lock migration.
