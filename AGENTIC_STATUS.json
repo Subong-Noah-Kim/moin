@@ -1,81 +1,81 @@
 {
-  "updatedAt": "2026-06-07T04:58:15+09:00",
+  "updatedAt": "2026-06-07T05:07:47+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 21,
-    "deployNeeded": 7
+    "doneLocal": 22,
+    "deployNeeded": 8
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0023 SQL/RPC smoke-test 준비 완료 검수",
+      "currentTask": "AG-0024 public/admin 정원 상태 read contract 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "public/admin capacity read contract 배정"
+      "next": "public/admin capacity UI 구현 배정"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "capacity rollout 순서 재정렬 확인",
+      "currentTask": "정원 상태 read contract 기반 UI 순서 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "read contract 이후 public/admin UX 범위 검토"
+      "next": "public/admin UI 문구와 운영 흐름 검토"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "UI 선행보다 read contract 우선 결정 지원",
+      "currentTask": "read contract 이후 UI 구현 대기",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "잔여석 UI 문구와 비활성 상태 설계"
+      "next": "잔여석/마감/신청 종료 표시 설계"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "smoke-test 배포 순서와 live Supabase 위험 검토 완료",
+      "currentTask": "public/admin read contract 권한 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "read contract 보안 검토"
+      "next": "UI merge 로직 검토"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "정원/잔여석 smoke-test SQL과 문서 가드 로컬 완료",
+      "currentTask": "public/admin 정원 상태 read contract migration 로컬 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "public/admin read contract 구현 대기"
+      "next": "availability RPC client merge 구현 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "capacity smoke-test 구조 검토 및 npm test 27개 통과",
+      "currentTask": "read contract 노출 범위 테스트 추가 및 npm test 28개 통과",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "원격 적용 시 SQL Editor smoke-test 실행 확인"
+      "next": "UI 구현 시 fallback/disabled 상태 테스트 추가"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "wildcard cleanup, migration prerequisite, Edge 선배포 위험 검토 완료",
+      "currentTask": "public 주문 수 노출 제거와 anon column grant 축소 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "read contract 권한 검토"
+      "next": "UI가 raw status_label을 판단 기준으로 쓰지 않는지 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0023 SQL/RPC smoke-test 준비 기록 완료",
+      "currentTask": "AG-0024 read contract 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -545,6 +545,29 @@
           "성공 시 ROLLBACK으로 테스트 row가 남지 않아야 합니다.",
           "현재 smoke-test는 Toss 외부 API를 호출하지 않습니다. Edge Function callback 검증은 배포 후 별도로 필요합니다.",
           "로컬 테스트는 27개 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0024",
+      "title": "public/admin 정원 상태 read contract",
+      "priority": "P0",
+      "owner": "개발 Agent + 보안 Agent + QA Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "public/admin UI가 availability RPC를 읽고 meetup_id로 merge하도록 구현",
+      "details": {
+        "summary": "공개 페이지와 관리자 페이지가 믿고 읽을 정원/잔여석 상태 통로를 만들었습니다.",
+        "what": "공개용 availability RPC와 관리자용 availability RPC를 새 migration에 추가했습니다. 공개용은 신청 가능 여부와 잔여석만, 관리자용은 운영에 필요한 결제완료/결제중 카운트와 종료 사유까지 반환합니다.",
+        "why": "기존 status_label은 사람이 적는 문구라 실제 정원 계산과 어긋날 수 있습니다. UI가 정확히 동작하려면 DB가 계산한 구조화된 상태를 읽어야 합니다.",
+        "developmentDirection": "다음 UI 작업은 raw meetups 컬럼이나 status_label을 해석하지 않고, availability RPC 결과를 meetup_id로 merge해서 버튼 활성화와 마감 표시를 결정합니다.",
+        "notes": [
+          "이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "public RPC는 live 주문 수를 직접 반환하지 않습니다.",
+          "anon direct meetups select는 공개 콘텐츠 컬럼으로 제한했습니다.",
+          "admin RPC는 is_admin()을 통과한 사용자에게만 자세한 운영 카운트를 반환합니다.",
+          "로컬 테스트는 28개 모두 통과했습니다."
         ]
       }
     }

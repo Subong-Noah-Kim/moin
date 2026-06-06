@@ -715,6 +715,47 @@ test('capacity guards wire public submissions and Toss confirmation expiry check
   assert.match(supabaseClient, /error\.code = message\.code/);
 });
 
+test('capacity read contract exposes safe public and admin availability fields', async () => {
+  const migration = await readProjectFile('../supabase/migrations/20260607020000_capacity_read_contract.sql');
+  const publicContract = migration.slice(
+    migration.indexOf('create or replace function public.list_public_meetup_availability'),
+    migration.indexOf('create or replace function public.list_admin_meetup_availability'),
+  );
+  const publicReturnSignature = publicContract.slice(
+    publicContract.indexOf('returns table'),
+    publicContract.indexOf('language sql'),
+  );
+  const publicProjection = publicContract.slice(
+    publicContract.indexOf('select\n    availability.meetup_id'),
+    publicContract.indexOf('from availability;'),
+  );
+  const adminContract = migration.slice(
+    migration.indexOf('create or replace function public.list_admin_meetup_availability'),
+  );
+
+  assert.match(migration, /create or replace function public\.list_public_meetup_availability\(\)/);
+  assert.match(publicReturnSignature, /returns table \(\s+meetup_id text,\s+capacity integer,\s+remaining_spots integer,\s+effective_registration_status text,\s+can_register boolean/s);
+  assert.match(publicContract, /where meetups\.is_published = true/);
+  assert.match(publicContract, /orders\.status in \('paid', 'demo_paid'\)/);
+  assert.match(publicContract, /orders\.status = 'pending'[\s\S]*orders\.expires_at > now\(\)/);
+  assert.match(publicContract, /grant execute on function public\.list_public_meetup_availability\(\) to anon/);
+  assert.match(publicContract, /grant execute on function public\.list_public_meetup_availability\(\) to authenticated/);
+  assert.match(publicContract, /revoke select on public\.meetups from anon/);
+  assert.match(publicContract, /grant select \([\s\S]*status_label[\s\S]*schedule[\s\S]*\) on public\.meetups to anon/);
+  assert.doesNotMatch(publicReturnSignature, /active_order_count|^\s+registration_status text|closed_at|close_reason|buyer_name|provider_payment_key|checkout_token/m);
+  assert.doesNotMatch(publicProjection, /active_order_count|availability\.registration_status|closed_at|close_reason|buyer_name|provider_payment_key|checkout_token/);
+  assert.doesNotMatch(publicContract, /grant select on public\.meetups to anon/);
+
+  assert.match(migration, /create or replace function public\.list_admin_meetup_availability\(\)/);
+  assert.match(adminContract, /if not public\.is_admin\(\) then\s+raise exception 'ADMIN_REQUIRED';\s+end if;/);
+  assert.match(adminContract, /paid_order_count/);
+  assert.match(adminContract, /pending_order_count/);
+  assert.match(adminContract, /closed_at/);
+  assert.match(adminContract, /close_reason/);
+  assert.match(adminContract, /grant execute on function public\.list_admin_meetup_availability\(\) to authenticated/);
+  assert.doesNotMatch(adminContract, /grant execute on function public\.list_admin_meetup_availability\(\) to anon/);
+});
+
 test('capacity smoke test SQL covers safe live migration verification paths', async () => {
   const [smokeTest, supabaseReadme] = await Promise.all([
     readProjectFile('../supabase/capacity-smoke-test.sql'),
@@ -725,6 +766,7 @@ test('capacity smoke test SQL covers safe live migration verification paths', as
   assert.match(smokeTest, /rollback;/);
   assert.match(smokeTest, /20260607000000_capacity_remaining_spots\.sql/);
   assert.match(smokeTest, /20260607010000_capacity_rpc_guards\.sql/);
+  assert.match(smokeTest, /20260607020000_capacity_read_contract\.sql/);
   assert.match(smokeTest, /__capacity_smoke_/);
   assert.match(smokeTest, /where meetup_id in \(/);
   assert.match(smokeTest, /where id in \(/);
@@ -736,6 +778,8 @@ test('capacity smoke test SQL covers safe live migration verification paths', as
   assert.match(smokeTest, /expected non-expired Toss pending order to become paid/);
   assert.match(smokeTest, /expected payment row for confirmed non-expired Toss order/);
   assert.match(smokeTest, /public\.get_meetup_seat_snapshot\('__capacity_smoke_one__'\)/);
+  assert.match(smokeTest, /public\.list_public_meetup_availability\(\)/);
+  assert.match(smokeTest, /expected public availability read contract to return sold_out/);
   assert.match(smokeTest, /effective_registration_status' <> 'sold_out'/);
   assert.match(smokeTest, /expected MEETUP_SOLD_OUT/);
   assert.match(smokeTest, /expected MEETUP_SOLD_OUT for application/);
@@ -751,7 +795,7 @@ test('capacity smoke test SQL covers safe live migration verification paths', as
   assert.match(supabaseReadme, /20260606070000_harden_toss_payment_security\.sql/);
   assert.match(supabaseReadme, /20260606080000_public_submission_abuse_controls\.sql/);
   assert.match(supabaseReadme, /20260606090000_lock_public_direct_inserts\.sql/);
-  assert.match(supabaseReadme, /20260607000000_capacity_remaining_spots\.sql[\s\S]*20260607010000_capacity_rpc_guards\.sql/);
+  assert.match(supabaseReadme, /20260607000000_capacity_remaining_spots\.sql[\s\S]*20260607010000_capacity_rpc_guards\.sql[\s\S]*20260607020000_capacity_read_contract\.sql/);
   assert.match(supabaseReadme, /Do not deploy `functions\/create-public-submission` or `functions\/confirm-toss-payment`/);
 });
 

@@ -665,3 +665,37 @@
 - Next:
   - 사용자가 원격 적용을 선택하면 migration 2개 적용 후 `supabase/capacity-smoke-test.sql`을 SQL Editor에서 실행합니다.
   - UI 개발은 public/admin이 읽을 구조화된 잔여석 read contract를 먼저 정한 뒤 시작하는 편이 안전합니다.
+
+### AG-0024 - public/admin 정원 상태 read contract
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + 보안 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 공개 페이지와 관리자 페이지가 같은 기준으로 정원/잔여석/마감 상태를 읽게 한다.
+- Subagents:
+  - Security/Review Agent: Sartre
+- Changed files:
+  - `supabase/migrations/20260607020000_capacity_read_contract.sql`
+  - `supabase/capacity-smoke-test.sql`
+  - `supabase/README.md`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - public RPC는 published meetup의 `meetup_id`, `capacity`, `remaining_spots`, `effective_registration_status`, `can_register`만 반환합니다.
+  - public에는 live 주문 수나 종료 사유를 직접 노출하지 않습니다.
+  - admin RPC는 `is_admin()`을 통과한 사용자에게만 paid/pending/active order count, remaining spots, 수동 종료 상태와 사유를 반환합니다.
+  - `anon` direct `meetups` select는 공개 콘텐츠 컬럼만 허용하도록 좁혔습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Security/Review Agent가 public 주문 수 노출과 direct meetup select 권한을 위험으로 확인했고 수정했습니다.
+  - `tests/paymentSecurity.test.js`에 public/admin read contract 노출 범위와 grant 범위 테스트를 추가했습니다.
+  - `supabase/capacity-smoke-test.sql`이 public availability RPC 결과를 확인하게 했습니다.
+  - `npm test` passed: 28 tests.
+- Next:
+  - 다음 구현 조각은 public/admin UI가 availability RPC를 별도로 읽고 `meetup_id`로 merge하는 작업입니다.
+  - UI 작업 전에 원격 적용 순서와 smoke-test 실행 여부를 사용자가 선택할 수 있게 정리해야 합니다.

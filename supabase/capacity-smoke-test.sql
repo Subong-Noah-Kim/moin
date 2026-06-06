@@ -3,6 +3,7 @@
 -- Run this only after applying:
 -- 1. supabase/migrations/20260607000000_capacity_remaining_spots.sql
 -- 2. supabase/migrations/20260607010000_capacity_rpc_guards.sql
+-- 3. supabase/migrations/20260607020000_capacity_read_contract.sql
 --
 -- The script runs inside one transaction and ends with ROLLBACK, so test rows
 -- should not remain in the live project when the whole script succeeds.
@@ -125,6 +126,7 @@ insert into public.meetups (
 do $$
 declare
   v_snapshot jsonb;
+  v_public_status text;
   v_active_order_id uuid;
   v_order_id uuid;
   v_expired_count integer;
@@ -218,6 +220,15 @@ begin
   if v_snapshot->>'effective_registration_status' <> 'sold_out'
     or (v_snapshot->>'remaining_spots')::integer <> 0 then
     raise exception 'expected one-seat meetup to be sold out, got %', v_snapshot;
+  end if;
+
+  select effective_registration_status
+  into v_public_status
+  from public.list_public_meetup_availability()
+  where meetup_id = '__capacity_smoke_one__';
+
+  if v_public_status <> 'sold_out' then
+    raise exception 'expected public availability read contract to return sold_out, got %', v_public_status;
   end if;
 
   begin

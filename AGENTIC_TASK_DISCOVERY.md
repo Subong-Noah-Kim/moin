@@ -537,3 +537,32 @@
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `tests/paymentSecurity.test.js`에 smoke-test 구조와 README 배포 순서 가드를 추가했다.
   - `npm test` 27개가 모두 통과했다.
+
+## Round 12 - 2026-06-07 05:07 KST
+
+### 요약
+
+이번 사이클은 public/admin UI가 정원 상태를 읽기 전에 믿을 수 있는 read contract를 만들었습니다. 쉽게 말하면, 공개 페이지에는 “신청 가능한지, 잔여석이 몇 개인지”만 안전하게 주고, 관리자 페이지에는 운영에 필요한 결제완료/결제중 숫자와 수동 종료 사유까지 주는 별도 통로를 만든 작업입니다. 화면은 아직 바꾸지 않았고, 다음 사이클부터 이 read contract를 사용해 UI를 붙일 수 있습니다.
+
+### TD-023 - public/admin 정원 상태 read contract
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, Security/Review, QA, Ops Log
+- What: public/admin이 구조화된 정원 상태를 읽는 RPC 계약을 만든다.
+- Why: 기존 public 조회는 `meetups.status_label` 같은 사람이 적는 문구 중심입니다. UI가 이 문구를 근거로 신청 가능 여부를 판단하면 실제 DB 차단 기준과 어긋날 수 있습니다.
+- First development unit:
+  - `list_public_meetup_availability()` RPC를 추가한다.
+  - public RPC는 published meetup만 대상으로 `meetup_id`, `capacity`, `remaining_spots`, `effective_registration_status`, `can_register`만 반환한다.
+  - `list_admin_meetup_availability()` RPC를 추가한다.
+  - admin RPC는 `is_admin()`을 통과한 사용자에게만 paid/pending/active order count, remaining spots, 수동 종료 상태와 사유를 반환한다.
+  - `anon`의 직접 `meetups` 조회 권한은 공개 콘텐츠 컬럼으로 제한해 새 `closed_at`, `close_reason` 같은 운영 내부 필드가 직접 노출되지 않게 한다.
+- Development direction: UI는 앞으로 raw table column이나 `status_label`을 직접 해석하지 않고, 별도 availability RPC 결과를 `meetup_id`로 merge해서 사용한다.
+- Risks:
+  - 이 migration은 아직 원격 Supabase에 적용하지 않았다.
+  - direct `meetups` select를 column-level grant로 줄이는 변경이라, 배포 전 smoke-test에서 기존 public meetup list 조회가 계속 되는지 확인해야 한다.
+  - public RPC는 주문 수 자체를 반환하지 않는다. 주문 수 디테일은 admin RPC에서만 봐야 한다.
+- Notes:
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `supabase/capacity-smoke-test.sql`에 public read contract 확인을 추가했다.
+  - `npm test` 28개가 모두 통과했다.
