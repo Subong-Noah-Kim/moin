@@ -274,3 +274,31 @@
   - 로컬 구현과 `npm test`는 완료했다.
   - TODO.md의 최종 완료 조건은 fresh deploy warning 확인까지 포함하므로 TODO 체크박스는 아직 열어둔다.
   - QA와 보안 검토 결과를 반영해 action 버전 정책, 최소 권한, 테스트 기대값을 맞췄다.
+
+## Round 4 - 2026-06-07 03:45 KST
+
+### 요약
+
+이번 사이클은 `TODO.md`의 다음 우선순위인 관리자 세션 저장 방식을 정리했습니다. 쉽게 말하면, 관리자 로그인 열쇠를 브라우저에 오래 남겨두지 않도록 바꾼 작업입니다. live 배포 후에는 같은 탭 새로고침은 유지되지만, 브라우저 탭/창을 닫으면 다시 로그인해야 할 수 있습니다.
+
+### TD-016 - 관리자 세션 저장소 축소
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Security, QA, Development, Ops Log
+- What: 관리자 세션을 오래 남는 저장소가 아니라 탭 단위 저장소에 보관하고, 쓰지 않는 refresh token 저장을 제거한다.
+- Why: 관리자 권한을 가진 값이 브라우저에 오래 남을수록 XSS나 같은 origin 페이지 사고 때 피해가 커진다.
+- First development unit:
+  - 관리자 세션 저장소를 `sessionStorage`로 전환한다.
+  - 기존 `localStorage` 세션은 옮기지 않고 삭제한다.
+  - 저장 세션에서 refresh token을 제거한다.
+  - 만료되거나 깨진 세션을 읽으면 저장소를 비우고 다시 로그인 안내를 보여준다.
+  - 초대/인증 토큰이 URL에 보이면 유효하지 않은 초대 링크라도 주소창에서 제거한다.
+- Development direction: 자동 refresh flow는 만들지 않고, 관리자 보안을 우선해 짧은 세션으로 운영한다.
+- Risks:
+  - 배포 후 관리자가 브라우저 탭/창을 닫으면 다시 로그인해야 할 수 있다.
+  - GitHub Pages 정적 구조에서는 HttpOnly cookie 기반 서버 세션은 별도 백엔드 설계가 필요해 이번 범위에서 제외했다.
+- Notes:
+  - 이 사이클에서 push와 deploy는 하지 않았다.
+  - `npm test` 20개가 모두 통과했다.
+  - live admin 페이지에 반영하려면 나중에 사용자가 선택한 배포 묶음에 포함해야 한다.

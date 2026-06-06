@@ -383,3 +383,36 @@
   - 실제 GitHub Actions fresh deploy warning 확인은 아직 하지 않았다.
 - Next:
   - 사용자가 배포를 선택하면 fresh deploy run에서 runtime warning이 사라졌는지 확인한다.
+
+### AG-0016 - 관리자 세션 저장소 축소
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 관리자 로그인 정보를 브라우저에 오래 남기지 않도록 세션 저장 방식을 짧게 줄이고, 쓰지 않는 refresh token 저장을 제거한다.
+- Subagents:
+  - Security Agent: Arendt
+  - QA Agent: Erdos
+- Changed files:
+  - `supabase-client.js`
+  - `admin.js`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 관리자 세션은 `sessionStorage`에만 저장한다.
+  - 기존 `localStorage` 세션은 보안을 위해 옮기지 않고 삭제한다.
+  - 저장되는 세션에서 refresh token을 제거했다.
+  - 깨진 JSON이나 만료된 세션을 읽으면 저장소를 비우고 다시 로그인 안내를 보여준다.
+  - 초대/인증 토큰이 URL에 있으면 유효하지 않은 초대 링크라도 주소창에서 제거한다.
+  - 배포 후 관리자는 브라우저 탭/창을 닫으면 다시 로그인해야 할 수 있다.
+- Verification:
+  - Security Agent가 refresh token 저장, legacy localStorage 마이그레이션, 손상/만료 세션 방치를 block 항목으로 확인했다.
+  - QA Agent 제안에 따라 소스 가드와 메모리 저장소 기반 행동 테스트를 추가했다.
+  - `npm test` passed: 20 tests.
+- Next:
+  - 사용자가 배포 묶음에 포함하면 live 관리자 페이지에서 Application Storage를 확인한다.

@@ -309,20 +309,95 @@ function requestWithXhr(url, options = {}, timeoutMs = requestTimeoutMs) {
   });
 }
 
-function storeAdminSession(session) {
-  localStorage.setItem(adminSessionKey, JSON.stringify(session));
-}
-
-export function getStoredAdminSession() {
+function getAdminSessionStorage() {
   try {
-    return JSON.parse(localStorage.getItem(adminSessionKey) || 'null');
+    return window.sessionStorage;
   } catch {
     return null;
   }
 }
 
+function getLegacyAdminSessionStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function removeStoredAdminSession(storage) {
+  try {
+    storage?.removeItem(adminSessionKey);
+  } catch {
+    // Storage cleanup is best-effort; sign-in/out should keep moving.
+  }
+}
+
+function normalizeAdminSession(session) {
+  if (!session || typeof session !== 'object' || typeof session.accessToken !== 'string' || !session.accessToken) {
+    return null;
+  }
+
+  const expiresAt = Number(session.expiresAt || 0);
+
+  if (expiresAt && expiresAt <= Date.now()) {
+    return null;
+  }
+
+  return {
+    accessToken: session.accessToken,
+    expiresAt: expiresAt || null,
+    user: session.user || null,
+  };
+}
+
+function createStoredAdminSession(session) {
+  return normalizeAdminSession({
+    accessToken: session.accessToken,
+    expiresAt: session.expiresAt,
+    user: session.user,
+  });
+}
+
+function storeAdminSession(session) {
+  const storage = getAdminSessionStorage();
+  const storedSession = createStoredAdminSession(session);
+
+  clearAdminSession();
+
+  if (!storage || !storedSession) {
+    return;
+  }
+
+  try {
+    storage.setItem(adminSessionKey, JSON.stringify(storedSession));
+  } catch {
+    // The in-memory session returned to the caller is still usable for this tab.
+  }
+}
+
+export function getStoredAdminSession() {
+  const storage = getAdminSessionStorage();
+
+  try {
+    const storedSession = normalizeAdminSession(JSON.parse(storage?.getItem(adminSessionKey) || 'null'));
+
+    if (!storedSession) {
+      clearAdminSession();
+    } else {
+      removeStoredAdminSession(getLegacyAdminSessionStorage());
+    }
+
+    return storedSession;
+  } catch {
+    clearAdminSession();
+    return null;
+  }
+}
+
 export function clearAdminSession() {
-  localStorage.removeItem(adminSessionKey);
+  removeStoredAdminSession(getAdminSessionStorage());
+  removeStoredAdminSession(getLegacyAdminSessionStorage());
 }
 
 export function getAmountFromMeetup(meetup) {
@@ -460,7 +535,6 @@ export async function signInAdmin({ email, password }) {
 
   const session = {
     accessToken: result.access_token,
-    refreshToken: result.refresh_token,
     expiresAt: Date.now() + Number(result.expires_in || 3600) * 1000,
     user: result.user,
   };
@@ -469,7 +543,7 @@ export async function signInAdmin({ email, password }) {
   return session;
 }
 
-export async function completeAdminInvite({ accessToken, refreshToken, password, expiresAt }) {
+export async function completeAdminInvite({ accessToken, password, expiresAt }) {
   if (!isSupabaseConfigured()) {
     throw new Error('Supabase is not configured.');
   }
@@ -495,7 +569,6 @@ export async function completeAdminInvite({ accessToken, refreshToken, password,
   const user = await response.json();
   const session = {
     accessToken,
-    refreshToken,
     expiresAt: expiresAt || Date.now() + 3600 * 1000,
     user,
   };

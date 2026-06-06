@@ -1,4 +1,5 @@
 import {
+  clearAdminSession,
   completeAdminInvite,
   createAdminMeetup,
   fetchAdminOperationalData,
@@ -106,10 +107,11 @@ let operationsRequestId = 0;
 let ordersRequestId = 0;
 let agenticRequestId = 0;
 let editingMeetupId = null;
+const shouldClearAuthParams = hasAuthTokenParams();
 let pendingInvite = getInviteParams();
 let meetupImagePreviewObjectUrl = null;
 
-if (pendingInvite) {
+if (shouldClearAuthParams) {
   clearAuthParamsFromUrl();
 }
 
@@ -476,7 +478,6 @@ function getAuthParams() {
 function getInviteParams() {
   const params = getAuthParams();
   const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
   const type = params.get('type');
 
   if (!accessToken || type !== 'invite') {
@@ -488,12 +489,24 @@ function getInviteParams() {
 
   return {
     accessToken,
-    refreshToken,
     email: params.get('email') || '',
     expiresAt: expiresAt
       ? expiresAt * 1000
       : Date.now() + (expiresIn || 3600) * 1000,
   };
+}
+
+function hasAuthTokenParams() {
+  const params = getAuthParams();
+
+  return [
+    'access_token',
+    'refresh_token',
+    'type',
+    'expires_at',
+    'expires_in',
+    'token_type',
+  ].some((key) => params.has(key));
 }
 
 function clearAuthParamsFromUrl() {
@@ -624,6 +637,36 @@ function showDashboard() {
 function isSessionUsable(session) {
   if (!session?.accessToken) return false;
   return !session.expiresAt || session.expiresAt > Date.now();
+}
+
+function getSessionUnavailableMessage(session, fallback = '관리자 로그인이 필요합니다.') {
+  if (session?.expiresAt && session.expiresAt <= Date.now()) {
+    return '관리자 세션이 만료되었습니다. 다시 로그인해주세요.';
+  }
+
+  return fallback;
+}
+
+function clearUnavailableActiveSession() {
+  if (activeSession) {
+    clearAdminSession();
+    activeSession = null;
+  }
+}
+
+function requireActiveSession(statusElement, fallbackMessage = '다시 로그인한 뒤 진행해주세요.') {
+  if (isSessionUsable(activeSession)) {
+    return true;
+  }
+
+  const message = getSessionUnavailableMessage(activeSession, fallbackMessage);
+  clearUnavailableActiveSession();
+
+  if (statusElement) {
+    statusElement.textContent = message;
+  }
+
+  return false;
 }
 
 function getLoginErrorMessage(error) {
@@ -903,7 +946,7 @@ async function fetchAgenticStatus() {
 }
 
 async function loadAgenticStatus() {
-  if (!isSessionUsable(activeSession)) {
+  if (!requireActiveSession(agenticStatus, '다시 로그인한 뒤 작업판을 확인해주세요.')) {
     return;
   }
 
@@ -936,7 +979,7 @@ async function loadAgenticStatus() {
 }
 
 async function loadOperationalData() {
-  if (!isSessionUsable(activeSession)) {
+  if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 운영 데이터를 확인해주세요.')) {
     return;
   }
 
@@ -984,7 +1027,7 @@ async function loadOperationalData() {
 }
 
 async function loadOrders() {
-  if (!isSessionUsable(activeSession)) {
+  if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 주문 데이터를 확인해주세요.')) {
     return;
   }
 
@@ -1035,7 +1078,9 @@ async function loadOverview() {
   }
 
   if (!isSessionUsable(activeSession)) {
-    showLogin('관리자 로그인이 필요합니다.');
+    const message = getSessionUnavailableMessage(activeSession);
+    clearUnavailableActiveSession();
+    showLogin(message);
     return;
   }
 
@@ -1116,7 +1161,6 @@ inviteForm.addEventListener('submit', async (event) => {
   try {
     activeSession = await completeAdminInvite({
       accessToken: pendingInvite.accessToken,
-      refreshToken: pendingInvite.refreshToken,
       password,
       expiresAt: pendingInvite.expiresAt,
     });
@@ -1165,9 +1209,8 @@ applicationsBody.addEventListener('change', async (event) => {
     return;
   }
 
-  if (!isSessionUsable(activeSession)) {
+  if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 변경해주세요.')) {
     select.value = previousStatus;
-    syncStatus.textContent = '다시 로그인한 뒤 변경해주세요.';
     return;
   }
 
@@ -1207,9 +1250,8 @@ ordersBody.addEventListener('change', async (event) => {
     return;
   }
 
-  if (!isSessionUsable(activeSession)) {
+  if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 변경해주세요.')) {
     select.value = previousStatus;
-    syncStatus.textContent = '다시 로그인한 뒤 변경해주세요.';
     return;
   }
 
@@ -1254,8 +1296,7 @@ meetupForm.elements.image_url.addEventListener('input', (event) => {
 meetupForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  if (!isSessionUsable(activeSession)) {
-    meetupFormStatus.textContent = '다시 로그인한 뒤 저장해주세요.';
+  if (!requireActiveSession(meetupFormStatus, '다시 로그인한 뒤 저장해주세요.')) {
     return;
   }
 
@@ -1314,8 +1355,7 @@ meetupsBody.addEventListener('click', async (event) => {
     return;
   }
 
-  if (!isSessionUsable(activeSession)) {
-    syncStatus.textContent = '다시 로그인한 뒤 변경해주세요.';
+  if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 변경해주세요.')) {
     return;
   }
 

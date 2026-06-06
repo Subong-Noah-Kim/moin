@@ -75,10 +75,11 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Status: deployed and verified on `jqnnolsyvynrhjvfmege`. Public writes route through `create-public-submission`, the setup migration adds rate-limit RPCs, the lock migration removes anonymous direct inserts, Edge Function creation still works after the lock, and direct anon inserts now fail with permission errors.
   - Deployment note: the safe order was `20260606080000_public_submission_abuse_controls.sql`, `create-public-submission` deploy, frontend deploy, application/demo/Toss order verification, then `20260606090000_lock_public_direct_inserts.sql`.
 
-- [ ] Tighten admin session lifecycle and token storage
+- [x] Tighten admin session lifecycle and token storage
   - Problem: admin access and refresh tokens are stored in `localStorage`, while refresh is not actually used; this increases token persistence without improving the operator experience.
   - Files: `supabase-client.js`, `admin.js`
   - Done when: admin sessions either use a deliberate refresh flow or shorter-lived storage such as `sessionStorage`, expired sessions are handled clearly, and sign-out reliably clears stored credentials.
+  - Status: local implementation is complete on `codex/overnight-task-discovery`; admin sessions now use tab-scoped storage, refresh token persistence was removed, expired/corrupted sessions are cleaned up, and `npm test` passes. Deploy is still needed before this affects the live admin page.
 
 - [ ] Update product/demo copy and setup docs to match current integration state
   - Problem: some README and UI copy still says "temporary," "demo," or "connection preparation" even though Supabase, Toss test payment, and Edge Function confirmation are wired.

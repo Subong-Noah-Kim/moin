@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getAmountFromMeetup } from '../supabase-client.js';
+import { clearAdminSession, getAmountFromMeetup, getStoredAdminSession } from '../supabase-client.js';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
 const cacheBustedSourceFiles = [
@@ -21,6 +21,20 @@ async function readProjectFile(pathname) {
 
 function getAssetVersions(source) {
   return [...source.matchAll(/\?v=([^"'`\s)]+)/g)].map((match) => match[1]);
+}
+
+function createMemoryStorage(initial = {}) {
+  const values = new Map(Object.entries(initial));
+
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => {
+      values.set(key, String(value));
+    },
+    removeItem: (key) => {
+      values.delete(key);
+    },
+  };
 }
 
 const sensitiveAgentStatusKeys = [
@@ -253,6 +267,94 @@ test('admin orders include payment record reconciliation', async () => {
   assert.match(adminScript, /getPaymentForOrder\(order\.id\)/);
   assert.match(adminScript, /data-label="결제 기록"/);
   assert.match(adminScript, /기록 없음/);
+});
+
+test('admin sessions use short-lived storage without refresh token persistence', async () => {
+  const [adminScript, supabaseClient] = await Promise.all([
+    readProjectFile('../admin.js'),
+    readProjectFile('../supabase-client.js'),
+  ]);
+
+  assert.match(supabaseClient, /function getAdminSessionStorage\(\) \{\s+try \{\s+return window\.sessionStorage;/);
+  assert.match(supabaseClient, /function getLegacyAdminSessionStorage\(\) \{\s+try \{\s+return window\.localStorage;/);
+  assert.match(supabaseClient, /function normalizeAdminSession\(session\)/);
+  assert.match(supabaseClient, /expiresAt && expiresAt <= Date\.now\(\)/);
+  assert.match(supabaseClient, /function createStoredAdminSession\(session\)[\s\S]*accessToken: session\.accessToken,[\s\S]*expiresAt: session\.expiresAt,[\s\S]*user: session\.user/);
+  assert.match(supabaseClient, /clearAdminSession\(\);\s+if \(!storage \|\| !storedSession\)/);
+  assert.match(supabaseClient, /removeStoredAdminSession\(getAdminSessionStorage\(\)\)/);
+  assert.match(supabaseClient, /removeStoredAdminSession\(getLegacyAdminSessionStorage\(\)\)/);
+  assert.match(supabaseClient, /catch \{\s+clearAdminSession\(\);\s+return null;/);
+  assert.doesNotMatch(supabaseClient, /localStorage\.setItem\(adminSessionKey/);
+  assert.doesNotMatch(supabaseClient, /localStorage\.getItem\(adminSessionKey/);
+  assert.doesNotMatch(supabaseClient, /refreshToken/);
+
+  assert.match(adminScript, /clearAdminSession,/);
+  assert.match(adminScript, /const shouldClearAuthParams = hasAuthTokenParams\(\)/);
+  assert.match(adminScript, /if \(shouldClearAuthParams\) \{\s+clearAuthParamsFromUrl\(\);/);
+  assert.match(adminScript, /function hasAuthTokenParams\(\)/);
+  assert.match(adminScript, /'refresh_token'/);
+  assert.match(adminScript, /function getSessionUnavailableMessage\(session/);
+  assert.match(adminScript, /관리자 세션이 만료되었습니다\. 다시 로그인해주세요\./);
+  assert.match(adminScript, /function requireActiveSession\(statusElement/);
+  assert.match(adminScript, /clearUnavailableActiveSession\(\)/);
+  assert.doesNotMatch(adminScript, /refreshToken:/);
+  assert.doesNotMatch(adminScript, /pendingInvite\.refreshToken/);
+});
+
+test('admin stored sessions clean up legacy, corrupted, and expired state', () => {
+  const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
+  const originalWindow = globalThis.window;
+  const key = 'momentclub:admin-session';
+  const sessionStorage = createMemoryStorage();
+  const localStorage = createMemoryStorage({
+    [key]: JSON.stringify({
+      accessToken: 'legacy-access-token',
+      expiresAt: Date.now() + 60_000,
+    }),
+  });
+
+  globalThis.window = { sessionStorage, localStorage };
+
+  try {
+    sessionStorage.setItem(key, JSON.stringify({
+      accessToken: 'tab-access-token',
+      refreshToken: 'must-not-survive',
+      expiresAt: Date.now() + 60_000,
+      user: { email: 'admin@example.com' },
+    }));
+
+    const storedSession = getStoredAdminSession();
+
+    assert.equal(storedSession.accessToken, 'tab-access-token');
+    assert.equal(storedSession.refreshToken, undefined);
+    assert.deepEqual(storedSession.user, { email: 'admin@example.com' });
+    assert.equal(localStorage.getItem(key), null);
+
+    sessionStorage.setItem(key, '{bad json');
+    assert.equal(getStoredAdminSession(), null);
+    assert.equal(sessionStorage.getItem(key), null);
+
+    sessionStorage.setItem(key, JSON.stringify({
+      accessToken: 'expired-access-token',
+      expiresAt: Date.now() - 1,
+    }));
+    assert.equal(getStoredAdminSession(), null);
+    assert.equal(sessionStorage.getItem(key), null);
+
+    localStorage.setItem(key, JSON.stringify({
+      accessToken: 'stale-legacy-token',
+      expiresAt: Date.now() + 60_000,
+    }));
+    clearAdminSession();
+    assert.equal(sessionStorage.getItem(key), null);
+    assert.equal(localStorage.getItem(key), null);
+  } finally {
+    if (hadWindow) {
+      globalThis.window = originalWindow;
+    } else {
+      delete globalThis.window;
+    }
+  }
 });
 
 test('admin dashboard renders agentic status from a static JSON board', async () => {
