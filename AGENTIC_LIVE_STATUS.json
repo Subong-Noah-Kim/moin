@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T03:24:01+09:00",
-  "currentFocus": "Agent status 민감정보 가드 테스트 개발 완료",
+  "updatedAt": "2026-06-07T03:29:17+09:00",
+  "currentFocus": "public localStorage 복원력 개발 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,23 +11,23 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "TD-013 done_local"
+    "currentFocus": "TD-014 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0013 민감정보 가드 테스트 개발 완료",
-      "updatedAt": "2026-06-07T03:24:01+09:00",
+      "currentTask": "AG-0014 public localStorage 복원력 개발 완료",
+      "updatedAt": "2026-06-07T03:29:17+09:00",
       "next": "다음 개발 후보 선택"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "Agent status 민감정보 denylist 테스트 구현 완료",
-      "updatedAt": "2026-06-07T03:24:01+09:00",
+      "currentTask": "public localStorage 안전 파싱 구현 완료",
+      "updatedAt": "2026-06-07T03:29:17+09:00",
       "next": "다음 개발 태스크 대기"
     },
     {
@@ -42,16 +42,16 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "Agent status 민감정보 테스트 검증 완료",
-      "updatedAt": "2026-06-07T03:24:01+09:00",
+      "currentTask": "public localStorage 복원력 테스트 검증 완료",
+      "updatedAt": "2026-06-07T03:29:17+09:00",
       "next": "구현 결과 검증 대기"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0013 민감정보 가드 기록 완료",
-      "updatedAt": "2026-06-07T03:24:01+09:00",
+      "currentTask": "AG-0014 localStorage 복원력 기록 완료",
+      "updatedAt": "2026-06-07T03:29:17+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T03:29:17+09:00",
+      "agent": "개발 Agent",
+      "level": "review",
+      "title": "public localStorage 복원력 구현",
+      "body": "momentclub:saved, momentclub:notified, momentclub:paid 값이 깨져 있어도 공개 페이지와 결제 결과 페이지가 계속 렌더링되도록 안전 파싱을 추가했습니다."
+    },
+    {
+      "time": "2026-06-07T03:29:17+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "localStorage 복원력 검증 완료",
+      "body": "테스트 수가 17개로 늘었고 전체 npm test가 통과했습니다. 직접 JSON.parse 회귀를 막는 소스 가드도 추가했습니다."
+    },
     {
       "time": "2026-06-07T03:24:01+09:00",
       "agent": "개발 Agent",

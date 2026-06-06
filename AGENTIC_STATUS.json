@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T03:24:01+09:00",
+  "updatedAt": "2026-06-07T03:29:17+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 11,
+    "doneLocal": 12,
     "deployNeeded": 0
   },
   "agents": [
@@ -12,7 +12,7 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0013 민감정보 가드 테스트 개발 완료",
+      "currentTask": "AG-0014 public localStorage 복원력 개발 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 개발 후보 선택"
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "Agent status 민감정보 denylist 테스트 구현 완료",
+      "currentTask": "public localStorage 안전 파싱 구현 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 개발 태스크 대기"
@@ -57,7 +57,7 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "Agent status 민감정보 테스트 검증 완료",
+      "currentTask": "public localStorage 복원력 테스트 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "구현 결과 검증 대기"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0013 민감정보 가드 기록 완료",
+      "currentTask": "AG-0014 localStorage 복원력 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -316,6 +316,27 @@
           "테스트 실패 메시지는 실제 매칭값을 출력하지 않고 위치와 규칙명만 보여줍니다.",
           "이번 작업은 배포가 필요 없는 로컬 테스트 안전망입니다.",
           "현재 테스트 수는 15개에서 16개로 늘었고 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0014",
+      "title": "public localStorage 파싱 복원력",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "깨진 saved/notified/paid 저장값이 있어도 공개 페이지 렌더링 유지",
+      "details": {
+        "summary": "공개 페이지의 저장된 관심/알림/결제 표시값이 깨져 있어도 페이지가 멈추지 않도록 복구 로직을 추가했습니다.",
+        "what": "main.js와 payment-result.js에서 momentclub:saved, momentclub:notified, momentclub:paid 값을 안전하게 읽고, 잘못된 JSON이나 배열이 아닌 값은 조용히 정리합니다.",
+        "why": "브라우저 localStorage 값 하나가 깨졌다는 이유로 모임 목록이나 결제 결과 페이지가 초기화 중 멈추면 일반 사용자가 서비스를 이용할 수 없습니다.",
+        "developmentDirection": "raw JSON.parse 대신 readStringSet helper를 사용하고, 저장 실패도 페이지 동작을 막지 않도록 best-effort 방식으로 처리했습니다.",
+        "notes": [
+          "TD-014 범위에서는 공개 UI용 세 키만 다루고, 관리자 세션이나 Toss 고객 키는 건드리지 않았습니다.",
+          "빈 값, 너무 긴 값, 과도하게 많은 값은 저장 상태에서 제외합니다.",
+          "현재 테스트 수는 17개로 늘었고 모두 통과했습니다."
         ]
       }
     }

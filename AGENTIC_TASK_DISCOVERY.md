@@ -228,7 +228,7 @@
 ### TD-014 - public localStorage 파싱 복원력
 
 - Priority: `P1`
-- Status: `approved`
+- Status: `done_local`
 - Source agents: QA
 - What: public 페이지의 `momentclub:*` localStorage 값이 깨져도 앱이 렌더링되게 한다.
 - Why: 잘못된 저장값 하나 때문에 공개 페이지가 초기화 중 멈추면 일반 사용자가 모임 목록을 못 볼 수 있다.
@@ -239,6 +239,7 @@
 - Development direction: 관리자 세션 parser처럼 방어적으로 읽고 실패 시 앱은 계속 보여준다.
 - Notes:
   - 결제/신청 핵심 흐름보다 낮지만, 코드 변경 범위가 작고 테스트하기 좋다.
+  - 2026-06-07 03:29 KST에 `main.js`, `payment-result.js`, `tests/paymentSecurity.test.js`에 로컬 구현과 테스트를 추가했다.
 
 ### Round 2 보류/폐기 판단
 

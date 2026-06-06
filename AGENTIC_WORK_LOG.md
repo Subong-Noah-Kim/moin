@@ -321,3 +321,33 @@
 - Next:
   - 다음 작은 안전망 후보는 TD-014 public localStorage 파싱 복원력이다.
   - 다음 핵심 서비스 후보는 TD-009/TD-010 정원 P0 패키지다.
+
+### AG-0014 - public localStorage 파싱 복원력
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent
+- Purpose: 공개 페이지의 브라우저 저장값이 깨져 있어도 모임 목록과 결제 결과 페이지가 계속 렌더링되게 한다.
+- Subagents:
+  - QA Agent: Cicero
+  - Security Agent: Aquinas
+- Changed files:
+  - `main.js`
+  - `payment-result.js`
+  - `tests/paymentSecurity.test.js`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - `momentclub:saved`, `momentclub:notified`, `momentclub:paid`만 TD-014 범위로 처리했다.
+  - 관리자 세션, Toss customer key, Toss last auth storage는 건드리지 않았다.
+  - invalid JSON, 배열이 아닌 값, storage 읽기/삭제 실패가 있어도 페이지 렌더링을 막지 않는다.
+  - 빈 값, 너무 긴 값, 과도하게 많은 값은 저장 상태에서 제외한다.
+  - `momentclub:paid`는 UI 표시 보조 상태일 뿐 결제 증명으로 사용하지 않는다.
+- Verification:
+  - `npm test` passed: 17 tests.
+- Next:
+  - 다음 작은 안전망 후보는 결제 결과 식별자 노출 최소화 TD-012다.
+  - 다음 핵심 서비스 후보는 TD-009/TD-010 정원 P0 패키지다.

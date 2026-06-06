@@ -12,6 +12,8 @@ const successDescription = document.querySelector('[data-success-description]');
 const confirmStatus = document.querySelector('[data-confirm-status]');
 const failSyncStatus = document.querySelector('[data-fail-sync-status]');
 const moneyFormatter = new Intl.NumberFormat('ko-KR');
+const publicStateMaxItems = 100;
+const publicStateMaxValueLength = 120;
 
 function setText(selector, value) {
   const element = document.querySelector(selector);
@@ -38,12 +40,52 @@ function setFailSyncStatus(message, type = 'pending') {
   failSyncStatus.dataset.status = type;
 }
 
+function readStringSet(key) {
+  try {
+    const rawValue = localStorage.getItem(key);
+
+    if (!rawValue) {
+      return new Set();
+    }
+
+    const values = JSON.parse(rawValue);
+
+    if (!Array.isArray(values)) {
+      localStorage.removeItem(key);
+      return new Set();
+    }
+
+    return new Set(
+      values
+        .map((value) => String(value).trim())
+        .filter((value) => value && value.length <= publicStateMaxValueLength)
+        .slice(0, publicStateMaxItems),
+    );
+  } catch {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Ignore storage cleanup failures so the result page can keep rendering.
+    }
+
+    return new Set();
+  }
+}
+
+function persistStringSet(key, set) {
+  try {
+    localStorage.setItem(key, JSON.stringify([...set]));
+  } catch {
+    // Paid-state persistence is best-effort and should not block confirmation.
+  }
+}
+
 function markMeetupPaid(meetupId) {
   if (!meetupId) return;
 
-  const paid = new Set(JSON.parse(localStorage.getItem('momentclub:paid') || '[]'));
+  const paid = readStringSet('momentclub:paid');
   paid.add(meetupId);
-  localStorage.setItem('momentclub:paid', JSON.stringify([...paid]));
+  persistStringSet('momentclub:paid', paid);
 }
 
 function getConfirmErrorMessage(error) {

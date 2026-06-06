@@ -164,6 +164,34 @@ test('checkout waits for Toss SDK loading and prevents duplicate pending orders'
   assert.match(mainScript, /shouldUnlockForm = false/);
 });
 
+test('public localStorage sets recover from corrupted saved state', async () => {
+  const [mainScript, paymentResultScript] = await Promise.all([
+    readProjectFile('../main.js'),
+    readProjectFile('../payment-result.js'),
+  ]);
+
+  assert.match(mainScript, /function readStringSet\(key\)/);
+  assert.match(mainScript, /const saved = readStringSet\('momentclub:saved'\)/);
+  assert.match(mainScript, /const notified = readStringSet\('momentclub:notified'\)/);
+  assert.match(mainScript, /const paid = readStringSet\('momentclub:paid'\)/);
+  assert.match(mainScript, /const publicStateMaxItems = 100/);
+  assert.match(mainScript, /const publicStateMaxValueLength = 120/);
+  assert.match(mainScript, /\.filter\(\(value\) => value && value\.length <= publicStateMaxValueLength\)/);
+  assert.match(mainScript, /\.slice\(0, publicStateMaxItems\)/);
+  assert.match(mainScript, /localStorage\.removeItem\(key\)/);
+  assert.match(mainScript, /function persist\(key, set\) \{\s+try \{/);
+  assert.doesNotMatch(mainScript, /const (?:saved|notified|paid) = new Set\(JSON\.parse/);
+
+  assert.match(paymentResultScript, /function readStringSet\(key\)/);
+  assert.match(paymentResultScript, /function persistStringSet\(key, set\)/);
+  assert.match(paymentResultScript, /const paid = readStringSet\('momentclub:paid'\)/);
+  assert.match(paymentResultScript, /const publicStateMaxItems = 100/);
+  assert.match(paymentResultScript, /const publicStateMaxValueLength = 120/);
+  assert.match(paymentResultScript, /persistStringSet\('momentclub:paid', paid\)/);
+  assert.match(paymentResultScript, /localStorage\.removeItem\(key\)/);
+  assert.doesNotMatch(paymentResultScript, /new Set\(JSON\.parse\(localStorage\.getItem\('momentclub:paid'\)/);
+});
+
 test('static asset cache-busting uses one deploy version placeholder', async () => {
   const [workflow, ...sources] = await Promise.all([
     readProjectFile('../.github/workflows/deploy-pages.yml'),
