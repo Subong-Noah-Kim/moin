@@ -35,6 +35,14 @@ const cancelMeetupButton = document.querySelector('[data-cancel-meetup]');
 const meetupsBody = document.querySelector('[data-meetups-body]');
 const applicationsBody = document.querySelector('[data-applications-body]');
 const ordersBody = document.querySelector('[data-orders-body]');
+const agenticSummary = document.querySelector('[data-agentic-summary]');
+const agenticAgents = document.querySelector('[data-agentic-agents]');
+const agenticTasks = document.querySelector('[data-agentic-tasks]');
+const agenticUpdated = document.querySelector('[data-agentic-updated]');
+const agenticStatus = document.querySelector('[data-agentic-status]');
+const agenticAgentCount = document.querySelector('[data-agentic-agent-count]');
+const agenticTaskCount = document.querySelector('[data-agentic-task-count]');
+const agenticRefreshButton = document.querySelector('[data-agentic-refresh]');
 const meetupImagePreviewImg = document.querySelector('[data-image-preview-img]');
 const meetupImagePreviewEmpty = document.querySelector('[data-image-preview-empty]');
 const meetupImageFileName = document.querySelector('[data-image-file-name]');
@@ -69,6 +77,23 @@ const paymentStatusLabels = {
   refunded: '환불',
   partial_refunded: '부분 환불',
 };
+const agentStatusLabels = {
+  running: '진행중',
+  idle: '대기',
+  blocked: '막힘',
+  done: '완료',
+};
+const taskStatusLabels = {
+  proposed: '제안',
+  approved: '승인',
+  assigned: '할당',
+  in_progress: '진행중',
+  needs_review: '검토 필요',
+  rejected: '반려',
+  deferred: '보류',
+  done_local: '로컬 완료',
+  deployed: '배포 완료',
+};
 
 let activeSession = getStoredAdminSession();
 let overview = {
@@ -79,6 +104,7 @@ let overview = {
 };
 let operationsRequestId = 0;
 let ordersRequestId = 0;
+let agenticRequestId = 0;
 let editingMeetupId = null;
 let pendingInvite = getInviteParams();
 let meetupImagePreviewObjectUrl = null;
@@ -149,6 +175,18 @@ function getPaymentStatusLabel(status) {
   return paymentStatusLabels[status] || status || '결제 기록';
 }
 
+function getAgentStatusLabel(status) {
+  return agentStatusLabels[status] || status || '-';
+}
+
+function getTaskStatusLabel(status) {
+  return taskStatusLabels[status] || status || '-';
+}
+
+function getStatusClass(status) {
+  return String(status || 'idle').replace(/[^a-z0-9_-]/gi, '_');
+}
+
 function renderOrderStatusOptions(currentStatus) {
   return orderStatuses
     .map(
@@ -205,6 +243,100 @@ function renderPaymentRecord(order) {
   }
 
   return '<span class="muted">-</span>';
+}
+
+function formatAgenticUpdated(value) {
+  if (!value) return '업데이트 정보 없음';
+
+  try {
+    return `업데이트 ${dateFormatter.format(new Date(value))}`;
+  } catch {
+    return `업데이트 ${value}`;
+  }
+}
+
+function renderAgenticMessage(message) {
+  agenticSummary.innerHTML = '';
+  agenticAgents.innerHTML = `
+    <article class="agent-card">
+      <p>${escapeHtml(message)}</p>
+    </article>
+  `;
+  agenticTasks.innerHTML = '';
+  agenticUpdated.textContent = '확인 지연';
+  agenticAgentCount.textContent = '0명';
+  agenticTaskCount.textContent = '0개';
+}
+
+function renderAgenticStatus(data) {
+  const summary = data.summary || {};
+  const agents = Array.isArray(data.agents) ? data.agents : [];
+  const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+
+  agenticUpdated.textContent = formatAgenticUpdated(data.updatedAt);
+  agenticAgentCount.textContent = `${agents.length}명`;
+  agenticTaskCount.textContent = `${tasks.length}개`;
+  agenticSummary.innerHTML = [
+    ['진행 Agent', summary.active ?? agents.filter((agent) => agent.status === 'running').length],
+    ['막힘', summary.blocked ?? agents.filter((agent) => agent.status === 'blocked').length],
+    ['로컬 완료', summary.doneLocal ?? tasks.filter((task) => task.status === 'done_local').length],
+    ['배포 필요', summary.deployNeeded ?? tasks.filter((task) => task.deployNeeded).length],
+  ]
+    .map(
+      ([label, value]) => `
+        <article>
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(value)}</strong>
+        </article>
+      `,
+    )
+    .join('');
+  agenticAgents.innerHTML =
+    agents
+      .map(
+        (agent) => `
+          <article class="agent-card">
+            <header>
+              <div>
+                <strong>${escapeHtml(agent.name)}</strong>
+                <small>${escapeHtml(agent.role || '-')} · ${escapeHtml(agent.lastUpdate || '-')}</small>
+              </div>
+              <span class="pill is-${escapeHtml(getStatusClass(agent.status))}">
+                ${escapeHtml(getAgentStatusLabel(agent.status))}
+              </span>
+            </header>
+            <p>${escapeHtml(agent.currentTask || '미할당')}</p>
+            <p><span class="muted">Next</span> ${escapeHtml(agent.next || '-')}</p>
+            ${agent.blocker ? `<p><span class="muted">Blocker</span> ${escapeHtml(agent.blocker)}</p>` : ''}
+          </article>
+        `,
+      )
+      .join('') || '<article class="agent-card"><p>Agent 상태가 없습니다.</p></article>';
+  agenticTasks.innerHTML =
+    tasks
+      .map(
+        (task) => `
+          <article class="task-item">
+            <header>
+              <div>
+                <strong>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</strong>
+                <small>${escapeHtml(task.owner || '-')}</small>
+              </div>
+              <span class="pill is-${escapeHtml(getStatusClass(task.status))}">
+                ${escapeHtml(getTaskStatusLabel(task.status))}
+              </span>
+            </header>
+            <div class="task-meta">
+              <span class="pill">${escapeHtml(task.priority || '-')}</span>
+              <span class="pill">${task.deployNeeded ? '배포 필요' : '로컬'}</span>
+              ${task.commit ? `<span class="pill">${escapeHtml(task.commit)}</span>` : ''}
+            </div>
+            <p>${escapeHtml(task.next || '-')}</p>
+          </article>
+        `,
+      )
+      .join('') || '<article class="task-item"><p>Task 상태가 없습니다.</p></article>';
+  agenticStatus.textContent = `작업판 확인 완료 · ${escapeHtml(data.branch || '-')}`;
 }
 
 function splitList(value) {
@@ -653,6 +785,51 @@ function renderOverview() {
   renderMeetups();
 }
 
+async function fetchAgenticStatus() {
+  const response = await fetch(`./AGENTIC_STATUS.json?v=__ASSET_VERSION__`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Agentic status fetch failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function loadAgenticStatus() {
+  if (!isSessionUsable(activeSession)) {
+    return;
+  }
+
+  const requestId = ++agenticRequestId;
+  agenticRefreshButton.disabled = true;
+  agenticStatus.textContent = '작업판 확인 중';
+
+  try {
+    const data = await fetchAgenticStatus();
+
+    if (requestId !== agenticRequestId) {
+      return;
+    }
+
+    renderAgenticStatus(data);
+  } catch (error) {
+    console.error(error);
+
+    if (requestId !== agenticRequestId) {
+      return;
+    }
+
+    renderAgenticMessage('작업판을 불러오지 못했습니다.');
+    agenticStatus.textContent = '작업판 확인 실패';
+  } finally {
+    if (requestId === agenticRequestId) {
+      agenticRefreshButton.disabled = false;
+    }
+  }
+}
+
 async function loadOperationalData() {
   if (!isSessionUsable(activeSession)) {
     return;
@@ -765,6 +942,7 @@ async function loadOverview() {
     overview = await fetchAdminOverview();
     renderOverview();
     showDashboard();
+    void loadAgenticStatus();
     syncStatus.textContent = overview.warnings?.length
       ? `${overview.warnings.join(' ')} 업데이트 ${dateFormatter.format(new Date())}`
       : `업데이트 ${dateFormatter.format(new Date())}`;
@@ -848,11 +1026,14 @@ inviteForm.addEventListener('submit', async (event) => {
 
 refreshButton.addEventListener('click', loadOverview);
 
+agenticRefreshButton.addEventListener('click', loadAgenticStatus);
+
 signOutButton.addEventListener('click', async () => {
   await signOutAdmin();
   activeSession = null;
   operationsRequestId += 1;
   ordersRequestId += 1;
+  agenticRequestId += 1;
   overview = { meetups: [], applications: [], orders: [], payments: [] };
   closeMeetupForm();
   showLogin('로그아웃했습니다.');

@@ -105,6 +105,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.ok(versions.length > 0);
   assert.deepEqual([...uniqueVersions], [assetVersionPlaceholder]);
   assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
+  assert.match(workflow, /cp AGENTIC_STATUS\.json dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });
 
@@ -124,6 +125,33 @@ test('admin orders include payment record reconciliation', async () => {
   assert.match(adminScript, /getPaymentForOrder\(order\.id\)/);
   assert.match(adminScript, /data-label="결제 기록"/);
   assert.match(adminScript, /기록 없음/);
+});
+
+test('admin dashboard renders agentic status from a static JSON board', async () => {
+  const [adminHtml, adminStyles, adminScript, agenticStatus] = await Promise.all([
+    readProjectFile('../admin.html'),
+    readProjectFile('../admin.css'),
+    readProjectFile('../admin.js'),
+    readProjectFile('../AGENTIC_STATUS.json'),
+  ]);
+  const status = JSON.parse(agenticStatus);
+
+  assert.match(adminHtml, /data-agentic-board/);
+  assert.match(adminHtml, /data-agentic-summary/);
+  assert.match(adminHtml, /data-agentic-agents/);
+  assert.match(adminHtml, /data-agentic-tasks/);
+  assert.match(adminHtml, /data-agentic-refresh/);
+  assert.match(adminStyles, /\.agentic-board/);
+  assert.match(adminStyles, /\.agent-grid/);
+  assert.match(adminStyles, /\.task-list/);
+  assert.match(adminScript, /AGENTIC_STATUS\.json\?v=__ASSET_VERSION__/);
+  assert.match(adminScript, /function renderAgenticStatus/);
+  assert.match(adminScript, /function loadAgenticStatus/);
+  assert.match(adminScript, /agenticRefreshButton\.addEventListener\('click', loadAgenticStatus\)/);
+  assert.equal(status.branch, 'codex/priority-roadmap-batch');
+  assert.ok(Array.isArray(status.agents));
+  assert.ok(Array.isArray(status.tasks));
+  assert.ok(status.agents.some((agent) => agent.name === 'UX/UI Agent'));
 });
 
 test('public submissions route through an abuse-controlled Edge Function', async () => {
