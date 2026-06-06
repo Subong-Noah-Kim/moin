@@ -638,6 +638,83 @@ test('capacity controls migration defines remaining spot and pending expiry cont
   assert.doesNotMatch(migration, /registration_status in \('open', 'sold_out', 'closed'\)/);
 });
 
+test('capacity guards wire public submissions and Toss confirmation expiry checks', async () => {
+  const [guardMigration, publicSubmissionFunction, tossConfirmFunction, supabaseClient] = await Promise.all([
+    readProjectFile('../supabase/migrations/20260607010000_capacity_rpc_guards.sql'),
+    readProjectFile('../supabase/functions/create-public-submission/index.ts'),
+    readProjectFile('../supabase/functions/confirm-toss-payment/index.ts'),
+    readProjectFile('../supabase-client.js'),
+  ]);
+  const applicationBody = guardMigration.slice(
+    guardMigration.indexOf('create or replace function public.create_public_application'),
+    guardMigration.indexOf('create or replace function public.create_public_order'),
+  );
+  const orderBody = guardMigration.slice(
+    guardMigration.indexOf('create or replace function public.create_public_order'),
+    guardMigration.indexOf('create or replace function public.confirm_toss_payment_order'),
+  );
+  const confirmBody = guardMigration.slice(
+    guardMigration.indexOf('create or replace function public.confirm_toss_payment_order'),
+  );
+  const tossConfirmFlow = tossConfirmFunction.slice(
+    tossConfirmFunction.indexOf('const { paymentKey, orderId, amount } = assertPaymentPayload(payload);'),
+  );
+  const applicationGuardIndex = applicationBody.indexOf('v_meetup := public.assert_meetup_can_register(p_meetup_id);');
+  const applicationInsertIndex = applicationBody.indexOf('insert into public.applications');
+  const orderGuardIndex = orderBody.indexOf('v_meetup := public.assert_meetup_can_register(p_meetup_id);');
+  const orderInsertIndex = orderBody.indexOf('insert into public.orders');
+  const sqlExpiryGuardIndex = confirmBody.indexOf("if v_order.status = 'pending' and v_order.expires_at <= now() then");
+  const sqlPaidUpdateIndex = confirmBody.indexOf('update public.orders');
+  const expiredCheckIndex = tossConfirmFlow.indexOf('isExpiredPendingOrder(order)');
+  const markExpiredIndex = tossConfirmFlow.indexOf("markOrderFinalStatus(order, 'failed')");
+  const expiredResponseIndex = tossConfirmFlow.indexOf("code: 'ORDER_EXPIRED'");
+  const tossConfirmIndex = tossConfirmFlow.indexOf('const tossPayment = await confirmWithToss(paymentKey, orderId, amount)');
+  const sqlConfirmIndex = tossConfirmFlow.indexOf('const result = await confirmOrderAndPayment(order, tossPayment)');
+
+  assert.match(guardMigration, /create or replace function public\.create_public_application/);
+  assert.match(guardMigration, /v_meetup := public\.assert_meetup_can_register\(p_meetup_id\)/);
+  assert.match(guardMigration, /perform public\.expire_stale_pending_orders\(100\)/);
+  assert.ok(applicationGuardIndex >= 0 && applicationGuardIndex < applicationInsertIndex);
+  assert.match(guardMigration, /create or replace function public\.create_public_order/);
+  assert.ok(orderGuardIndex >= 0 && orderGuardIndex < orderInsertIndex);
+  assert.match(guardMigration, /expires_at/);
+  assert.match(guardMigration, /expires_at,\s+source/);
+  assert.match(guardMigration, /case when v_action = 'toss_order' then now\(\) \+ interval '30 minutes' else null end/);
+  assert.match(guardMigration, /v_meetup\.price_amount/);
+  assert.match(guardMigration, /to_jsonb\(v_order\) - 'checkout_token'/);
+  assert.match(guardMigration, /create or replace function public\.confirm_toss_payment_order/);
+  assert.match(guardMigration, /for update/);
+  assert.match(guardMigration, /v_order\.status = 'pending' and v_order\.expires_at <= now\(\)/);
+  assert.match(guardMigration, /ORDER_EXPIRED/);
+  assert.ok(sqlExpiryGuardIndex >= 0 && sqlExpiryGuardIndex < sqlPaidUpdateIndex);
+  assert.match(guardMigration, /grant execute on function public\.confirm_toss_payment_order\(uuid, text, text, timestamptz, jsonb\) to service_role/);
+
+  assert.match(publicSubmissionFunction, /MEETUP_SOLD_OUT/);
+  assert.match(publicSubmissionFunction, /MEETUP_REGISTRATION_CLOSED/);
+  assert.match(publicSubmissionFunction, /return 409/);
+  assert.match(publicSubmissionFunction, /function getErrorCode\(error: unknown\)/);
+  assert.match(publicSubmissionFunction, /code: getErrorCode\(error\)/);
+  assert.match(publicSubmissionFunction, /모임 정원이 마감되었습니다/);
+  assert.match(publicSubmissionFunction, /이 모임은 지금 신청을 받지 않습니다/);
+  assert.match(publicSubmissionFunction, /신청 가능한 모임을 찾지 못했습니다/);
+
+  assert.match(tossConfirmFunction, /expires_at: string \| null/);
+  assert.match(tossConfirmFunction, /checkout_token,expires_at/);
+  assert.match(tossConfirmFunction, /function isExpiredPendingOrder\(order: OrderRow\)/);
+  assert.match(tossConfirmFunction, /Date\.parse\(order\.expires_at\)/);
+  assert.match(tossConfirmFunction, /expiresAt <= Date\.now\(\)/);
+  assert.match(tossConfirmFunction, /결제 가능 시간이 만료되었습니다\. 다시 신청해 주세요\./);
+  assert.match(tossConfirmFunction, /code: 'ORDER_EXPIRED'/);
+  assert.ok(expiredCheckIndex >= 0 && expiredCheckIndex < tossConfirmIndex);
+  assert.ok(expiredCheckIndex < sqlConfirmIndex);
+  assert.ok(markExpiredIndex > expiredCheckIndex);
+  assert.ok(expiredResponseIndex > markExpiredIndex);
+
+  assert.match(supabaseClient, /const message = await parseErrorMessage\(response\)/);
+  assert.match(supabaseClient, /error\.status = response\.status/);
+  assert.match(supabaseClient, /error\.code = message\.code/);
+});
+
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
   const [indexHtml, mainScript] = await Promise.all([
     readProjectFile('../index.html'),

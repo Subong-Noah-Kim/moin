@@ -15,6 +15,7 @@ type OrderRow = {
   payment_method: string | null;
   provider_order_id: string | null;
   checkout_token: string | null;
+  expires_at: string | null;
 };
 
 type MeetupRow = {
@@ -152,7 +153,7 @@ async function findTossOrder(orderId: string) {
     provider_order_id: `eq.${orderId}`,
     provider: 'eq.tosspayments',
     select:
-      'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token',
+      'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token,expires_at',
     limit: '2',
   });
   const rows = (await supabaseRequest(`orders?${query.toString()}`)) as OrderRow[];
@@ -219,10 +220,20 @@ function redactOrder(order: OrderRow) {
   return safeOrder;
 }
 
+function isExpiredPendingOrder(order: OrderRow) {
+  if (order.status !== 'pending' || !order.expires_at) {
+    return false;
+  }
+
+  const expiresAt = Date.parse(order.expires_at);
+
+  return Number.isFinite(expiresAt) && expiresAt <= Date.now();
+}
+
 async function markOrderFinalStatus(order: OrderRow, status: 'cancelled' | 'failed') {
   const query = new URLSearchParams({
     id: `eq.${order.id}`,
-    select: 'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token',
+    select: 'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token,expires_at',
   });
 
   const rows = (await supabaseRequest(`orders?${query.toString()}`, {
@@ -346,6 +357,16 @@ Deno.serve(async (request) => {
 
     if (order.status !== 'pending') {
       return jsonResponse({ error: `주문 상태가 결제 승인 대상이 아닙니다: ${order.status}` }, 409);
+    }
+
+    if (isExpiredPendingOrder(order)) {
+      const updatedOrder = await markOrderFinalStatus(order, 'failed');
+
+      return jsonResponse({
+        error: '결제 가능 시간이 만료되었습니다. 다시 신청해 주세요.',
+        code: 'ORDER_EXPIRED',
+        order: redactOrder(updatedOrder),
+      }, 409);
     }
 
     const tossPayment = await confirmWithToss(paymentKey, orderId, amount);

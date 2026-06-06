@@ -5,8 +5,8 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 ## Current Priority Queue - 2026-06-07 Audit
 
 1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
-2. Add Edge Function guards and 409 mapping for sold-out/closed/expired-pending cases after the DB migration contract is reviewed.
-3. Add public/admin UI for structured capacity and registration status after the backend contract is stable.
+2. Add public/admin UI for structured capacity and registration status after the backend contract is stable.
+3. Prepare SQL/RPC smoke-test steps before applying the capacity migrations to the live Supabase project.
 4. Run one fresh GitHub Pages deployment check for the completed workflow runtime update.
 5. Expand behavior-oriented frontend tests after the capacity rollout is split into safer helper slices.
 
@@ -16,7 +16,7 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Problem: meetup capacity is still a manual display label such as "4자리 남음"; public application/order creation does not atomically block over-capacity submissions, and Toss `pending` orders have no expiry.
   - Files: `supabase/migrations/`, `supabase/functions/create-public-submission/index.ts`, `supabase/functions/confirm-toss-payment/index.ts`, `supabase-client.js`, `main.js`, `admin.html`, `admin.js`, `tests/paymentSecurity.test.js`
   - Done when: capacity is stored in Supabase, remaining spots are computed from seat-holding orders, sold-out/closed states return stable 409 errors, expired pending Toss holds do not consume seats forever, and public/admin UI use structured status instead of freeform `status_label`.
-  - Status: local implementation has started with the DB contract migration in `supabase/migrations/20260607000000_capacity_remaining_spots.sql` and regression coverage in `tests/paymentSecurity.test.js`. The full feature is not complete yet: Edge Function guards, public/admin UI, and live Supabase migration application are still pending. Do not deploy Edge Functions for this package before the DB migration exists remotely.
+  - Status: local backend implementation has started with the DB contract migration in `supabase/migrations/20260607000000_capacity_remaining_spots.sql`, the public RPC guard migration in `supabase/migrations/20260607010000_capacity_rpc_guards.sql`, Edge Function sold-out/closed/expired-pending handling, and regression coverage in `tests/paymentSecurity.test.js`. The full feature is not complete yet: public/admin UI, live Supabase migration application, Edge Function deploy, and manual smoke tests are still pending. Do not deploy Edge Functions for this package before the DB migrations exist remotely.
 
 - [x] Lock payment amount to server-side meetup price
   - Problem: anonymous clients can insert `orders.amount`, and the Edge Function currently validates Toss amount against that untrusted order row.

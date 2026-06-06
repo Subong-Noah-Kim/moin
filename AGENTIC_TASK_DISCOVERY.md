@@ -478,3 +478,33 @@
   - `TODO.md`의 Current Priority Queue를 현재 상태에 맞게 다시 정렬했다.
   - `tests/paymentSecurity.test.js`에 migration 계약 테스트를 추가했다.
   - `npm test` 25개가 모두 통과했다.
+
+## Round 10 - 2026-06-07 04:47 KST
+
+### 요약
+
+이번 사이클은 정원/잔여석 P0 패키지의 백엔드 guard를 한 단계 더 연결했습니다. 쉽게 말하면, 정원이 찼거나 운영자가 신청을 닫은 모임에 새 신청/주문이 들어오지 않도록 public RPC가 DB의 정원 확인 함수를 먼저 거치게 했고, 결제창을 열고 오래 지나 만료된 Toss 주문은 외부 승인 API를 호출하기 전에 막도록 했습니다. 아직 원격 Supabase나 GitHub Pages에는 반영하지 않았습니다.
+
+### TD-021 - 정원/마감 public RPC와 Edge guard 연결
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, Security/Review, QA, Ops Log
+- What: 공개 신청/주문 생성 RPC와 Toss 승인 Edge Function이 정원/마감/만료 pending 상태를 확인하도록 연결한다.
+- Why: DB에 정원 필드만 있어도 실제 신청/결제 생성 경로가 그 기준을 쓰지 않으면 과모집을 막지 못합니다. 결제창 이탈 후 만료된 pending 주문도 늦게 성공으로 돌아오면 좌석 수가 어긋날 수 있습니다.
+- First development unit:
+  - `create_public_application`과 `create_public_order`가 `assert_meetup_can_register`를 호출한 뒤에만 insert한다.
+  - 새 Toss pending 주문에는 `expires_at = now() + interval '30 minutes'`를 저장한다.
+  - 정원 확인 전에 `expire_stale_pending_orders(100)`을 호출해 오래된 pending을 보수적으로 정리한다.
+  - `create-public-submission`은 `MEETUP_SOLD_OUT`, `MEETUP_REGISTRATION_CLOSED`를 HTTP 409와 사용자용 메시지, 안정적인 `code`로 변환한다.
+  - `confirm-toss-payment`는 만료된 pending 주문이면 Toss confirm API를 호출하기 전에 failed로 정리하고 `ORDER_EXPIRED` 409를 반환한다.
+  - SQL `confirm_toss_payment_order` RPC도 row lock 아래에서 만료 pending을 paid로 바꾸지 못하게 막는다.
+- Development direction: 화면은 아직 바꾸지 않고, 서버/DB 쪽 최종 차단선을 먼저 만든다. public/admin UI는 다음 사이클에서 계산된 상태를 읽고 보여주는 역할로 붙인다.
+- Risks:
+  - 이 변경은 Edge Function이 `orders.expires_at` 컬럼을 읽기 때문에 원격 DB migration 전에 Edge Function만 먼저 배포하면 깨질 수 있습니다.
+  - Toss 승인 직전 만료 경계에 걸린 결제는 live payment 전 환불/재시도 정책을 별도로 정해야 합니다.
+  - 현재 테스트는 소스 계약 테스트라 PL/pgSQL 문법이나 실제 동시성은 Supabase SQL smoke test로 다시 확인해야 합니다.
+- Notes:
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `supabase-client.js`는 결제 승인 Edge Function 실패 시 `error.status`와 `error.code`를 보존하게 맞췄다.
+  - `npm test` 26개가 모두 통과했다.

@@ -477,19 +477,16 @@ export async function confirmTossPayment({ paymentKey, orderId, amount }) {
       amount: Number(amount),
     }),
   });
-  let body;
-
-  try {
-    body = await response.json();
-  } catch {
-    body = { error: await response.text() };
-  }
 
   if (!response.ok) {
-    throw new Error(body?.error || `Toss confirm function failed: ${response.status}`);
+    const message = await parseErrorMessage(response);
+    const error = new Error(message.text);
+    error.status = response.status;
+    error.code = message.code;
+    throw error;
   }
 
-  return body;
+  return response.json();
 }
 
 export async function recordTossPaymentFailure({ orderId, checkoutToken, code, message }) {
@@ -512,19 +509,16 @@ export async function recordTossPaymentFailure({ orderId, checkoutToken, code, m
       message,
     }),
   });
-  let body;
-
-  try {
-    body = await response.json();
-  } catch {
-    body = { error: await response.text() };
-  }
 
   if (!response.ok) {
-    throw new Error(body?.error || `Toss failure sync failed: ${response.status}`);
+    const message = await parseErrorMessage(response);
+    const error = new Error(message.text);
+    error.status = response.status;
+    error.code = message.code;
+    throw error;
   }
 
-  return body;
+  return response.json();
 }
 
 export async function signInAdmin({ email, password }) {

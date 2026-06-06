@@ -140,7 +140,33 @@ function getErrorStatus(error: unknown) {
     return 429;
   }
 
+  if (message.includes('MEETUP_SOLD_OUT') || message.includes('MEETUP_REGISTRATION_CLOSED')) {
+    return 409;
+  }
+
   return 400;
+}
+
+function getErrorCode(error: unknown) {
+  const message = error instanceof Error ? error.message : '';
+
+  if (message.includes('PUBLIC_SUBMISSION_RATE_LIMITED')) {
+    return 'PUBLIC_SUBMISSION_RATE_LIMITED';
+  }
+
+  if (message.includes('MEETUP_SOLD_OUT')) {
+    return 'MEETUP_SOLD_OUT';
+  }
+
+  if (message.includes('MEETUP_REGISTRATION_CLOSED')) {
+    return 'MEETUP_REGISTRATION_CLOSED';
+  }
+
+  if (message.includes('MEETUP_NOT_FOUND')) {
+    return 'MEETUP_NOT_FOUND';
+  }
+
+  return undefined;
 }
 
 function getErrorMessage(error: unknown) {
@@ -148,6 +174,18 @@ function getErrorMessage(error: unknown) {
 
   if (message.includes('PUBLIC_SUBMISSION_RATE_LIMITED')) {
     return '짧은 시간 안에 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+  }
+
+  if (message.includes('MEETUP_SOLD_OUT')) {
+    return '모임 정원이 마감되었습니다. 다른 모임을 확인해 주세요.';
+  }
+
+  if (message.includes('MEETUP_REGISTRATION_CLOSED')) {
+    return '이 모임은 지금 신청을 받지 않습니다.';
+  }
+
+  if (message.includes('MEETUP_NOT_FOUND')) {
+    return '신청 가능한 모임을 찾지 못했습니다.';
   }
 
   return message || '공개 신청/주문 생성에 실패했습니다.';
@@ -179,6 +217,7 @@ Deno.serve(async (request) => {
     return jsonResponse(
       {
         error: getErrorMessage(error),
+        code: getErrorCode(error),
       },
       getErrorStatus(error),
     );

@@ -595,3 +595,40 @@
 - Next:
   - 다음 구현 조각은 `create-public-submission`의 sold-out/closed 409 매핑과 `confirm-toss-payment`의 expired pending 사전 차단입니다.
   - 원격 적용 전에는 DB migration 적용 후 Edge Function deploy 순서를 다시 확인해야 합니다.
+
+### AG-0022 - 정원/마감 public RPC와 Edge guard 연결
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + 보안 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 정원이 찼거나 신청이 닫힌 모임에 공개 신청/주문이 들어오지 않도록 서버 쪽 차단선을 연결한다.
+- Subagents:
+  - Security/Review Agent: Noether
+  - QA Agent: Archimedes
+- Changed files:
+  - `supabase/migrations/20260607010000_capacity_rpc_guards.sql`
+  - `supabase/functions/create-public-submission/index.ts`
+  - `supabase/functions/confirm-toss-payment/index.ts`
+  - `supabase-client.js`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - `create_public_application`과 `create_public_order`가 insert 전에 `assert_meetup_can_register`를 호출하게 했습니다.
+  - 새 Toss pending 주문에는 30분 만료 시각을 저장합니다.
+  - 오래된 pending 주문은 정원 확인 전에 `expire_stale_pending_orders(100)`으로 정리합니다.
+  - `create-public-submission`은 정원 마감/신청 종료를 409와 안정적인 code로 반환합니다.
+  - `confirm-toss-payment`는 만료된 pending 주문이면 Toss 승인 API를 호출하기 전에 failed로 정리하고 `ORDER_EXPIRED` 409를 반환합니다.
+  - SQL `confirm_toss_payment_order`도 row lock 아래에서 만료 pending을 paid로 바꾸지 못하게 막습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Security/Review Agent가 public RPC 미연결, pending expires_at 누락, late Toss success, 409 매핑 누락을 P0 위험으로 확인했습니다.
+  - QA Agent가 순서 기반 소스 계약 테스트를 제안했고, 해당 기준을 반영했습니다.
+  - `npm test` passed: 26 tests.
+- Next:
+  - 다음 구현 조각은 공개/관리자 화면에서 `capacity`, `remaining_spots`, `effective_registration_status`를 보여주고 신청/결제 진입을 비활성화하는 UI 작업입니다.
+  - 실제 배포 전에는 Supabase migration 2개를 먼저 적용하고 SQL/RPC smoke test를 실행해야 합니다.
