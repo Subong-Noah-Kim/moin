@@ -1,0 +1,702 @@
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabase-config.js?v=admin-10';
+
+const supabaseUrl = SUPABASE_URL.replace(/\/$/, '');
+const supabaseAnonKey = SUPABASE_ANON_KEY;
+const adminSessionKey = 'momentclub:admin-session';
+const meetupImageBucket = 'meetup-images';
+const requestTimeoutMs = 15000;
+const optionalRequestTimeoutMs = 12000;
+const adminMeetupFields = [
+  'id',
+  'type',
+  'category',
+  'title',
+  'description',
+  'host_name',
+  'host_role',
+  'status_label',
+  'date_label',
+  'time_label',
+  'location',
+  'price_amount',
+  'price_label',
+  'tags',
+  'image_url',
+  'schedule',
+  'is_published',
+  'created_at',
+].join(',');
+const adminApplicationFields = [
+  'id',
+  'meetup_id',
+  'applicant_name',
+  'interest',
+  'status',
+  'source',
+  'created_at',
+].join(',');
+const adminOrderFields = [
+  'id',
+  'meetup_id',
+  'buyer_name',
+  'amount',
+  'currency',
+  'status',
+  'provider',
+  'payment_method',
+  'source',
+  'created_at',
+].join(',');
+
+export function isSupabaseConfigured() {
+  return Boolean(supabaseUrl && supabaseAnonKey);
+}
+
+function parsePriceAmount(priceLabel) {
+  const digits = String(priceLabel || '').replace(/[^\d]/g, '');
+  return Number(digits || 0);
+}
+
+function getNumericAmount(value) {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+async function insertRow(tableName, payload) {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, rows: [] };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/${tableName}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase insert failed for ${tableName}: ${response.status} ${message}`);
+  }
+
+  return { skipped: false, rows: [] };
+}
+
+async function selectRows(tableName, queryString) {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, rows: [] };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/${tableName}${queryString}`, {
+    method: 'GET',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+    },
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase select failed for ${tableName}: ${response.status} ${message}`);
+  }
+
+  return { skipped: false, rows: await response.json() };
+}
+
+async function selectRowsWithToken(tableName, queryString, accessToken, timeoutMs = requestTimeoutMs) {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, rows: [] };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/${tableName}${queryString}`, {
+    method: 'GET',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  }, timeoutMs);
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase admin select failed for ${tableName}: ${response.status} ${message}`);
+  }
+
+  return response.json();
+}
+
+async function writeRowsWithToken(tableName, queryString, accessToken, payload, method = 'PATCH') {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, rows: [] };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/${tableName}${queryString}`, {
+    method,
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase admin write failed for ${tableName}: ${response.status} ${message}`);
+  }
+
+  return response.json();
+}
+
+async function authRequest(path, options = {}) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/auth/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+
+  if (!response.ok) {
+    const message = await parseErrorMessage(response);
+    const error = new Error(message.text);
+    error.status = response.status;
+    error.code = message.code;
+    throw error;
+  }
+
+  return response.json();
+}
+
+async function parseErrorMessage(response) {
+  const fallback = { code: String(response.status), text: `HTTP ${response.status}` };
+
+  try {
+    const payload = await response.json();
+    return {
+      code: payload.error_code || payload.code || payload.error || fallback.code,
+      text: payload.msg || payload.message || payload.error_description || payload.error || fallback.text,
+    };
+  } catch {
+    const text = await response.text();
+    return {
+      code: fallback.code,
+      text: text || fallback.text,
+    };
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = requestTimeoutMs) {
+  const controller = new AbortController();
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error('Supabase request timed out.'));
+    }, timeoutMs);
+  });
+
+  try {
+    const response = await Promise.race([
+      (async () => {
+        const fetchResponse = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
+        const bodyText = await fetchResponse.text();
+
+        return {
+          ok: fetchResponse.ok,
+          status: fetchResponse.status,
+          json: async () => (bodyText ? JSON.parse(bodyText) : null),
+          text: async () => bodyText,
+        };
+      })(),
+      timeoutPromise,
+    ]);
+
+    return response;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Supabase request timed out.');
+    }
+
+    if (isNetworkLoadError(error) && typeof XMLHttpRequest !== 'undefined') {
+      return requestWithXhr(url, options, timeoutMs);
+    }
+
+    if (isNetworkLoadError(error)) {
+      throw new Error('Supabase network request failed.');
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function isNetworkLoadError(error) {
+  const message = error?.message || '';
+  return error?.name === 'TypeError' || message.includes('Load failed') || message.includes('Failed to fetch');
+}
+
+function createResponseShim(status, bodyText) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => (bodyText ? JSON.parse(bodyText) : null),
+    text: async () => bodyText,
+  };
+}
+
+function requestWithXhr(url, options = {}, timeoutMs = requestTimeoutMs) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(options.method || 'GET', url, true);
+    xhr.timeout = timeoutMs;
+
+    Object.entries(options.headers || {}).forEach(([key, value]) => {
+      xhr.setRequestHeader(key, value);
+    });
+
+    xhr.onload = () => {
+      resolve(createResponseShim(xhr.status, xhr.responseText || ''));
+    };
+    xhr.onerror = () => {
+      reject(new Error('Supabase network request failed.'));
+    };
+    xhr.ontimeout = () => {
+      reject(new Error('Supabase request timed out.'));
+    };
+    xhr.onabort = () => {
+      reject(new Error('Supabase request timed out.'));
+    };
+    xhr.send(options.body || null);
+  });
+}
+
+function storeAdminSession(session) {
+  localStorage.setItem(adminSessionKey, JSON.stringify(session));
+}
+
+export function getStoredAdminSession() {
+  try {
+    return JSON.parse(localStorage.getItem(adminSessionKey) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+export function clearAdminSession() {
+  localStorage.removeItem(adminSessionKey);
+}
+
+export function getAmountFromMeetup(meetup) {
+  const storedAmount = getNumericAmount(meetup?.price_amount ?? meetup?.priceAmount);
+
+  if (storedAmount !== null) {
+    return storedAmount;
+  }
+
+  return parsePriceAmount(meetup?.price);
+}
+
+export async function fetchPublishedMeetups() {
+  const fields = [
+    'id',
+    'type',
+    'category',
+    'title',
+    'description',
+    'host_name',
+    'host_role',
+    'status_label',
+    'date_label',
+    'time_label',
+    'location',
+    'price_amount',
+    'price_label',
+    'tags',
+    'image_url',
+    'schedule',
+  ].join(',');
+
+  return selectRows('meetups', `?select=${fields}&is_published=eq.true`);
+}
+
+export async function createApplication({ meetup, name, interest }) {
+  return insertRow('applications', {
+    meetup_id: meetup.id,
+    applicant_name: name.trim(),
+    interest: interest.trim(),
+    source: 'github-pages-demo',
+  });
+}
+
+export async function createDemoOrder({ meetup, payerName, paymentMethod }) {
+  return insertRow('orders', {
+    meetup_id: meetup.id,
+    buyer_name: payerName ? payerName.trim() : null,
+    amount: getAmountFromMeetup(meetup),
+    currency: 'KRW',
+    status: 'demo_paid',
+    provider: 'demo',
+    payment_method: paymentMethod,
+    source: 'github-pages-demo',
+  });
+}
+
+export async function createTossPendingOrder({ meetup, payerName, paymentMethod, providerOrderId, checkoutToken }) {
+  return insertRow('orders', {
+    meetup_id: meetup.id,
+    buyer_name: payerName ? payerName.trim() : null,
+    amount: getAmountFromMeetup(meetup),
+    currency: 'KRW',
+    status: 'pending',
+    provider: 'tosspayments',
+    payment_method: paymentMethod,
+    provider_order_id: providerOrderId,
+    checkout_token: checkoutToken,
+    source: 'toss-test',
+  });
+}
+
+export async function confirmTossPayment({ paymentKey, orderId, amount }) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/confirm-toss-payment`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      paymentKey,
+      orderId,
+      amount: Number(amount),
+    }),
+  });
+  let body;
+
+  try {
+    body = await response.json();
+  } catch {
+    body = { error: await response.text() };
+  }
+
+  if (!response.ok) {
+    throw new Error(body?.error || `Toss confirm function failed: ${response.status}`);
+  }
+
+  return body;
+}
+
+export async function recordTossPaymentFailure({ orderId, checkoutToken, code, message }) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/confirm-toss-payment`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      action: 'record-failure',
+      orderId,
+      checkoutToken,
+      code,
+      message,
+    }),
+  });
+  let body;
+
+  try {
+    body = await response.json();
+  } catch {
+    body = { error: await response.text() };
+  }
+
+  if (!response.ok) {
+    throw new Error(body?.error || `Toss failure sync failed: ${response.status}`);
+  }
+
+  return body;
+}
+
+export async function signInAdmin({ email, password }) {
+  const result = await authRequest('token?grant_type=password', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+
+  const session = {
+    accessToken: result.access_token,
+    refreshToken: result.refresh_token,
+    expiresAt: Date.now() + Number(result.expires_in || 3600) * 1000,
+    user: result.user,
+  };
+
+  storeAdminSession(session);
+  return session;
+}
+
+export async function completeAdminInvite({ accessToken, refreshToken, password, expiresAt }) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/auth/v1/user`, {
+    method: 'PUT',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!response.ok) {
+    const message = await parseErrorMessage(response);
+    const error = new Error(message.text);
+    error.status = response.status;
+    error.code = message.code;
+    throw error;
+  }
+
+  const user = await response.json();
+  const session = {
+    accessToken,
+    refreshToken,
+    expiresAt: expiresAt || Date.now() + 3600 * 1000,
+    user,
+  };
+
+  storeAdminSession(session);
+  return session;
+}
+
+export async function signOutAdmin() {
+  const session = getStoredAdminSession();
+
+  if (session?.accessToken) {
+    try {
+      await authRequest('logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+    } catch {
+      // Local sign-out should still proceed even when the remote session already expired.
+    }
+  }
+
+  clearAdminSession();
+}
+
+function getAdminFetchWarning(label, error) {
+  const message = error?.message || String(error);
+
+  if (message.includes('timed out')) {
+    return `${label} 데이터 조회가 지연되어 이번 화면에서는 건너뛰었습니다.`;
+  }
+
+  return `${label} 데이터 조회 실패: ${message}`;
+}
+
+function resolveAdminRows(label, result, warnings) {
+  if (result.status === 'fulfilled') {
+    return result.value;
+  }
+
+  console.warn(result.reason);
+  warnings.push(getAdminFetchWarning(label, result.reason));
+  return [];
+}
+
+async function resolveAdminMeetups(result, warnings) {
+  const adminRows = resolveAdminRows('모임', result, warnings);
+
+  if (adminRows.length) {
+    return adminRows;
+  }
+
+  try {
+    const fallback = await fetchPublishedMeetups();
+
+    if (fallback.rows.length) {
+      warnings.push('관리자 전체 모임 조회가 비어 공개 모임으로 임시 표시했습니다.');
+      return fallback.rows.map((row) => ({
+        ...row,
+        is_published: true,
+        created_at: row.created_at || null,
+      }));
+    }
+  } catch (error) {
+    console.warn(error);
+    warnings.push(getAdminFetchWarning('공개 모임', error));
+  }
+
+  return adminRows;
+}
+
+export async function fetchAdminOverview() {
+  const warnings = [];
+
+  const meetups = [];
+  const applications = [];
+  const orders = [];
+  const payments = [];
+  warnings.push('운영 데이터는 화면을 먼저 연 뒤 따로 불러오도록 분리했습니다.');
+  warnings.push('실제 결제 연동 전이라 결제 상세 데이터 조회는 건너뛰었습니다.');
+
+  return { meetups, applications, orders, payments, warnings };
+}
+
+export async function fetchAdminOperationalData(accessToken) {
+  const warnings = [];
+  const [meetupsResult, applicationsResult] = await Promise.allSettled([
+    selectRowsWithToken(
+      'meetups',
+      `?select=${adminMeetupFields}&order=created_at.desc`,
+      accessToken,
+      optionalRequestTimeoutMs,
+    ),
+    selectRowsWithToken(
+      'applications',
+      `?select=${adminApplicationFields}&order=created_at.desc&limit=200`,
+      accessToken,
+      optionalRequestTimeoutMs,
+    ),
+  ]);
+
+  const meetups = await resolveAdminMeetups(meetupsResult, warnings);
+  const applications = resolveAdminRows('신청', applicationsResult, warnings);
+
+  return { meetups, applications, warnings };
+}
+
+export async function fetchAdminOrders(accessToken) {
+  return selectRowsWithToken(
+    'orders',
+    `?select=${adminOrderFields}&order=created_at.desc&limit=200`,
+    accessToken,
+    optionalRequestTimeoutMs,
+  );
+}
+
+export async function createAdminMeetup(accessToken, meetup) {
+  const rows = await writeRowsWithToken(
+    'meetups',
+    `?select=${adminMeetupFields}`,
+    accessToken,
+    meetup,
+    'POST',
+  );
+
+  return rows?.[0] || meetup;
+}
+
+export async function updateAdminMeetup(accessToken, meetupId, meetup) {
+  const rows = await writeRowsWithToken(
+    'meetups',
+    `?id=eq.${encodeURIComponent(meetupId)}&select=${adminMeetupFields}`,
+    accessToken,
+    meetup,
+    'PATCH',
+  );
+
+  if (!rows?.length) {
+    throw new Error('수정할 모임을 찾지 못했습니다.');
+  }
+
+  return rows[0];
+}
+
+export async function uploadMeetupImage(accessToken, file, meetupId) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const extension = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : 'jpg';
+  const safeMeetupId = String(meetupId || 'meetup')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48) || 'meetup';
+  const randomId = globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
+  const filePath = `${safeMeetupId}/${Date.now().toString(36)}-${randomId}.${extension}`;
+  const response = await fetchWithTimeout(`${supabaseUrl}/storage/v1/object/${meetupImageBucket}/${filePath}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': file.type || 'application/octet-stream',
+      'x-upsert': 'false',
+    },
+    body: file,
+  }, 30000);
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase storage upload failed: ${response.status} ${message}`);
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/${meetupImageBucket}/${filePath}`;
+}
+
+export async function setAdminMeetupVisibility(accessToken, meetupId, isPublished) {
+  return updateAdminMeetup(accessToken, meetupId, { is_published: isPublished });
+}
+
+export async function updateAdminApplicationStatus(accessToken, applicationId, status) {
+  const rows = await writeRowsWithToken(
+    'applications',
+    `?id=eq.${encodeURIComponent(applicationId)}&select=${adminApplicationFields}`,
+    accessToken,
+    { status },
+    'PATCH',
+  );
+
+  if (!rows?.length) {
+    throw new Error('수정할 신청을 찾지 못했습니다.');
+  }
+
+  return rows[0];
+}
+
+export async function updateAdminOrderStatus(accessToken, orderId, status) {
+  if (!['pending', 'cancelled', 'failed'].includes(status)) {
+    throw new Error('수동으로 저장할 수 없는 주문 상태입니다.');
+  }
+
+  const rows = await writeRowsWithToken(
+    'orders',
+    `?id=eq.${encodeURIComponent(orderId)}&select=${adminOrderFields}`,
+    accessToken,
+    { status },
+    'PATCH',
+  );
+
+  if (!rows?.length) {
+    throw new Error('수정할 주문을 찾지 못했습니다.');
+  }
+
+  return rows[0];
+}

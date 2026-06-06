@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="취향 기반 모임과 원데이 이벤트를 탐색하고 신청하는 커뮤니티 플랫폼 데모"
+    />
+    <title>moin | 취향 모임 플랫폼</title>
+    <link rel="stylesheet" href="./styles.css?v=mobile-nav-5" />
+  </head>
+  <body>
+    <header class="site-header" data-header>
+      <a class="brand" href="#top" aria-label="moin 홈">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>moin</span>
+      </a>
+
+      <nav class="top-nav" aria-label="주요 메뉴">
+        <a href="#top">홈</a>
+        <a href="#reviews">후기</a>
+        <a href="#meetups">모임</a>
+        <a href="#events">이벤트</a>
+        <a href="#small-groups">소모임</a>
+        <a href="#waitlist">오픈 예정</a>
+        <a href="#hosts">여는이</a>
+      </nav>
+
+      <button class="header-action" type="button" data-open-apply>
+        시작하기
+      </button>
+    </header>
+
+    <main id="top">
+      <section class="hero-shell" aria-labelledby="hero-title">
+        <aside class="hero-feature" aria-label="추천 모임">
+          <img
+            src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1500&q=80"
+            alt="라운지에서 대화하는 사람들"
+          />
+          <div class="hero-card">
+            <p>이번 주 추천</p>
+            <h2>토요일 밤의 취향 살롱</h2>
+            <span>6월 13일 · 성수 · 4자리</span>
+          </div>
+        </aside>
+
+        <div class="hero-copy">
+          <p class="eyebrow">INTEREST COMMUNITY</p>
+          <h1 id="hero-title">취향이 비슷한 사람들과 보내는 진짜 저녁</h1>
+          <p>
+            책, 영화, 산책, 미식, 커리어처럼 일상 가까이에 있는 관심사를
+            작은 모임으로 이어갑니다.
+          </p>
+
+          <form class="search-panel" role="search" data-search-form>
+            <label for="searchInput">모임 검색</label>
+            <div class="search-field">
+              <input
+                id="searchInput"
+                type="search"
+                name="query"
+                placeholder="관심사, 지역, 여는이로 찾아보기"
+                autocomplete="off"
+                data-search
+              />
+              <button type="submit">검색</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="quick-nav" aria-label="빠른 탐색">
+        <button class="quick-chip is-active" type="button" data-filter="all">
+          전체
+        </button>
+        <button class="quick-chip" type="button" data-filter="regular">
+          정기 모임
+        </button>
+        <button class="quick-chip" type="button" data-filter="event">
+          원데이
+        </button>
+        <button class="quick-chip" type="button" data-filter="social">
+          소모임
+        </button>
+        <button class="quick-chip" type="button" data-filter="waitlist">
+          오픈 예정
+        </button>
+      </section>
+
+      <section class="section-block" id="meetups" aria-labelledby="meetups-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">NOW OPEN</p>
+            <h2 id="meetups-title">지금 참여할 수 있는 모임</h2>
+          </div>
+          <p class="result-count" data-result-count></p>
+        </div>
+
+        <div class="card-grid" data-meetup-grid></div>
+      </section>
+
+      <section class="feature-band" id="waitlist" aria-labelledby="waitlist-title">
+        <div>
+          <p class="eyebrow">OPEN WITH MEMBERS</p>
+          <h2 id="waitlist-title">기다리는 사람이 모이면 열려요</h2>
+        </div>
+        <div class="rail" data-waitlist-rail></div>
+      </section>
+
+      <section class="section-block compact" id="events" aria-labelledby="events-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">THIS MONTH</p>
+            <h2 id="events-title">주목할만한 원데이 이벤트</h2>
+          </div>
+          <a class="text-link" href="#meetups">전체 보기</a>
+        </div>
+
+        <div class="event-list" data-event-list></div>
+      </section>
+
+      <section
+        class="section-block compact"
+        id="small-groups"
+        aria-labelledby="small-groups-title"
+      >
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">SMALL GROUPS</p>
+            <h2 id="small-groups-title">가볍게 만나는 소모임</h2>
+          </div>
+          <button class="text-button" type="button" data-show-social>소모임만 보기</button>
+        </div>
+
+        <div class="mini-grid" data-small-group-list></div>
+      </section>
+
+      <section class="review-band" id="reviews" aria-labelledby="reviews-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">COMMUNITY REVIEWS</p>
+            <h2 id="reviews-title">함께한 사람들이 남긴 말</h2>
+          </div>
+          <p class="result-count">데모 후기 3개</p>
+        </div>
+
+        <div class="review-grid">
+          <article>
+            <p>
+              혼자였다면 지나쳤을 장면을 다른 사람의 언어로 다시 보게 됐어요.
+            </p>
+            <strong>문화 살롱 참여자</strong>
+          </article>
+          <article>
+            <p>
+              운영 흐름이 분명해서 처음 만난 사람들과도 금방 이야기가 열렸습니다.
+            </p>
+            <strong>원데이 이벤트 참여자</strong>
+          </article>
+          <article>
+            <p>
+              일상에 작게 걸어둘 약속이 생긴 느낌이라 다음 시즌도 기다려져요.
+            </p>
+            <strong>정기 모임 참여자</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="host-panel" id="hosts" aria-labelledby="hosts-title">
+        <div class="host-copy">
+          <p class="eyebrow">HOST PROGRAM</p>
+          <h2 id="hosts-title">좋아하는 일을 사람들과 나눠보세요</h2>
+          <p>
+            작은 커리큘럼, 좋은 질문, 안전한 운영 도구를 갖춘 여는이 경험을
+            설계했습니다.
+          </p>
+          <button type="button" data-open-apply>여는이 제안하기</button>
+        </div>
+        <div class="host-stats" aria-label="여는이 지표">
+          <article>
+            <strong>4회</strong>
+            <span>기본 시즌 구성</span>
+          </article>
+          <article>
+            <strong>12명</strong>
+            <span>권장 소규모 정원</span>
+          </article>
+          <article>
+            <strong>3시간</strong>
+            <span>평균 진행 시간</span>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>moin</strong>
+        <p>취향을 중심으로 안전한 작은 모임을 설계하는 커뮤니티 데모입니다.</p>
+      </div>
+      <nav aria-label="하단 메뉴">
+        <a href="#top">About</a>
+        <a href="#reviews">후기</a>
+        <a href="#hosts">여는이 모집</a>
+        <a href="#events">이벤트</a>
+        <a href="./admin.html">관리자</a>
+      </nav>
+    </footer>
+
+    <div class="mobile-tabs" aria-label="모바일 메뉴" data-mobile-tabs>
+      <a href="#meetups" data-mobile-nav="meetups" aria-current="page">
+        <span aria-hidden="true">01</span>
+        모임
+      </a>
+      <a href="#waitlist" data-mobile-nav="waitlist">
+        <span aria-hidden="true">02</span>
+        알림
+      </a>
+      <a href="#events" data-mobile-nav="events">
+        <span aria-hidden="true">03</span>
+        이벤트
+      </a>
+    </div>
+
+    <aside class="detail-drawer" aria-hidden="true" data-drawer hidden inert>
+      <div class="drawer-backdrop" data-close-drawer></div>
+      <article class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" tabindex="-1">
+        <button class="icon-button close-button" type="button" data-close-drawer aria-label="닫기">
+          ×
+        </button>
+        <div data-drawer-content></div>
+      </article>
+    </aside>
+
+    <aside class="checkout-modal" aria-hidden="true" data-checkout-modal hidden inert>
+      <div class="checkout-backdrop" data-close-checkout></div>
+      <article class="checkout-panel" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle" tabindex="-1">
+        <button class="icon-button checkout-close" type="button" data-close-checkout aria-label="결제창 닫기">
+          ×
+        </button>
+        <div data-checkout-content></div>
+      </article>
+    </aside>
+
+    <div class="toast" data-toast role="status" aria-live="polite"></div>
+
+    <script type="module" src="./main.js?v=mobile-nav-5"></script>
+  </body>
+</html>

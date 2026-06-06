@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>moin 결제 테스트 결과</title>
+    <link rel="stylesheet" href="./styles.css?v=payment-stable-1" />
+  </head>
+  <body class="payment-result-page">
+    <main class="payment-result-shell">
+      <section class="payment-result-card" data-success-view hidden>
+        <p class="eyebrow">TOSS TEST RESULT</p>
+        <h1 data-success-title>결제 인증이 도착했어요</h1>
+        <p data-success-description>
+          토스페이먼츠 테스트 결제창에서 인증이 끝났습니다. 서버 승인 처리 결과를
+          확인하고 있습니다.
+        </p>
+        <dl class="payment-result-list">
+          <div>
+            <dt>주문번호</dt>
+            <dd data-order-id>-</dd>
+          </div>
+          <div>
+            <dt>결제키</dt>
+            <dd data-payment-key>-</dd>
+          </div>
+          <div>
+            <dt>금액</dt>
+            <dd data-amount>-</dd>
+          </div>
+        </dl>
+        <p class="payment-result-note">
+          Supabase Edge Function이 이 값을 받아 토스 결제 승인 API를 호출하고,
+          성공하면 주문 상태를 결제완료로 바꿉니다.
+        </p>
+        <div class="payment-confirm-status" data-confirm-status>
+          결제 승인을 준비하고 있습니다.
+        </div>
+        <div class="payment-result-actions">
+          <a href="./">사이트로 돌아가기</a>
+          <a href="./admin.html">관리자 보기</a>
+        </div>
+      </section>
+
+      <section class="payment-result-card is-fail" data-fail-view hidden>
+        <p class="eyebrow">TOSS TEST RESULT</p>
+        <h1>결제가 완료되지 않았어요</h1>
+        <p data-fail-message>결제창에서 결제가 취소되었거나 테스트 인증에 실패했습니다.</p>
+        <dl class="payment-result-list">
+          <div>
+            <dt>오류 코드</dt>
+            <dd data-error-code>-</dd>
+          </div>
+          <div>
+            <dt>주문번호</dt>
+            <dd data-fail-order-id>-</dd>
+          </div>
+        </dl>
+        <div class="payment-confirm-status" data-fail-sync-status>
+          주문 상태를 정리하고 있습니다.
+        </div>
+        <div class="payment-result-actions">
+          <a href="./">다시 시도하기</a>
+          <a href="./admin.html">관리자 보기</a>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./payment-result.js?v=payment-secure-1"></script>
+  </body>
+</html>

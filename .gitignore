@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+coverage/
+.gh-cache/
+supabase/.temp/
+.gh-config/
+ai_report_project/

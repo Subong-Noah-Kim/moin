@@ -1,0 +1,2 @@
+[functions.confirm-toss-payment]
+verify_jwt = false
