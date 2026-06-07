@@ -92,6 +92,14 @@ function getText(payload: Record<string, unknown>, key: string) {
   return String(payload[key] || '').trim();
 }
 
+const checkoutPaymentMethods = ['간편결제', '카드', '계좌이체'];
+
+function getPaymentMethod(payload: Record<string, unknown>) {
+  const paymentMethod = getText(payload, 'paymentMethod');
+
+  return checkoutPaymentMethods.includes(paymentMethod) ? paymentMethod : '간편결제';
+}
+
 function getAction(payload: Record<string, unknown>): PublicSubmissionAction {
   const action = getText(payload, 'action') as PublicSubmissionAction;
 
@@ -126,7 +134,7 @@ async function createOrder(
       p_action: action,
       p_meetup_id: getText(payload, 'meetupId'),
       p_buyer_name: getText(payload, 'payerName'),
-      p_payment_method: getText(payload, 'paymentMethod'),
+      p_payment_method: getPaymentMethod(payload),
       p_provider_order_id: getText(payload, 'providerOrderId') || null,
       p_checkout_token: getText(payload, 'checkoutToken') || null,
     }),

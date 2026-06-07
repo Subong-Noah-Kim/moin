@@ -1058,3 +1058,40 @@
 - Next:
   - `public-form.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
   - 다음 개발 후보는 공개 drawer 신청/결제 guard DOM flow, payment-result DOM flow, 또는 서버 paymentMethod allowlist follow-up입니다.
+
+### AG-0034 - server paymentMethod allowlist
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 공개 주문 생성 서버에서도 결제 수단 metadata를 정해진 값으로만 저장하게 한다.
+- Subagents:
+  - Planning/Review Agent: Hume
+  - QA Agent: Peirce
+  - Security/Review Agent: Lagrange
+- Changed files:
+  - `supabase/functions/create-public-submission/index.ts`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+- Notes:
+  - 브라우저 UI에서는 이미 `public-form.js`가 결제 수단을 `간편결제`, `카드`, `계좌이체`로 정리합니다.
+  - 이번 작업은 공개 Edge Function을 직접 호출하는 경우에도 같은 규칙을 적용합니다.
+  - 알 수 없거나 빈 결제 수단 값은 `간편결제`로 저장합니다.
+  - 이 필드는 결제 승인 권한이나 금액 판단에 쓰이지 않는 metadata입니다. 금액은 계속 서버/RPC의 `meetups.price_amount` 기준을 따릅니다.
+  - 실제 Supabase 프로젝트에 반영하려면 `create-public-submission` Edge Function 재배포가 필요합니다.
+  - capacity 관련 Edge Function 배포는 원격 DB migration과 smoke-test 순서를 확인한 뒤 진행해야 합니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 TD-033을 작고 낮은 위험의 다음 사이클로 승인했습니다.
+  - QA Agent가 allowlist helper, RPC wiring, 기존 raw `paymentMethod` 전달 제거 테스트를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 fallback 안전성, 결제 권한/금액과의 분리, 배포 영향 문서화를 검토했고 blocking 이슈 없음으로 확인했습니다.
+  - `node --check tests/paymentSecurity.test.js` passed.
+  - `git diff --check` passed.
+  - `npm test` passed: 39 tests.
+- Next:
+  - 로컬 커밋 후 다음 후보는 공개 drawer 신청/결제 guard DOM flow 또는 payment-result DOM flow입니다.

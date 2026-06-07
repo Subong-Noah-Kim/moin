@@ -1085,6 +1085,11 @@ test('public submissions route through an abuse-controlled Edge Function', async
   assert.doesNotMatch(supabaseClient, /insertRow\('orders'/);
   assert.match(edgeFunction, /getVisitorHash/);
   assert.match(edgeFunction, /PUBLIC_SUBMISSION_HASH_SALT/);
+  assert.match(edgeFunction, /const checkoutPaymentMethods = \['간편결제', '카드', '계좌이체'\]/);
+  assert.match(edgeFunction, /function getPaymentMethod\(payload: Record<string, unknown>\)/);
+  assert.match(edgeFunction, /checkoutPaymentMethods\.includes\(paymentMethod\) \? paymentMethod : '간편결제'/);
+  assert.match(edgeFunction, /p_payment_method: getPaymentMethod\(payload\)/);
+  assert.doesNotMatch(edgeFunction, /p_payment_method: getText\(payload, 'paymentMethod'\)/);
   assert.match(edgeFunction, /rpc\/create_public_application/);
   assert.match(edgeFunction, /rpc\/create_public_order/);
   assert.match(edgeFunction, /PUBLIC_SUBMISSION_RATE_LIMITED/);

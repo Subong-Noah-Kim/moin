@@ -840,7 +840,7 @@
 ### TD-033 - mirror payment method allowlist in public submission function
 
 - Priority: `P2`
-- Status: `candidate`
+- Status: `done_local`
 - Source agents: Security/Review, Director
 - What: `create-public-submission` Edge Function에서도 결제 수단 값을 `간편결제`, `카드`, `계좌이체` 중 하나로 정규화한다.
 - Why: 이번 작업으로 브라우저 UI에서는 조작된 결제 수단이 `간편결제`로 되돌아가지만, 누군가 Edge Function을 직접 호출하면 임의 문자열이 주문 metadata에 남을 수 있습니다. 결제 승인 보안 문제는 아니지만 운영 데이터 정합성을 위해 서버도 같은 규칙을 갖는 편이 깔끔합니다.
@@ -852,3 +852,31 @@
 - Risks:
   - 현재 결제 수단은 금액/승인 권한에 쓰이지 않으므로 긴급 보안 패치는 아닙니다.
   - Edge Function 변경은 실제 반영에 별도 Supabase deploy가 필요하므로, 배포 전까지는 로컬 코드만 바뀐 상태가 됩니다.
+
+## Round 22 - 2026-06-07 11:05 KST
+
+### 요약
+
+이번 사이클은 바로 전 사이클에서 남긴 서버 측 결제 수단 정리 follow-up을 완료했습니다. 쉽게 말하면, 브라우저 화면에서는 사용자가 고를 수 있는 결제 수단이 정해져 있지만, 누군가 서버 함수를 직접 호출하면 엉뚱한 문자열을 보낼 수도 있습니다. 이제 공개 주문 생성 Edge Function도 `간편결제`, `카드`, `계좌이체`만 저장하고 나머지는 `간편결제`로 정리합니다.
+
+### TD-033 - mirror payment method allowlist in public submission function
+
+- Priority: `P2`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: `create-public-submission` Edge Function에서도 결제 수단 값을 `간편결제`, `카드`, `계좌이체` 중 하나로 정규화한다.
+- Why: 브라우저 UI는 이미 값을 정리하지만, Edge Function은 공개 호출 지점입니다. 서버도 같은 규칙을 가지면 직접 호출로 이상한 주문 metadata가 남는 일을 줄일 수 있습니다.
+- First development unit:
+  - `supabase/functions/create-public-submission/index.ts`에 `checkoutPaymentMethods`와 `getPaymentMethod()`를 추가한다.
+  - `create_public_order` RPC 호출의 `p_payment_method`에는 raw `getText()`가 아니라 `getPaymentMethod(payload)`를 넘긴다.
+  - `tests/paymentSecurity.test.js`가 allowlist, fallback helper, RPC wiring, 기존 raw 전달 제거를 확인한다.
+- Development direction: 실제 반영은 `create-public-submission` Edge Function 재배포가 필요합니다. 단, capacity 관련 Edge Function은 원격 DB migration/smoke-test 순서와 묶어서 배포해야 합니다.
+- Risks:
+  - 이 테스트는 repo의 기존 방식에 맞춘 source contract 테스트이며, Deno request runtime test는 아닙니다.
+  - allowlist가 `public-form.js`와 Edge Function에 중복되어 있어 결제 수단을 새로 추가할 때 두 곳을 같이 바꿔야 합니다.
+- Notes:
+  - Planning/Review Agent가 작고 낮은 위험의 후속 작업으로 승인했습니다.
+  - QA Agent가 테스트 범위와 wiring을 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 결제 권한/금액 판단과 분리되어 있음을 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 39개가 모두 통과했다.

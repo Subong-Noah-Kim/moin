@@ -6,10 +6,9 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
 2. Continue behavior-oriented frontend tests for broader DOM/flow slices after public/admin capacity helper coverage.
-3. Consider mirroring the public checkout payment-method allowlist in the Edge Function for cleaner order metadata.
-4. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
-5. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
-6. Revisit optional live regions for important loading/error states after operational rollout.
+3. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
+4. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
+5. Revisit optional live regions for important loading/error states after operational rollout.
 
 ## P0 - Before Real Payment Use
 
@@ -62,11 +61,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Done when: the checkout submit button stays disabled through the Toss request lifecycle, or a single pending order is reused safely.
   - Status: checkout uses a global in-progress lock and keeps the form disabled while Toss checkout is active.
 
-- [ ] Mirror checkout payment-method allowlist server-side
+- [x] Mirror checkout payment-method allowlist server-side
   - Problem: the browser now normalizes checkout `paymentMethod`, but a direct `create-public-submission` Edge Function call can still send arbitrary strings into order metadata.
   - Files: `supabase/functions/create-public-submission/index.ts`, `tests/paymentSecurity.test.js`
   - Done when: the Edge Function stores only `간편결제`, `카드`, or `계좌이체`, and falls back to `간편결제` for missing/unknown values.
   - Priority note: this is data hygiene and consistency hardening, not a payment authorization blocker, because amount/provider approval still does not trust this field.
+  - Status: local implementation is complete on `codex/overnight-task-discovery`; `create-public-submission` now normalizes `paymentMethod` before calling `create_public_order`, and tests pin the server allowlist contract. Supabase Edge Function deploy is still needed before this affects live order metadata.
 
 - [x] Restrict manual admin order status transitions
   - Problem: admins can set `paid`/`demo_paid` without a payment row or audit trail.
