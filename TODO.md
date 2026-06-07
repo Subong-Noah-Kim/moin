@@ -4,11 +4,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 ## Current Priority Queue - 2026-06-07 Audit
 
-1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
-2. Continue behavior-oriented frontend tests for broader DOM/flow slices after public/admin capacity helper coverage.
-3. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
-4. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
-5. Revisit optional live regions for important loading/error states after operational rollout.
+1. Review `AGENTIC_DEPLOY_HANDOFF.md` before choosing what to push/deploy.
+2. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout if the user chooses the full Supabase-first deploy bundle.
+3. Continue behavior-oriented frontend tests for broader DOM/flow slices after public/admin capacity helper coverage.
+4. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
+5. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
+6. Revisit optional live regions for important loading/error states after operational rollout.
 
 ## P0 - Before Real Payment Use
 
@@ -189,3 +190,4 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 - Payment hardening migration and Edge Function deploy were applied after the SQL migration and function deployment steps. Keep using test keys until business/live payment setup is intentional.
 - Supabase Edge Function deploy may require running locally from the terminal because the CLI can pause on macOS keychain/auth prompts.
 - Public submission abuse controls were applied with the two-step migration path. Keep that same order for future environments: setup migration, Edge Function deploy, frontend deploy/verification, then lock migration.
+- `AGENTIC_DEPLOY_HANDOFF.md` is the morning deploy decision guide for the current `codex/overnight-task-discovery` branch. It separates lower-risk frontend/test/doc changes from the larger capacity rollout and repeats the Supabase-first hard stop.

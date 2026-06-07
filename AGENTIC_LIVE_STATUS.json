@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T11:32:00+09:00",
-  "currentFocus": "public storage helper 로컬 완료",
+  "updatedAt": "2026-06-07T11:45:00+09:00",
+  "currentFocus": "morning deploy handoff 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -8,82 +8,82 @@
     "note": "이 파일은 localhost 모니터링 전용입니다. GitHub Pages 배포 artifact에는 포함하지 않습니다."
   },
   "summary": {
-    "activeAgents": 1,
-    "waitingAgents": 9,
+    "activeAgents": 0,
+    "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0036 done_local"
+    "currentFocus": "AG-0037 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
-      "status": "running",
-      "currentTask": "AG-0036 public storage helper 커밋 준비",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
-      "next": "최종 검증 후 로컬 커밋"
+      "status": "done",
+      "currentTask": "AG-0037 morning deploy handoff 정리 완료",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "next": "사용자 배포 결정 대기"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public-storage.js helper 분리와 main/payment-result 연결 완료",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
-      "next": "다음 flow test 후보 대기"
+      "currentTask": "새 기능 개발 대신 배포 인수인계 문서화로 마감",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "next": "정오 이후 사용자 지시에 따라 개발 재개"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "idle",
       "currentTask": "대기",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
       "next": "필요 시 UI 테스트 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public storage helper 테스트 완료, 이슈 없음",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
-      "next": "다음 flow test QA 후보 검토"
+      "currentTask": "배포 전 확인 순서와 hard stop 조건 검토 완료",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "next": "배포 전 npm test와 Supabase smoke-test 재확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0036 검토 결과 기록 완료",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
-      "next": "커밋 후 다음 Task 기록 대기"
+      "currentTask": "AG-0037 배포 인수인계 기록 완료",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "next": "사용자 배포 bundle 선택 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public storage helper 추출 승인",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
-      "next": "DOM/flow 테스트 후보 분해"
+      "currentTask": "배포 bundle 분리 관점 정리",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "next": "사용자가 선택한 bundle 기준으로 다음 작업 조정"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public storage helper 검토 완료",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
-      "next": "다음 후보 검토"
+      "currentTask": "morning deploy handoff 검토 완료",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "next": "배포 선택 후 hard stop 조건 재확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "public storage helper 보안 검토 완료",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
-      "next": "다음 flow test 보안 검토"
+      "currentTask": "capacity 배포 순서와 공개 status redaction 주의점 재확인",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "next": "Supabase migration 전 Edge Function deploy 금지 확인"
     },
     {
       "name": "보조 Agent",
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,39 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T11:32:00+09:00",
+      "updatedAt": "2026-06-07T11:45:00+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T11:45:00+09:00",
+      "agent": "QA/Release Agent",
+      "level": "review",
+      "title": "morning deploy handoff 검토",
+      "body": "HEAD 7e0b2ea 기준으로 push/deploy가 없었고, current branch는 capacity migration, smoke-test, Edge Function, Pages 순서가 맞아야 한다고 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T11:45:00+09:00",
+      "agent": "작업 정리 Agent",
+      "level": "complete",
+      "title": "AGENTIC_DEPLOY_HANDOFF.md 작성",
+      "body": "사용자가 아침에 배포 bundle을 선택할 수 있도록 낮은 위험 묶음, capacity rollout 묶음, Agentic monitor 묶음과 검증 순서를 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T11:45:00+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "Supabase-first hard stop 재확인",
+      "body": "capacity-aware Edge Function은 세 개 capacity migration과 smoke-test가 live Supabase에서 통과하기 전 배포하면 안 됩니다."
+    },
+    {
+      "time": "2026-06-07T11:45:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0037 로컬 완료",
+      "body": "정오가 가까워 새 기능 개발 대신 배포 전 의사결정 문서와 상태 기록을 업데이트했습니다. push/deploy는 하지 않습니다."
+    },
     {
       "time": "2026-06-07T11:32:00+09:00",
       "agent": "개발 Agent",

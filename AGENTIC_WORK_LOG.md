@@ -1176,3 +1176,36 @@
 - Next:
   - `public-storage.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
   - 12시 cutoff가 가까우므로 다음 heartbeat에서는 새 개발보다 작업 요약/배포 전 확인 목록 정리가 더 안전합니다.
+
+### AG-0037 - morning deploy handoff
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + QA/Release Agent + 작업 정리 Agent
+- Purpose: 아침에 배포할지, 어떤 묶음으로 배포할지 빠르게 판단할 수 있게 current branch의 순서와 위험을 정리한다.
+- Subagents:
+  - QA/Release Agent: Harvey
+- Changed files:
+  - `AGENTIC_DEPLOY_HANDOFF.md`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+- Notes:
+  - 정오가 가까워 새 기능 개발 대신 배포 전 의사결정 문서를 추가했습니다.
+  - `AGENTIC_DEPLOY_HANDOFF.md`는 current branch를 낮은 위험의 frontend/test/doc bundle, capacity rollout bundle, Agentic monitor/documentation bundle로 나눠 설명합니다.
+  - current branch를 그대로 배포하려면 live Supabase에 세 개 capacity migration을 먼저 적용하고, `capacity-smoke-test.sql`을 통과시킨 뒤 Edge Function과 Pages를 배포해야 합니다.
+  - QA/Release Agent가 branch HEAD `7e0b2ea`, 미push/미배포 상태, 새 browser module 목록, raw `AGENTIC_STATUS.json` 비공개 의도를 확인했습니다.
+  - AG-0036은 이미 `7e0b2ea`로 커밋된 상태라 status JSON의 commit 값을 보정했습니다.
+  - branch upstream은 로컬에 설정되어 있지 않은 상태로 확인되었습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - QA/Release Agent가 `supabase/capacity-rollout-checklist.md`를 source of truth로 유지하라고 권고했습니다.
+  - Hard stop 조건: migration, smoke-test assertion, public availability RPC, Edge Function verification, Toss confirmation 중 하나라도 실패하면 배포를 중단합니다.
+  - 이번 작업은 documentation/status handoff라 앱 runtime 변경은 없습니다.
+  - `npm test` passed: 39 tests.
+- Next:
+  - 사용자가 배포 bundle을 선택하면 그 기준으로 push/deploy 또는 branch split/cherry-pick 계획을 세웁니다.
+  - full current branch deploy를 고르면 반드시 Supabase-first rollout 순서로 진행합니다.

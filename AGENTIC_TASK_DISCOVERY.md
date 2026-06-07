@@ -938,3 +938,32 @@
   - Security/Review Agent가 storage helper가 결제/security authority가 아님을 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 39개가 모두 통과했다.
+
+## Round 25 - 2026-06-07 11:45 KST
+
+### 요약
+
+이번 사이클은 새 기능을 더 만들기보다, 아침에 사용자가 배포 여부를 고를 수 있도록 current branch의 배포 판단 자료를 정리했습니다. 쉽게 말하면 지금 브랜치에는 작은 개선들과 큰 정원/잔여석 rollout이 함께 들어 있으므로, 그냥 Pages만 배포하면 안 되는 지점을 한 문서로 모았습니다.
+
+### TD-036 - morning deploy handoff
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, QA/Release, Ops Log
+- What: current branch의 배포 bundle, Supabase-first 순서, post-deploy check, hard stop 조건을 `AGENTIC_DEPLOY_HANDOFF.md`로 정리한다.
+- Why: 현재 브랜치는 frontend/helper/test 개선뿐 아니라 capacity migration, Edge Function guard, public/admin UI 변경이 함께 들어 있습니다. 배포 순서를 잘못 잡으면 live Supabase와 frontend/Edge Function 계약이 어긋나 신청/결제 흐름이 깨질 수 있습니다.
+- First development unit:
+  - `AGENTIC_DEPLOY_HANDOFF.md`를 추가한다.
+  - 낮은 위험의 frontend/test/doc bundle과 capacity rollout bundle을 나눈다.
+  - current branch를 그대로 배포할 때 필요한 migration, smoke-test, Edge Function, Pages 순서를 적는다.
+  - status/log/TODO에 morning handoff를 기록하고 AG-0036 commit 값을 보정한다.
+- Development direction: 사용자가 full branch deploy를 고르면 `supabase/capacity-rollout-checklist.md`를 source of truth로 삼고 Supabase migration과 smoke-test를 먼저 진행합니다. 작은 개선만 먼저 배포하려면 cherry-pick 또는 별도 branch split 계획을 세웁니다.
+- Risks:
+  - current branch를 그대로 배포하면 capacity rollout까지 같이 배포하는 결정이 됩니다.
+  - capacity-aware Edge Function은 세 개 capacity migration과 smoke-test 전에는 배포하면 안 됩니다.
+  - raw `AGENTIC_STATUS.json`은 Pages에 복사하지 않는 것이 의도이며, 공개 상태판은 `PUBLIC_AGENTIC_STATUS.json`만 사용해야 합니다.
+- Notes:
+  - QA/Release Agent가 HEAD `7e0b2ea`, 미push/미배포, branch upstream 없음, 새 browser module 목록을 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - 새 앱 runtime 코드는 만들지 않았고, 문서와 상태 기록만 정리했다.
+  - `npm test` 39개가 모두 통과했다.
