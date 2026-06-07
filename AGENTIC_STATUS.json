@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-06-07T13:36:00+09:00",
+  "updatedAt": "2026-06-07T13:42:00+09:00",
   "branch": "main",
   "summary": {
     "active": 0,
     "blocked": 0,
     "doneLocal": 44,
-    "deployNeeded": 21
+    "deployNeeded": 22
   },
   "agents": [
     {
