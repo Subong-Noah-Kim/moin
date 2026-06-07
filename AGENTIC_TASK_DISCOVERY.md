@@ -595,3 +595,35 @@
   - UX/UI Agent는 missing availability row에서 서버 409에 맡기자는 대안을 냈지만, Security/Review Agent 의견에 따라 운영 모드에서는 fail-closed를 선택했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 29개가 모두 통과했다.
+
+## Round 14 - 2026-06-07 09:36 KST
+
+### 요약
+
+이번 사이클은 관리자 화면에서 정원과 접수 상태를 직접 운영할 수 있게 만든 작업입니다. 쉽게 말하면, 운영자가 모임별 정원을 입력하고, 접수를 수동으로 닫거나 다시 열 수 있으며, 모임 목록에서 `잔여 3/12`, `마감`, `신청 종료`, `확정 7 · 결제중 2` 같은 운영용 좌석 상태를 볼 수 있게 했습니다. 화면은 편의 기능이고, 실제 과모집 차단은 계속 DB/RPC와 Edge Function이 담당합니다.
+
+### TD-025 - admin capacity operations UI
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, UX/UI, Security/Review, QA, Ops Log
+- What: 관리자 모임 편집 폼과 모임 목록에 정원/잔여석/접수 상태 운영 UI를 추가한다.
+- Why: public UI가 구조화된 정원 상태를 읽어도, 운영자가 정원과 수동 종료 상태를 입력하거나 확인할 화면이 없으면 실제 운영에 쓰기 어렵습니다.
+- First development unit:
+  - 관리자 모임 폼에 `capacity`, `registration_status`, `close_reason` 입력을 추가한다.
+  - 빈 정원은 `null`로 저장해 무제한으로 본다.
+  - `registration_status`는 `open`/`closed`만 저장한다.
+  - `list_admin_meetup_availability()`는 signed-in admin access token으로만 호출한다.
+  - 모임 목록에 `좌석` 열을 추가하고 badge, 잔여석, 확정/결제중 count를 보여준다.
+  - availability RPC가 실패하면 숫자를 권위 있는 값처럼 보여주지 않고 `확인 지연`으로 표시한다.
+  - `supabase-client.js`에서 admin meetup write payload를 allow-list로 걸러 파생 availability 필드가 저장되지 않게 한다.
+- Development direction: 다음 조각은 실제 배포 전 적용 순서와 SQL/RPC smoke-test 체크리스트를 더 명확히 정리하는 작업입니다.
+- Risks:
+  - 이 UI는 원격 Supabase에 capacity migrations와 admin availability RPC가 적용된 뒤에 정상 동작합니다.
+  - 이번 slice는 새 migration을 만들지 않았으므로 `closed_at` 자동 기록은 아직 서버 계약으로 보장하지 않습니다. 클라이언트는 보안상 `closed_at`을 쓰지 않습니다.
+  - 현재 테스트는 source contract 중심입니다. 실제 관리자 UI 조작 테스트는 프론트엔드 테스트 확장 때 보강하는 것이 좋습니다.
+- Notes:
+  - UX/UI Agent는 form/table 문구와 모바일 카드 기준을 제안했습니다.
+  - Security/Review Agent는 admin RPC access token 사용, write payload allow-list, availability 실패 시 stale count 금지를 요구했고 반영했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 30개가 모두 통과했다.

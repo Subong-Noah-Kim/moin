@@ -838,6 +838,55 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(styles, /\.registration-closed-note/);
 });
 
+test('admin capacity UI uses admin RPC and strips derived availability fields', async () => {
+  const [supabaseClient, adminHtml, adminScript, adminStyles] = await Promise.all([
+    readProjectFile('../supabase-client.js'),
+    readProjectFile('../admin.html'),
+    readProjectFile('../admin.js'),
+    readProjectFile('../admin.css'),
+  ]);
+  const operationalLoad = supabaseClient.slice(
+    supabaseClient.indexOf('export async function fetchAdminOperationalData'),
+    supabaseClient.indexOf('export async function fetchAdminOrders'),
+  );
+  const sanitizeBlock = supabaseClient.slice(
+    supabaseClient.indexOf('const adminMeetupWritableFields'),
+    supabaseClient.indexOf('async function callPublicSubmission'),
+  );
+
+  assert.match(supabaseClient, /'capacity',\s+'registration_status',\s+'closed_at',\s+'close_reason'/);
+  assert.match(supabaseClient, /async function callReadRpcWithToken\(functionName, accessToken, payload = \{\}/);
+  assert.match(operationalLoad, /callReadRpcWithToken\('list_admin_meetup_availability', accessToken/);
+  assert.doesNotMatch(supabaseClient, /callReadRpc\('list_admin_meetup_availability'/);
+  assert.match(sanitizeBlock, /const adminMeetupWritableFields = \[/);
+  assert.match(sanitizeBlock, /'capacity'/);
+  assert.match(sanitizeBlock, /'registration_status'/);
+  assert.match(sanitizeBlock, /'close_reason'/);
+  assert.match(sanitizeBlock, /normalizeAdminMeetupCapacity/);
+  assert.match(sanitizeBlock, /registration_status'[\s\S]*\['open', 'closed'\]\.includes/);
+  assert.doesNotMatch(sanitizeBlock, /remaining_spots|effective_registration_status|paid_order_count|pending_order_count|active_order_count|can_register|closed_at/);
+  assert.match(supabaseClient, /sanitizeAdminMeetupPayload\(meetup, \{ includeId: true \}\)/);
+  assert.match(supabaseClient, /sanitizeAdminMeetupPayload\(meetup\)/);
+
+  assert.match(adminHtml, /name="capacity" type="number" min="1" step="1"/);
+  assert.match(adminHtml, /name="registration_status"[\s\S]*value="open"[\s\S]*접수중[\s\S]*value="closed"[\s\S]*수동 종료/);
+  assert.match(adminHtml, /name="close_reason"/);
+  assert.match(adminHtml, /<th>좌석<\/th>/);
+  assert.doesNotMatch(adminHtml, /name="remaining_spots"|name="effective_registration_status"|name="active_order_count"|name="can_register"|name="closed_at"/);
+
+  assert.match(adminScript, /function mergeAdminMeetupAvailability\(meetups, availabilityRows = \[\]\)/);
+  assert.match(adminScript, /meetups: mergeAdminMeetupAvailability\(data\.meetups, data\.meetupAvailability\)/);
+  assert.match(adminScript, /availability_known: false/);
+  assert.match(adminScript, /function renderSeatSummary\(meetup\)/);
+  assert.match(adminScript, /<td data-label="좌석">\$\{renderSeatSummary\(meetup\)\}<\/td>/);
+  assert.match(adminScript, /getCapacityPayloadValue\(formData\.get\('capacity'\)\)/);
+  assert.match(adminScript, /getRegistrationStatusPayloadValue\(formData\.get\('registration_status'\)\)/);
+  assert.match(adminScript, /registrationStatus === 'closed' && closeReason \? closeReason : null/);
+
+  assert.match(adminStyles, /\.capacity-controls/);
+  assert.match(adminStyles, /\.seat-summary/);
+});
+
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
   const [indexHtml, mainScript] = await Promise.all([
     readProjectFile('../index.html'),

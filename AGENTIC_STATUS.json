@@ -1,81 +1,81 @@
 {
-  "updatedAt": "2026-06-07T09:25:14+09:00",
+  "updatedAt": "2026-06-07T09:36:12+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 23,
-    "deployNeeded": 9
+    "doneLocal": 24,
+    "deployNeeded": 10
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0025 공개 페이지 정원/잔여석 UI 완료 검수",
+      "currentTask": "AG-0026 관리자 정원/잔여석 운영 UI 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "관리자 capacity UI 구현 배정"
+      "next": "live Supabase 적용 체크리스트 배정"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public UI 이후 admin UI 우선순위 확인",
+      "currentTask": "admin UI 이후 원격 적용 순서 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "관리자 운영 흐름 분해"
+      "next": "배포/검증 단계 분해"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "public 잔여석/마감/신청 종료 문구 검토 완료",
+      "currentTask": "admin 정원 입력과 좌석 요약 문구 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin capacity 운영 UI 문구 검토"
+      "next": "배포 전 운영 문구 검토"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public UI merge/fail-closed 기준 검토 완료",
+      "currentTask": "admin capacity UI 범위와 실패 상태 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin UI 권한/상태 변경 검토"
+      "next": "배포 순서 검토"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public availability RPC client merge 로컬 완료",
+      "currentTask": "admin capacity form/list 로컬 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin capacity form/list 구현 대기"
+      "next": "배포 체크리스트 구현 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public UI availability guard 테스트 추가 및 npm test 29개 통과",
+      "currentTask": "admin capacity UI 테스트 추가 및 npm test 30개 통과",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin capacity UI 테스트 추가"
+      "next": "smoke-test 실행 체크리스트 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "status_label 기준 판단 제거와 운영 모드 fail-closed 검토 완료",
+      "currentTask": "admin RPC token과 write payload allow-list 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin capacity update 권한 검토"
+      "next": "원격 적용 전 권한 점검"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0025 public UI 기록 완료",
+      "currentTask": "AG-0026 admin capacity UI 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -590,6 +590,29 @@
           "Supabase가 설정된 운영 모드에서 DB 또는 availability를 확인하지 못하면 신청/결제를 열지 않는 fail-closed 기준을 적용했습니다.",
           "status_label은 홍보성 문구로만 남기고, 잔여석/마감 판단에는 쓰지 않습니다.",
           "로컬 테스트는 29개 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0026",
+      "title": "관리자 정원/잔여석 운영 UI",
+      "priority": "P0",
+      "owner": "개발 Agent + UX/UI Agent + 보안 Agent + QA Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "live Supabase migration/smoke-test/deploy 순서 체크리스트 정리",
+      "details": {
+        "summary": "관리자가 모임별 정원을 입력하고, 접수를 닫거나 열고, 실제 잔여석 상태를 볼 수 있게 했습니다.",
+        "what": "관리자 모임 폼에 정원, 접수 상태, 종료 사유 입력을 추가했습니다. 모임 목록에는 좌석 열을 추가해 접수 가능, 마감, 신청 종료, 확인 지연과 잔여석, 확정/결제중 숫자를 보여줍니다.",
+        "why": "공개 페이지가 정확한 잔여석 상태를 읽더라도 운영자가 정원과 수동 종료 상태를 관리할 화면이 없으면 실제 서비스 운영에 쓰기 어렵습니다.",
+        "developmentDirection": "다음 단계는 원격 Supabase에 capacity migration을 적용하고 smoke-test를 실행한 뒤 Edge Function과 GitHub Pages를 배포하는 순서를 점검표로 정리하는 것입니다.",
+        "notes": [
+          "이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "관리자 availability RPC는 signed-in admin access token으로만 호출합니다.",
+          "저장 payload는 supabase-client.js에서 allow-list로 걸러 파생 좌석 상태와 주문 수가 저장되지 않게 했습니다.",
+          "closed_at은 보안상 클라이언트에서 쓰지 않습니다. 접수 닫힘 여부는 registration_status가 담당합니다.",
+          "로컬 테스트는 30개 모두 통과했습니다."
         ]
       }
     }

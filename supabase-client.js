@@ -23,6 +23,10 @@ const adminMeetupFields = [
   'tags',
   'image_url',
   'schedule',
+  'capacity',
+  'registration_status',
+  'closed_at',
+  'close_reason',
   'is_published',
   'created_at',
 ].join(',');
@@ -60,6 +64,28 @@ const adminPaymentFields = [
   'paid_at',
   'created_at',
 ].join(',');
+const adminMeetupWritableFields = [
+  'id',
+  'type',
+  'category',
+  'title',
+  'description',
+  'host_name',
+  'host_role',
+  'status_label',
+  'date_label',
+  'time_label',
+  'location',
+  'price_amount',
+  'price_label',
+  'tags',
+  'image_url',
+  'schedule',
+  'capacity',
+  'registration_status',
+  'close_reason',
+  'is_published',
+];
 
 export function isSupabaseConfigured() {
   return Boolean(supabaseUrl && supabaseAnonKey);
@@ -73,6 +99,44 @@ function parsePriceAmount(priceLabel) {
 function getNumericAmount(value) {
   const amount = Number(value);
   return Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+function normalizeAdminMeetupCapacity(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const capacity = Number(value);
+
+  if (!Number.isInteger(capacity) || capacity <= 0) {
+    throw new Error('정원은 비워두거나 1 이상의 정수여야 합니다.');
+  }
+
+  return capacity;
+}
+
+function sanitizeAdminMeetupPayload(meetup, { includeId = false } = {}) {
+  const payload = {};
+  const allowedFields = includeId
+    ? adminMeetupWritableFields
+    : adminMeetupWritableFields.filter((field) => field !== 'id');
+
+  allowedFields.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(meetup, field)) {
+      payload[field] = meetup[field];
+    }
+  });
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'capacity')) {
+    payload.capacity = normalizeAdminMeetupCapacity(payload.capacity);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'registration_status')
+    && !['open', 'closed'].includes(payload.registration_status)) {
+    throw new Error('신청 상태는 open 또는 closed만 저장할 수 있습니다.');
+  }
+
+  return payload;
 }
 
 async function callPublicSubmission(action, payload) {
@@ -152,6 +216,29 @@ async function callReadRpc(functionName, payload = {}) {
   }
 
   return { skipped: false, rows: await response.json() };
+}
+
+async function callReadRpcWithToken(functionName, accessToken, payload = {}, timeoutMs = requestTimeoutMs) {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, rows: [] };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  }, timeoutMs);
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase admin RPC failed for ${functionName}: ${response.status} ${message}`);
+  }
+
+  return response.json();
 }
 
 async function selectRowsWithToken(tableName, queryString, accessToken, timeoutMs = requestTimeoutMs) {
@@ -666,6 +753,7 @@ async function resolveAdminMeetups(result, warnings) {
 export async function fetchAdminOverview() {
   return {
     meetups: [],
+    meetupAvailability: [],
     applications: [],
     orders: [],
     payments: [],
@@ -675,7 +763,7 @@ export async function fetchAdminOverview() {
 
 export async function fetchAdminOperationalData(accessToken) {
   const warnings = [];
-  const [meetupsResult, applicationsResult] = await Promise.allSettled([
+  const [meetupsResult, applicationsResult, availabilityResult] = await Promise.allSettled([
     selectRowsWithToken(
       'meetups',
       `?select=${adminMeetupFields}&order=created_at.desc`,
@@ -688,12 +776,14 @@ export async function fetchAdminOperationalData(accessToken) {
       accessToken,
       optionalRequestTimeoutMs,
     ),
+    callReadRpcWithToken('list_admin_meetup_availability', accessToken, {}, optionalRequestTimeoutMs),
   ]);
 
   const meetups = await resolveAdminMeetups(meetupsResult, warnings);
+  const availabilityRows = resolveAdminRows('정원 상태', availabilityResult, warnings);
   const applications = resolveAdminRows('신청', applicationsResult, warnings);
 
-  return { meetups, applications, warnings };
+  return { meetups, meetupAvailability: availabilityRows, applications, warnings };
 }
 
 export async function fetchAdminOrders(accessToken) {
@@ -725,7 +815,7 @@ export async function createAdminMeetup(accessToken, meetup) {
     'meetups',
     `?select=${adminMeetupFields}`,
     accessToken,
-    meetup,
+    sanitizeAdminMeetupPayload(meetup, { includeId: true }),
     'POST',
   );
 
@@ -737,7 +827,7 @@ export async function updateAdminMeetup(accessToken, meetupId, meetup) {
     'meetups',
     `?id=eq.${encodeURIComponent(meetupId)}&select=${adminMeetupFields}`,
     accessToken,
-    meetup,
+    sanitizeAdminMeetupPayload(meetup),
     'PATCH',
   );
 

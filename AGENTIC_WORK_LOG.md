@@ -737,3 +737,43 @@
 - Next:
   - 다음 구현 조각은 관리자 화면에서 정원 입력, 잔여석/마감 상태 확인, 수동 신청 종료/재개를 관리하는 UI입니다.
   - 실제 배포 전에는 capacity migration 3개와 smoke-test 적용 순서를 다시 확인해야 합니다.
+
+### AG-0026 - 관리자 정원/잔여석 운영 UI
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + UX/UI Agent + 보안 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 운영자가 관리자 화면에서 정원을 입력하고, 접수를 닫거나 열고, 실제 잔여석 상태를 확인할 수 있게 한다.
+- Subagents:
+  - UX/UI Agent: Ohm
+  - Security/Review Agent: Lovelace
+- Changed files:
+  - `admin.html`
+  - `admin.js`
+  - `admin.css`
+  - `supabase-client.js`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 관리자 모임 폼에 정원, 접수 상태, 종료 사유 입력을 추가했습니다.
+  - 정원을 비우면 무제한으로 저장합니다.
+  - 접수 상태는 `open`/`closed`만 저장하고, `sold_out`은 주문 수로 계산해서 표시합니다.
+  - 관리자 모임 목록에는 `좌석` 열을 추가해 접수 가능/마감/신청 종료/확인 지연, 잔여석, 확정/결제중 숫자를 보여줍니다.
+  - `list_admin_meetup_availability()`는 관리자 access token으로만 호출합니다.
+  - `supabase-client.js`에서 모임 저장 payload를 allow-list로 걸러 `remaining_spots`, 주문 수, `can_register`, `closed_at` 같은 파생/내부 필드는 저장하지 않게 했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - UX/UI Agent가 관리자 폼/목록/모바일 카드 기준을 제안했습니다.
+  - Security/Review Agent가 admin RPC token 사용, payload allow-list, availability 실패 시 `확인 지연` 표시를 요구했고 반영했습니다.
+  - `node --check admin.js` passed.
+  - `node --check supabase-client.js` passed.
+  - `git diff --check` passed.
+  - `npm test` passed: 30 tests.
+- Next:
+  - 다음 구현 조각은 live Supabase migration 적용, SQL/RPC smoke-test, Edge Function deploy, GitHub Pages deploy 순서를 사용자가 검토하기 쉽게 체크리스트로 정리하는 작업입니다.
+  - 실제 배포 전에는 capacity migration 3개가 원격에 먼저 적용되어야 합니다.

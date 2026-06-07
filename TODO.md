@@ -5,10 +5,10 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 ## Current Priority Queue - 2026-06-07 Audit
 
 1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
-2. Add admin UI for capacity input, remaining-spots review, and manual registration close/open controls.
-3. Prepare the live Supabase migration/smoke-test execution checklist for morning review.
-4. Run one fresh GitHub Pages deployment check for the completed workflow runtime update.
-5. Expand behavior-oriented frontend tests after the capacity rollout is split into safer helper slices.
+2. Prepare the live Supabase migration/smoke-test execution checklist for morning review.
+3. Run one fresh GitHub Pages deployment check for the completed workflow runtime update.
+4. Expand behavior-oriented frontend tests after the capacity rollout is split into safer helper slices.
+5. Revisit optional live regions for important loading/error states after operational rollout.
 
 ## P0 - Before Real Payment Use
 
@@ -16,7 +16,7 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Problem: meetup capacity is still a manual display label such as "4자리 남음"; public application/order creation does not atomically block over-capacity submissions, and Toss `pending` orders have no expiry.
   - Files: `supabase/migrations/`, `supabase/functions/create-public-submission/index.ts`, `supabase/functions/confirm-toss-payment/index.ts`, `supabase-client.js`, `main.js`, `admin.html`, `admin.js`, `tests/paymentSecurity.test.js`
   - Done when: capacity is stored in Supabase, remaining spots are computed from seat-holding orders, sold-out/closed states return stable 409 errors, expired pending Toss holds do not consume seats forever, and public/admin UI use structured status instead of freeform `status_label`.
-  - Status: local backend implementation has started with the DB contract migration in `supabase/migrations/20260607000000_capacity_remaining_spots.sql`, the public RPC guard migration in `supabase/migrations/20260607010000_capacity_rpc_guards.sql`, the structured read contract in `supabase/migrations/20260607020000_capacity_read_contract.sql`, Edge Function sold-out/closed/expired-pending handling, `supabase/capacity-smoke-test.sql`, and regression coverage in `tests/paymentSecurity.test.js`. Public UI now reads `list_public_meetup_availability()`, shows structured remaining/closed status, and fails closed for configured Supabase mode when availability is missing. The full feature is not complete yet: admin UI, live Supabase migration application, Edge Function deploy, and manual smoke-test execution are still pending. Do not deploy Edge Functions for this package before the DB migrations exist remotely.
+  - Status: local backend implementation has started with the DB contract migration in `supabase/migrations/20260607000000_capacity_remaining_spots.sql`, the public RPC guard migration in `supabase/migrations/20260607010000_capacity_rpc_guards.sql`, the structured read contract in `supabase/migrations/20260607020000_capacity_read_contract.sql`, Edge Function sold-out/closed/expired-pending handling, `supabase/capacity-smoke-test.sql`, and regression coverage in `tests/paymentSecurity.test.js`. Public UI now reads `list_public_meetup_availability()`, shows structured remaining/closed status, and fails closed for configured Supabase mode when availability is missing. Admin UI now has capacity input, manual open/closed status, close reason, and read-only remaining-seat summary from `list_admin_meetup_availability()`. The full feature is not complete yet: live Supabase migration application, Edge Function deploy, GitHub Pages deploy, and manual smoke-test execution are still pending. Do not deploy Edge Functions for this package before the DB migrations exist remotely.
 
 - [x] Lock payment amount to server-side meetup price
   - Problem: anonymous clients can insert `orders.amount`, and the Edge Function currently validates Toss amount against that untrusted order row.

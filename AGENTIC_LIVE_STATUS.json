@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T09:25:14+09:00",
-  "currentFocus": "공개 페이지 정원/잔여석 UI 1차 연결 로컬 완료",
+  "updatedAt": "2026-06-07T09:36:12+09:00",
+  "currentFocus": "관리자 정원/잔여석 운영 UI 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,79 +11,79 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0025 done_local"
+    "currentFocus": "AG-0026 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0025 공개 페이지 정원/잔여석 UI 완료 검수",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
-      "next": "관리자 capacity UI 구현 배정"
+      "currentTask": "AG-0026 관리자 정원/잔여석 운영 UI 완료 검수",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "next": "live Supabase 적용 체크리스트 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public availability RPC client merge 로컬 완료",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
-      "next": "admin capacity form/list 구현 대기"
+      "currentTask": "admin capacity form/list 로컬 완료",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "next": "배포 체크리스트 구현 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "public 잔여석/마감/신청 종료 문구 검토 완료",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
-      "next": "admin capacity 운영 UI 문구 검토"
+      "currentTask": "admin 정원 입력과 좌석 요약 문구 검토 완료",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "next": "배포 전 운영 문구 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public UI availability guard 테스트 추가 및 npm test 29개 통과",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
-      "next": "admin capacity UI 테스트 추가"
+      "currentTask": "admin capacity UI 테스트 추가 및 npm test 30개 통과",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "next": "smoke-test 실행 체크리스트 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0025 public UI 기록 완료",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "currentTask": "AG-0026 admin capacity UI 기록 완료",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public UI 이후 admin UI 우선순위 확인",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
-      "next": "관리자 운영 흐름 분해"
+      "currentTask": "admin UI 이후 원격 적용 순서 확인",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "next": "배포/검증 단계 분해"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public UI merge/fail-closed 기준 검토 완료",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
-      "next": "admin UI 권한/상태 변경 검토"
+      "currentTask": "admin capacity UI 범위와 실패 상태 검토 완료",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "next": "배포 순서 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "status_label 기준 판단 제거와 운영 모드 fail-closed 검토 완료",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
-      "next": "admin capacity update 권한 검토"
+      "currentTask": "admin RPC token과 write payload allow-list 검토 완료",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "next": "원격 적용 전 권한 점검"
     },
     {
       "name": "보조 Agent",
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,39 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "updatedAt": "2026-06-07T09:36:12+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T09:36:12+09:00",
+      "agent": "개발 Agent",
+      "level": "review",
+      "title": "admin capacity UI 추가",
+      "body": "관리자 모임 폼에 정원, 접수 상태, 종료 사유 입력을 추가하고, 모임 목록에 좌석 요약 열을 추가했습니다."
+    },
+    {
+      "time": "2026-06-07T09:36:12+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "admin RPC와 payload allow-list 적용",
+      "body": "관리자 availability RPC는 access token으로만 호출하고, 모임 저장 payload에서 파생 좌석 상태와 주문 수를 제거하도록 했습니다."
+    },
+    {
+      "time": "2026-06-07T09:36:12+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "admin capacity UI 테스트 통과",
+      "body": "관리자 정원 UI, admin RPC token 사용, payload allow-list를 테스트했습니다. npm test 30개가 모두 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T09:36:12+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0026 로컬 완료",
+      "body": "다음 우선순위는 live Supabase migration, smoke-test, Edge Function deploy, GitHub Pages deploy 순서 체크리스트 정리입니다."
+    },
     {
       "time": "2026-06-07T09:25:14+09:00",
       "agent": "개발 Agent",
@@ -277,34 +305,6 @@
       "level": "review",
       "title": "결제 인증값 노출 리스크 검토",
       "body": "paymentKey는 Supabase 승인 호출에는 필요하지만 화면, 브라우저 저장소, 주소창에 오래 남기지 않는 방향을 승인했습니다. 초기 callback URL은 잠깐 존재할 수 있다는 한계도 기록했습니다."
-    },
-    {
-      "time": "2026-06-07T04:22:31+09:00",
-      "agent": "UX/UI Agent",
-      "level": "review",
-      "title": "결과 화면 문구 정리",
-      "body": "원문 결제키를 보여주지 않고도 사용자가 테스트 결제 인증이 도착했다는 점을 이해하도록 '테스트 결제 접수 상태' 문구로 정리했습니다."
-    },
-    {
-      "time": "2026-06-07T04:22:31+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "식별자 최소화 테스트 통과",
-      "body": "paymentKey가 서버 승인에는 쓰이지만 화면/저장소에 원문으로 남지 않고 URL query가 캡처 후 정리되는지 확인하는 테스트를 추가했습니다. npm test 24개가 모두 통과했습니다."
-    },
-    {
-      "time": "2026-06-07T04:22:31+09:00",
-      "agent": "총괄 디렉터",
-      "level": "review",
-      "title": "AG-0019 로컬 완료",
-      "body": "결제 결과 식별자 노출 최소화 작업을 완료했습니다. push와 deploy는 하지 않았고, live 반영은 사용자가 선택한 배포 묶음에 포함합니다."
-    },
-    {
-      "time": "2026-06-07T04:08:22+09:00",
-      "agent": "기획 Agent",
-      "level": "review",
-      "title": "테스트 결제 문구 기준 확정",
-      "body": "테스트 결제와 실제 과금을 혼동하게 만드는 단독 '결제 완료' 표현을 줄이고, 화면 확인용 데모/토스 테스트/Supabase 승인 함수 흐름을 분리해 설명하는 방향을 승인했습니다."
     }
   ]
 }

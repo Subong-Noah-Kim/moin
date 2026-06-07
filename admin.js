@@ -99,6 +99,7 @@ const taskStatusLabels = {
 let activeSession = getStoredAdminSession();
 let overview = {
   meetups: [],
+  meetupAvailability: [],
   applications: [],
   orders: [],
   payments: [],
@@ -145,6 +146,80 @@ function normalizePriceLabel(priceLabel, amount) {
   }
 
   return trimmed;
+}
+
+function normalizeOptionalInteger(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+function getCapacityPayloadValue(value) {
+  const trimmed = String(value ?? '').trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const capacity = Number(trimmed);
+
+  if (!Number.isInteger(capacity) || capacity <= 0) {
+    throw new Error('정원은 비워두거나 1명 이상의 정수로 입력해주세요.');
+  }
+
+  return capacity;
+}
+
+function getRegistrationStatusPayloadValue(value) {
+  return value === 'closed' ? 'closed' : 'open';
+}
+
+function normalizeAdminAvailability(row) {
+  return {
+    meetup_id: String(row.meetup_id || ''),
+    capacity: normalizeOptionalInteger(row.capacity),
+    paid_order_count: Number(row.paid_order_count || 0),
+    pending_order_count: Number(row.pending_order_count || 0),
+    active_order_count: Number(row.active_order_count || 0),
+    remaining_spots: row.remaining_spots === null ? null : Number(row.remaining_spots),
+    registration_status: String(row.registration_status || 'open'),
+    effective_registration_status: String(row.effective_registration_status || 'open'),
+    can_register: row.can_register === true,
+    closed_at: row.closed_at || null,
+    close_reason: row.close_reason || '',
+    availability_known: true,
+  };
+}
+
+function mergeAdminMeetupAvailability(meetups, availabilityRows = []) {
+  const availabilityByMeetupId = new Map(
+    availabilityRows
+      .map(normalizeAdminAvailability)
+      .filter((availability) => availability.meetup_id)
+      .map((availability) => [availability.meetup_id, availability]),
+  );
+
+  return meetups.map((meetup) => {
+    const availability = availabilityByMeetupId.get(meetup.id);
+
+    if (availability) {
+      return { ...meetup, ...availability };
+    }
+
+    return {
+      ...meetup,
+      availability_known: false,
+      effective_registration_status: 'unknown',
+      can_register: false,
+      paid_order_count: null,
+      pending_order_count: null,
+      active_order_count: null,
+      remaining_spots: null,
+    };
+  });
 }
 
 function getTypeLabel(type) {
@@ -517,6 +592,8 @@ function getMeetupFormPayload(includeId) {
   const formData = new FormData(meetupForm);
   const priceAmount = Number(formData.get('price_amount') || 0);
   const title = String(formData.get('title') || '').trim();
+  const registrationStatus = getRegistrationStatusPayloadValue(formData.get('registration_status'));
+  const closeReason = String(formData.get('close_reason') || '').trim();
   const payload = {
     type: String(formData.get('type') || 'regular'),
     category: String(formData.get('category') || '').trim(),
@@ -530,6 +607,9 @@ function getMeetupFormPayload(includeId) {
     location: String(formData.get('location') || '').trim(),
     price_amount: priceAmount,
     price_label: normalizePriceLabel(formData.get('price_label'), priceAmount),
+    capacity: getCapacityPayloadValue(formData.get('capacity')),
+    registration_status: registrationStatus,
+    close_reason: registrationStatus === 'closed' && closeReason ? closeReason : null,
     tags: splitList(formData.get('tags')),
     image_url: String(formData.get('image_url') || '').trim(),
     schedule: splitList(formData.get('schedule')),
@@ -541,6 +621,19 @@ function getMeetupFormPayload(includeId) {
   }
 
   return payload;
+}
+
+function syncRegistrationStatusFields({ clearReason = false } = {}) {
+  const statusField = meetupForm.elements.registration_status;
+  const reasonField = meetupForm.elements.close_reason;
+  if (!statusField || !reasonField) return;
+
+  const isClosed = statusField.value === 'closed';
+  reasonField.disabled = !isClosed;
+
+  if (!isClosed && clearReason) {
+    reasonField.value = '';
+  }
 }
 
 function getSelectedMeetupImageFile() {
@@ -777,6 +870,52 @@ function renderOrdersMessage(message, countLabel = '0건') {
   `;
 }
 
+function getSeatStatusLabel(meetup) {
+  if (meetup.availability_known === false) return '확인 지연';
+  if (meetup.effective_registration_status === 'closed') return '신청 종료';
+  if (meetup.effective_registration_status === 'sold_out') return '마감';
+  return '접수 가능';
+}
+
+function getSeatStatusClass(meetup) {
+  if (meetup.availability_known === false) return 'is-deferred';
+  if (meetup.effective_registration_status === 'closed' || meetup.effective_registration_status === 'sold_out') {
+    return 'is-failed';
+  }
+  if (Number.isFinite(meetup.remaining_spots) && meetup.remaining_spots <= 2) return 'is-pending';
+  return 'is-published';
+}
+
+function getSeatSummaryText(meetup) {
+  if (meetup.availability_known === false) {
+    return meetup.capacity ? `정원 ${meetup.capacity}명 · 잔여 확인 지연` : '잔여 확인 지연';
+  }
+
+  if (!meetup.capacity) {
+    return '무제한';
+  }
+
+  return `잔여 ${meetup.remaining_spots}/${meetup.capacity}`;
+}
+
+function getSeatBreakdownText(meetup) {
+  if (meetup.availability_known === false) {
+    return '정원 상태를 다시 불러와야 합니다.';
+  }
+
+  return `확정 ${meetup.paid_order_count || 0} · 결제중 ${meetup.pending_order_count || 0}`;
+}
+
+function renderSeatSummary(meetup) {
+  return `
+    <div class="seat-summary">
+      <span class="pill ${getSeatStatusClass(meetup)}">${escapeHtml(getSeatStatusLabel(meetup))}</span>
+      <strong>${escapeHtml(getSeatSummaryText(meetup))}</strong>
+      <span>${escapeHtml(getSeatBreakdownText(meetup))}</span>
+    </div>
+  `;
+}
+
 function renderMeetups() {
   document.querySelector('[data-meetups-count]').textContent = `${overview.meetups.length}개`;
   document.querySelector('[data-meetups-body]').innerHTML =
@@ -792,6 +931,7 @@ function renderMeetups() {
             <td data-label="일정">${escapeHtml(meetup.date_label)}<br /><span class="muted">${escapeHtml(meetup.time_label)}</span></td>
             <td data-label="장소">${escapeHtml(meetup.location)}</td>
             <td data-label="가격">${escapeHtml(normalizePriceLabel(meetup.price_label, meetup.price_amount))}</td>
+            <td data-label="좌석">${renderSeatSummary(meetup)}</td>
             <td data-label="상태">
               <span class="pill ${meetup.is_published ? 'is-published' : ''}">
                 ${meetup.is_published ? '공개' : '숨김'}
@@ -813,14 +953,14 @@ function renderMeetups() {
           </tr>
         `,
       )
-      .join('') || '<tr class="empty-row"><td colspan="7">모임 데이터가 없습니다.</td></tr>';
+      .join('') || '<tr class="empty-row"><td colspan="8">모임 데이터가 없습니다.</td></tr>';
 }
 
 function renderMeetupsMessage(message, countLabel = '0개') {
   document.querySelector('[data-meetups-count]').textContent = countLabel;
   document.querySelector('[data-meetups-body]').innerHTML = `
     <tr class="empty-row">
-      <td colspan="7">${escapeHtml(message)}</td>
+      <td colspan="8">${escapeHtml(message)}</td>
     </tr>
   `;
 }
@@ -846,12 +986,16 @@ function setMeetupFormValues(meetup) {
   meetupForm.elements.location.value = meetup?.location || '';
   meetupForm.elements.price_amount.value = meetup?.price_amount ?? '';
   meetupForm.elements.price_label.value = meetup?.price_label || '';
+  meetupForm.elements.capacity.value = meetup?.capacity ?? '';
+  meetupForm.elements.registration_status.value = meetup?.registration_status === 'closed' ? 'closed' : 'open';
+  meetupForm.elements.close_reason.value = meetup?.close_reason || '';
   meetupForm.elements.image_url.value = meetup?.image_url || '';
   meetupForm.elements.image_file.value = '';
   resetMeetupImagePicker(meetup?.image_url || '');
   meetupForm.elements.tags.value = Array.isArray(meetup?.tags) ? meetup.tags.join(', ') : '';
   meetupForm.elements.schedule.value = Array.isArray(meetup?.schedule) ? meetup.schedule.join('\n') : '';
   meetupForm.elements.is_published.checked = meetup?.is_published ?? true;
+  syncRegistrationStatusFields();
 }
 
 function openMeetupForm(meetup = null) {
@@ -875,12 +1019,15 @@ function closeMeetupForm() {
 }
 
 function upsertMeetupInOverview(meetup) {
+  const meetupWithUnknownAvailability = mergeAdminMeetupAvailability([meetup], [])[0];
   const index = overview.meetups.findIndex((item) => item.id === meetup.id);
 
   if (index >= 0) {
-    overview.meetups = overview.meetups.map((item) => (item.id === meetup.id ? meetup : item));
+    overview.meetups = overview.meetups.map((item) => (
+      item.id === meetup.id ? meetupWithUnknownAvailability : item
+    ));
   } else {
-    overview.meetups = [meetup, ...overview.meetups];
+    overview.meetups = [meetupWithUnknownAvailability, ...overview.meetups];
   }
 
   renderStats();
@@ -997,7 +1144,8 @@ async function loadOperationalData() {
 
     overview = {
       ...overview,
-      meetups: data.meetups,
+      meetups: mergeAdminMeetupAvailability(data.meetups, data.meetupAvailability),
+      meetupAvailability: data.meetupAvailability,
       applications: data.applications,
     };
     renderStats();
@@ -1018,7 +1166,7 @@ async function loadOperationalData() {
       return;
     }
 
-    overview = { ...overview, meetups: [], applications: [] };
+    overview = { ...overview, meetups: [], meetupAvailability: [], applications: [] };
     renderStats();
     renderApplicationsMessage('신청 데이터 조회가 지연되어 이번 화면에서는 건너뛰었습니다.', '확인 지연');
     renderMeetupsMessage('모임 데이터 조회가 지연되어 이번 화면에서는 건너뛰었습니다.', '확인 지연');
@@ -1189,7 +1337,7 @@ signOutButton.addEventListener('click', async () => {
   operationsRequestId += 1;
   ordersRequestId += 1;
   agenticRequestId += 1;
-  overview = { meetups: [], applications: [], orders: [], payments: [] };
+  overview = { meetups: [], meetupAvailability: [], applications: [], orders: [], payments: [] };
   closeMeetupForm();
   showLogin('로그아웃했습니다.');
 });
@@ -1293,6 +1441,10 @@ meetupForm.elements.image_url.addEventListener('input', (event) => {
   setMeetupImagePreview(isHttpImageUrl(event.target.value) ? event.target.value : '');
 });
 
+meetupForm.elements.registration_status.addEventListener('change', () => {
+  syncRegistrationStatusFields({ clearReason: true });
+});
+
 meetupForm.addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -1301,7 +1453,15 @@ meetupForm.addEventListener('submit', async (event) => {
   }
 
   const isEditing = Boolean(editingMeetupId);
-  const payload = getMeetupFormPayload(!isEditing);
+  let payload;
+
+  try {
+    payload = getMeetupFormPayload(!isEditing);
+  } catch (error) {
+    meetupFormStatus.textContent = error.message;
+    return;
+  }
+
   const imageFile = getSelectedMeetupImageFile();
 
   if (!payload.image_url && !imageFile) {
@@ -1336,6 +1496,7 @@ meetupForm.addEventListener('submit', async (event) => {
     meetupFormStatus.textContent = getAdminWriteErrorMessage(error);
   } finally {
     setMeetupFormPending(false);
+    syncRegistrationStatusFields();
   }
 });
 

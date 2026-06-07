@@ -207,6 +207,30 @@
                 가격 표시
                 <input name="price_label" type="text" placeholder="200,000원" required />
               </label>
+              <div class="form-field is-wide capacity-field">
+                <div class="field-head">
+                  <span>정원과 접수 상태</span>
+                  <small>자동 잔여석 기준</small>
+                </div>
+                <div class="capacity-controls">
+                  <label>
+                    정원
+                    <input name="capacity" type="number" min="1" step="1" placeholder="비우면 제한 없음" />
+                  </label>
+                  <label>
+                    접수 상태
+                    <select name="registration_status">
+                      <option value="open">접수중</option>
+                      <option value="closed">수동 종료</option>
+                    </select>
+                  </label>
+                  <label class="is-wide">
+                    종료 사유
+                    <input name="close_reason" type="text" placeholder="예: 운영 사정으로 접수 종료" />
+                  </label>
+                </div>
+                <p class="field-help">마감은 주문 수로 자동 계산합니다. 접수를 직접 닫을 때만 수동 종료를 사용하세요.</p>
+              </div>
               <div class="form-field is-wide image-field">
                 <div class="field-head">
                   <span>대표 이미지</span>
@@ -264,6 +288,7 @@
                   <th>일정</th>
                   <th>장소</th>
                   <th>가격</th>
+                  <th>좌석</th>
                   <th>상태</th>
                   <th>관리</th>
                 </tr>
