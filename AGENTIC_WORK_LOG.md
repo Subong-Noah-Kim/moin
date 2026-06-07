@@ -699,3 +699,41 @@
 - Next:
   - 다음 구현 조각은 public/admin UI가 availability RPC를 별도로 읽고 `meetup_id`로 merge하는 작업입니다.
   - UI 작업 전에 원격 적용 순서와 smoke-test 실행 여부를 사용자가 선택할 수 있게 정리해야 합니다.
+
+### AG-0025 - 공개 페이지 정원/잔여석 UI 1차 연결
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + UX/UI Agent + 보안 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 공개 페이지의 신청/결제 가능 여부를 사람이 적은 문구가 아니라 Supabase가 계산한 정원 상태로 판단하게 한다.
+- Subagents:
+  - UX/UI Agent: Dewey
+  - Security/Review Agent: Nash
+- Changed files:
+  - `supabase-client.js`
+  - `main.js`
+  - `styles.css`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - `supabase-client.js`에 `list_public_meetup_availability()`를 호출하는 helper를 추가했습니다.
+  - 공개 페이지는 모임 목록과 availability RPC 결과를 `meetup_id`로 합칩니다.
+  - 카드 배지는 `잔여 N석`, `마감`, `신청 종료`, `접수중`, `접수 확인중`처럼 DB 계산 상태에서 나온 짧은 문구를 보여줍니다.
+  - 상세 화면은 `can_register`가 `true`일 때만 결제 버튼과 신청 폼을 보여줍니다.
+  - Supabase가 설정된 운영 모드에서 DB 목록이나 availability를 확인하지 못하면 fallback 모임도 신청/결제가 닫힌 상태로 보입니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - UX/UI Agent가 카드/상세/모바일 문구 기준을 제안했습니다.
+  - Security/Review Agent가 운영 모드 fail-open fallback과 `status_label` 기준 판단을 위험으로 확인했고, fail-closed 기준으로 반영했습니다.
+  - `tests/paymentSecurity.test.js`에 public UI availability RPC merge와 fail-closed guard 테스트를 추가했습니다.
+  - `node --check main.js` passed.
+  - `node --check supabase-client.js` passed.
+  - `npm test` passed: 29 tests.
+- Next:
+  - 다음 구현 조각은 관리자 화면에서 정원 입력, 잔여석/마감 상태 확인, 수동 신청 종료/재개를 관리하는 UI입니다.
+  - 실제 배포 전에는 capacity migration 3개와 smoke-test 적용 순서를 다시 확인해야 합니다.

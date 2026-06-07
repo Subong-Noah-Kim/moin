@@ -799,6 +799,45 @@ test('capacity smoke test SQL covers safe live migration verification paths', as
   assert.match(supabaseReadme, /Do not deploy `functions\/create-public-submission` or `functions\/confirm-toss-payment`/);
 });
 
+test('public meetup UI reads availability RPC and fails closed in configured mode', async () => {
+  const [supabaseClient, mainScript, styles] = await Promise.all([
+    readProjectFile('../supabase-client.js'),
+    readProjectFile('../main.js'),
+    readProjectFile('../styles.css'),
+  ]);
+  const checkoutGuardIndex = mainScript.indexOf('if (!isRegistrationAvailable(item)) {\n    setCheckoutStatus');
+  const checkoutCreateIndex = mainScript.indexOf('await createTossPendingOrder');
+  const demoCreateIndex = mainScript.indexOf('await createDemoOrder');
+  const applicationGuardIndex = mainScript.indexOf('if (!isRegistrationAvailable(item)) {\n    showToast(getRegistrationStatusDescription(item));');
+  const applicationCreateIndex = mainScript.indexOf('await createApplication');
+  const statusClassStructuredIndex = mainScript.indexOf("if (item.availabilityKnown === true) return 'is-open';");
+  const statusClassRawIndex = mainScript.indexOf('const value = String(item.status || \'\');');
+
+  assert.match(supabaseClient, /async function callReadRpc\(functionName, payload = \{\}\)/);
+  assert.match(supabaseClient, /export async function fetchPublicMeetupAvailability\(\) \{\s+return callReadRpc\('list_public_meetup_availability'\);\s+\}/);
+  assert.match(mainScript, /fetchPublicMeetupAvailability,/);
+  assert.match(mainScript, /function normalizeAvailability\(row\)/);
+  assert.match(mainScript, /meetup_id/);
+  assert.match(mainScript, /effective_registration_status/);
+  assert.match(mainScript, /can_register === true/);
+  assert.match(mainScript, /function mergeMeetupAvailability\(items, availabilityRows, \{ requireAvailability = false \} = \{\}\)/);
+  assert.match(mainScript, /new Map\([\s\S]*\.map\(normalizeAvailability\)[\s\S]*\[availability\.id, availability\]/);
+  assert.match(mainScript, /let meetups = isSupabaseConfigured\(\)\s+\? mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
+  assert.match(mainScript, /Promise\.allSettled\(\[\s+fetchPublishedMeetups\(\),\s+fetchPublicMeetupAvailability\(\),\s+\]\)/);
+  assert.match(mainScript, /mergeMeetupAvailability\(rows\.map\(normalizeMeetup\), availabilityRows, \{ requireAvailability: true \}\)/);
+  assert.match(mainScript, /meetups = mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
+  assert.match(mainScript, /잔여석 정보를 확인하지 못해 신청과 결제를 잠시 막았습니다/);
+  assert.match(mainScript, /정원이 모두 차서 새 신청과 테스트 결제를 받을 수 없습니다/);
+  assert.match(mainScript, /운영자가 접수를 닫아 새 신청과 테스트 결제를 받을 수 없습니다/);
+  assert.ok(checkoutGuardIndex >= 0 && checkoutGuardIndex < checkoutCreateIndex);
+  assert.ok(checkoutGuardIndex < demoCreateIndex);
+  assert.ok(applicationGuardIndex >= 0 && applicationGuardIndex < applicationCreateIndex);
+  assert.ok(statusClassStructuredIndex >= 0 && statusClassStructuredIndex < statusClassRawIndex);
+  assert.match(styles, /\.status-badge\.is-checking/);
+  assert.match(styles, /\.payment-summary\.is-closed/);
+  assert.match(styles, /\.registration-closed-note/);
+});
+
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
   const [indexHtml, mainScript] = await Promise.all([
     readProjectFile('../index.html'),

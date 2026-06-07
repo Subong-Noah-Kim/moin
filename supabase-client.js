@@ -131,6 +131,29 @@ async function selectRows(tableName, queryString) {
   return { skipped: false, rows: await response.json() };
 }
 
+async function callReadRpc(functionName, payload = {}) {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, rows: [] };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase RPC failed for ${functionName}: ${response.status} ${message}`);
+  }
+
+  return { skipped: false, rows: await response.json() };
+}
+
 async function selectRowsWithToken(tableName, queryString, accessToken, timeoutMs = requestTimeoutMs) {
   if (!isSupabaseConfigured()) {
     return { skipped: true, rows: [] };
@@ -431,6 +454,10 @@ export async function fetchPublishedMeetups() {
   ].join(',');
 
   return selectRows('meetups', `?select=${fields}&is_published=eq.true`);
+}
+
+export async function fetchPublicMeetupAvailability() {
+  return callReadRpc('list_public_meetup_availability');
 }
 
 export async function createApplication({ meetup, name, interest }) {

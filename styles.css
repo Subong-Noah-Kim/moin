@@ -484,6 +484,11 @@ h1 {
   color: #fff;
 }
 
+.status-badge.is-checking {
+  background: #43474e;
+  color: #fff;
+}
+
 .save-button {
   position: absolute;
   top: 10px;
@@ -1126,6 +1131,13 @@ h1 {
     #f3faf6;
 }
 
+.payment-summary.is-closed {
+  border-color: rgba(200, 74, 63, 0.28);
+  background:
+    linear-gradient(135deg, rgba(200, 74, 63, 0.12), transparent 48%),
+    #fff7f5;
+}
+
 .drawer-pay-button {
   min-height: 48px;
   min-width: 112px;
@@ -1138,6 +1150,10 @@ h1 {
   cursor: default;
   background: var(--green);
   color: #fff;
+}
+
+.payment-summary.is-closed .drawer-pay-button:disabled {
+  background: #43474e;
 }
 
 .drawer-section {
@@ -1198,6 +1214,28 @@ h1 {
   display: grid;
   gap: 10px;
   margin-top: 16px;
+}
+
+.registration-closed-note {
+  margin-top: 16px;
+  border: 1px solid rgba(200, 74, 63, 0.24);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff7f5;
+}
+
+.registration-closed-note strong {
+  display: block;
+  color: var(--coal);
+  font-size: 0.98rem;
+}
+
+.registration-closed-note p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.5;
 }
 
 .field-group {

@@ -1,6 +1,7 @@
 import {
   createApplication,
   createDemoOrder,
+  fetchPublicMeetupAvailability,
   createTossPendingOrder,
   fetchPublishedMeetups,
   getAmountFromMeetup,
@@ -170,7 +171,9 @@ const fallbackMeetups = [
   },
 ];
 
-let meetups = [...fallbackMeetups];
+let meetups = isSupabaseConfigured()
+  ? mergeMeetupAvailability(fallbackMeetups, [], { requireAvailability: true })
+  : [...fallbackMeetups];
 window.__momentclubDataSource = 'fallback';
 document.documentElement.dataset.meetupSource = 'fallback';
 
@@ -689,6 +692,7 @@ function normalizeMeetup(row) {
     desc: row.description || fallback.desc,
     host: row.host_name || fallback.host,
     hostRole: row.host_role || fallback.hostRole,
+    statusLabel: row.status_label || fallback.status,
     status: row.status_label || fallback.status,
     date: row.date_label || fallback.date,
     time: row.time_label || fallback.time,
@@ -698,7 +702,62 @@ function normalizeMeetup(row) {
     tags: Array.isArray(row.tags) ? row.tags : fallback.tags,
     image: isPublicImageUrl(row.image_url) ? row.image_url : getCategoryFallbackImage(category),
     schedule: Array.isArray(row.schedule) ? row.schedule.filter(Boolean) : fallback.schedule,
+    availabilityKnown: null,
+    canRegister: true,
+    effectiveRegistrationStatus: 'open',
+    capacity: null,
+    remainingSpots: null,
   };
+}
+
+function normalizeOptionalCount(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const count = Number(value);
+  return Number.isFinite(count) ? count : null;
+}
+
+function normalizeAvailability(row) {
+  return {
+    id: String(row.meetup_id || ''),
+    availabilityKnown: true,
+    capacity: normalizeOptionalCount(row.capacity),
+    remainingSpots: normalizeOptionalCount(row.remaining_spots),
+    effectiveRegistrationStatus: String(row.effective_registration_status || 'closed'),
+    canRegister: row.can_register === true,
+  };
+}
+
+function mergeMeetupAvailability(items, availabilityRows, { requireAvailability = false } = {}) {
+  const availabilityByMeetupId = new Map(
+    availabilityRows
+      .map(normalizeAvailability)
+      .filter((availability) => availability.id)
+      .map((availability) => [availability.id, availability]),
+  );
+
+  return items.map((item) => {
+    const availability = availabilityByMeetupId.get(item.id);
+
+    if (availability) {
+      return { ...item, ...availability };
+    }
+
+    if (requireAvailability) {
+      return {
+        ...item,
+        availabilityKnown: false,
+        canRegister: false,
+        effectiveRegistrationStatus: 'unknown',
+        capacity: null,
+        remainingSpots: null,
+      };
+    }
+
+    return item;
+  });
 }
 
 function sortMeetupsByFallbackOrder(items) {
@@ -745,8 +804,69 @@ function createFieldId(...parts) {
     .join('-');
 }
 
-function getStatusClass(status) {
-  const value = String(status || '');
+function isRegistrationAvailable(item) {
+  if (item.availabilityKnown === false) {
+    return false;
+  }
+
+  if (typeof item.canRegister === 'boolean') {
+    return item.canRegister;
+  }
+
+  return true;
+}
+
+function getRegistrationStatusLabel(item) {
+  if (item.availabilityKnown === false) {
+    return '접수 확인중';
+  }
+
+  if (item.effectiveRegistrationStatus === 'closed') {
+    return '신청 종료';
+  }
+
+  if (item.effectiveRegistrationStatus === 'sold_out') {
+    return '마감';
+  }
+
+  if (Number.isFinite(item.remainingSpots)) {
+    return `잔여 ${item.remainingSpots}석`;
+  }
+
+  if (item.availabilityKnown === true) {
+    return '접수중';
+  }
+
+  return item.status || '신청 가능';
+}
+
+function getRegistrationStatusDescription(item) {
+  if (item.availabilityKnown === false) {
+    return '잔여석 정보를 확인하지 못해 신청과 결제를 잠시 막았습니다. 잠시 후 다시 시도해주세요.';
+  }
+
+  if (item.effectiveRegistrationStatus === 'closed') {
+    return '운영자가 접수를 닫아 새 신청과 테스트 결제를 받을 수 없습니다.';
+  }
+
+  if (item.effectiveRegistrationStatus === 'sold_out') {
+    return '정원이 모두 차서 새 신청과 테스트 결제를 받을 수 없습니다.';
+  }
+
+  if (Number.isFinite(item.remainingSpots)) {
+    return `현재 신청 가능한 자리는 ${item.remainingSpots}석입니다.`;
+  }
+
+  return '현재 신청과 테스트 결제를 진행할 수 있습니다.';
+}
+
+function getStatusClass(item) {
+  if (item.availabilityKnown === false) return 'is-checking';
+  if (item.effectiveRegistrationStatus === 'closed' || item.effectiveRegistrationStatus === 'sold_out') return 'is-urgent';
+  if (Number.isFinite(item.remainingSpots)) return item.remainingSpots <= 2 ? 'is-urgent' : 'is-seat';
+  if (item.availabilityKnown === true) return 'is-open';
+
+  const value = String(item.status || '');
   if (value.includes('마감')) return 'is-urgent';
   if (value.includes('NEW')) return 'is-new';
   if (value.includes('자리')) return 'is-seat';
@@ -754,7 +874,13 @@ function getStatusClass(status) {
 }
 
 function getPaymentButtonText(itemId) {
-  return paid.has(itemId) ? '테스트 결제 완료' : '결제하기';
+  const item = meetups.find((meetup) => meetup.id === itemId);
+  if (paid.has(itemId)) return '테스트 결제 완료';
+  if (item?.availabilityKnown === false) return '확인중';
+  if (item?.effectiveRegistrationStatus === 'sold_out') return '마감';
+  if (item?.effectiveRegistrationStatus === 'closed') return '신청 종료';
+  if (item && !isRegistrationAvailable(item)) return '신청 불가';
+  return '결제하기';
 }
 
 function renderMeetups() {
@@ -777,7 +903,7 @@ function renderMeetups() {
         <article class="meetup-card">
           <figure>
             <img src="${escapeImageUrl(item.image)}" alt="${escapeAttribute(item.title)}" loading="lazy" decoding="async" />
-            <span class="status-badge ${getStatusClass(item.status)}">${escapeHtml(item.status)}</span>
+            <span class="status-badge ${getStatusClass(item)}">${escapeHtml(getRegistrationStatusLabel(item))}</span>
             <button
               class="save-button ${saved.has(item.id) ? 'is-saved' : ''}"
               type="button"
@@ -877,21 +1003,52 @@ async function loadMeetupsFromDatabase() {
   if (!isSupabaseConfigured()) return;
 
   try {
-    const { rows } = await fetchPublishedMeetups();
-    if (!rows.length) return;
+    const [meetupsResult, availabilityResult] = await Promise.allSettled([
+      fetchPublishedMeetups(),
+      fetchPublicMeetupAvailability(),
+    ]);
 
-    meetups = sortMeetupsByFallbackOrder(rows.map(normalizeMeetup));
+    if (meetupsResult.status !== 'fulfilled') {
+      throw meetupsResult.reason;
+    }
+
+    const { rows } = meetupsResult.value;
+    if (!rows.length) {
+      meetups = mergeMeetupAvailability(fallbackMeetups, [], { requireAvailability: true });
+      renderMeetups();
+      renderEvents();
+      renderSmallGroups();
+      showToast('DB 모임 목록이 비어 있어 신청과 결제를 잠시 막았어요.');
+      return;
+    }
+
+    const availabilityRows = availabilityResult.status === 'fulfilled'
+      ? availabilityResult.value.rows
+      : [];
+
+    meetups = sortMeetupsByFallbackOrder(
+      mergeMeetupAvailability(rows.map(normalizeMeetup), availabilityRows, { requireAvailability: true }),
+    );
     window.__momentclubDataSource = 'supabase';
     document.documentElement.dataset.meetupSource = 'supabase';
     renderMeetups();
     renderEvents();
     renderSmallGroups();
     syncMobileNavFromHash();
+
+    if (availabilityResult.status !== 'fulfilled') {
+      console.error(availabilityResult.reason);
+      showToast('잔여석 상태를 확인하지 못해 신청과 결제를 잠시 막았어요.');
+    }
   } catch (error) {
     console.error(error);
     window.__momentclubDataSource = 'fallback';
     document.documentElement.dataset.meetupSource = 'fallback';
-    showToast('DB 모임 목록을 불러오지 못해 임시 데이터를 보여드려요.');
+    meetups = mergeMeetupAvailability(fallbackMeetups, [], { requireAvailability: true });
+    renderMeetups();
+    renderEvents();
+    renderSmallGroups();
+    showToast('DB 모임 목록을 불러오지 못해 신청과 결제를 잠시 막았어요.');
   }
 }
 
@@ -903,6 +1060,9 @@ function openDrawer(itemId, opener = document.activeElement) {
     : opener;
   const recommendations = meetups.filter((meetup) => meetup.id !== item.id).slice(0, 2);
   const isPaid = paid.has(item.id);
+  const canRegister = isRegistrationAvailable(item);
+  const registrationLabel = getRegistrationStatusLabel(item);
+  const registrationDescription = getRegistrationStatusDescription(item);
   const applicationNameId = createFieldId('application', item.id, 'name');
   const applicationNameHelpId = createFieldId(applicationNameId, 'help');
   const applicationInterestId = createFieldId('application', item.id, 'interest');
@@ -915,69 +1075,8 @@ function openDrawer(itemId, opener = document.activeElement) {
       </section>
     `
     : '';
-
-  drawerContent.innerHTML = `
-    <div class="drawer-hero">
-      <img src="${escapeImageUrl(item.image)}" alt="${escapeAttribute(item.title)}" />
-    </div>
-    <div class="drawer-content">
-      <p class="drawer-kicker">${escapeHtml(item.category)} · ${escapeHtml(item.status)}</p>
-      <h2 id="drawerTitle">${escapeHtml(item.title)}</h2>
-      <p class="drawer-desc">${escapeHtml(item.desc)}</p>
-
-      <div class="drawer-meta">
-        <div>
-          <span>일정</span>
-          <strong>${escapeHtml(item.date)} · ${escapeHtml(item.time)}</strong>
-        </div>
-        <div>
-          <span>장소</span>
-          <strong>${escapeHtml(item.location)}</strong>
-        </div>
-        <div>
-          <span>여는이</span>
-          <strong>${escapeHtml(item.host)} · ${escapeHtml(item.hostRole)}</strong>
-        </div>
-        <div>
-          <span>참가비</span>
-          <strong>${escapeHtml(item.price)}</strong>
-        </div>
-      </div>
-
-      <div class="tag-row">${createTagMarkup(item.tags)}</div>
-
-      <section class="payment-summary ${isPaid ? 'is-paid' : ''}" aria-label="결제 요약">
-        <div>
-          <span>${isPaid ? '결제 상태' : '참가비 결제'}</span>
-          <strong>${isPaid ? '테스트 결제 확인 표시가 있는 모임입니다' : escapeHtml(item.price)}</strong>
-          <p>${isPaid ? '이 브라우저에 테스트 결제 확인 표시가 저장되어 있어요.' : '토스 테스트 결제와 서버 승인 흐름을 확인합니다. 실제 출금은 없습니다.'}</p>
-        </div>
-        <button
-          class="drawer-pay-button"
-          type="button"
-          data-checkout="${escapeAttribute(item.id)}"
-          ${isPaid ? 'disabled' : ''}
-        >
-          ${getPaymentButtonText(item.id)}
-        </button>
-      </section>
-
-      ${scheduleMarkup}
-
-      <section class="drawer-section">
-        <h3>자주 묻는 질문</h3>
-        <ul class="faq-list">
-          ${detailFaqs.map(([question, answer]) => `<li><strong>${escapeHtml(question)}</strong>${escapeHtml(answer)}</li>`).join('')}
-        </ul>
-      </section>
-
-      <section class="drawer-section">
-        <h3>비슷한 모임</h3>
-        <div class="recommend-row">
-          ${recommendations.map((meetup) => `<button type="button" data-detail="${escapeAttribute(meetup.id)}">${escapeHtml(meetup.title)}</button>`).join('')}
-        </div>
-      </section>
-
+  const applicationMarkup = canRegister
+    ? `
       <form class="application-form" data-application-form="${escapeAttribute(item.id)}">
         <label class="field-group" for="${escapeAttribute(applicationNameId)}">
           <span>이름</span>
@@ -1004,6 +1103,76 @@ function openDrawer(itemId, opener = document.activeElement) {
         <p class="form-helper" id="${escapeAttribute(applicationInterestHelpId)}">모임에 끌린 이유를 한 줄로 적어주세요.</p>
         <button class="drawer-cta" type="submit">신청서 제출</button>
       </form>
+    `
+    : `
+      <div class="registration-closed-note" role="status">
+        <strong>${escapeHtml(registrationLabel)}</strong>
+        <p>${escapeHtml(registrationDescription)}</p>
+      </div>
+    `;
+
+  drawerContent.innerHTML = `
+    <div class="drawer-hero">
+      <img src="${escapeImageUrl(item.image)}" alt="${escapeAttribute(item.title)}" />
+    </div>
+    <div class="drawer-content">
+      <p class="drawer-kicker">${escapeHtml(item.category)} · ${escapeHtml(registrationLabel)}</p>
+      <h2 id="drawerTitle">${escapeHtml(item.title)}</h2>
+      <p class="drawer-desc">${escapeHtml(item.desc)}</p>
+
+      <div class="drawer-meta">
+        <div>
+          <span>일정</span>
+          <strong>${escapeHtml(item.date)} · ${escapeHtml(item.time)}</strong>
+        </div>
+        <div>
+          <span>장소</span>
+          <strong>${escapeHtml(item.location)}</strong>
+        </div>
+        <div>
+          <span>여는이</span>
+          <strong>${escapeHtml(item.host)} · ${escapeHtml(item.hostRole)}</strong>
+        </div>
+        <div>
+          <span>참가비</span>
+          <strong>${escapeHtml(item.price)}</strong>
+        </div>
+      </div>
+
+      <div class="tag-row">${createTagMarkup(item.tags)}</div>
+
+      <section class="payment-summary ${isPaid ? 'is-paid' : ''} ${!canRegister && !isPaid ? 'is-closed' : ''}" aria-label="결제 요약">
+        <div>
+          <span>${isPaid ? '결제 상태' : canRegister ? '참가비 결제' : '신청 상태'}</span>
+          <strong>${isPaid ? '테스트 결제 확인 표시가 있는 모임입니다' : canRegister ? escapeHtml(item.price) : escapeHtml(registrationLabel)}</strong>
+          <p>${isPaid ? '이 브라우저에 테스트 결제 확인 표시가 저장되어 있어요.' : canRegister ? '토스 테스트 결제와 서버 승인 흐름을 확인합니다. 실제 출금은 없습니다.' : escapeHtml(registrationDescription)}</p>
+        </div>
+        <button
+          class="drawer-pay-button"
+          type="button"
+          data-checkout="${escapeAttribute(item.id)}"
+          ${isPaid || !canRegister ? 'disabled' : ''}
+        >
+          ${getPaymentButtonText(item.id)}
+        </button>
+      </section>
+
+      ${scheduleMarkup}
+
+      <section class="drawer-section">
+        <h3>자주 묻는 질문</h3>
+        <ul class="faq-list">
+          ${detailFaqs.map(([question, answer]) => `<li><strong>${escapeHtml(question)}</strong>${escapeHtml(answer)}</li>`).join('')}
+        </ul>
+      </section>
+
+      <section class="drawer-section">
+        <h3>비슷한 모임</h3>
+        <div class="recommend-row">
+          ${recommendations.map((meetup) => `<button type="button" data-detail="${escapeAttribute(meetup.id)}">${escapeHtml(meetup.title)}</button>`).join('')}
+        </div>
+      </section>
+      ${applicationMarkup}
     </div>
   `;
 
@@ -1022,6 +1191,12 @@ function closeDrawer({ restoreFocus = true } = {}) {
 function openCheckout(itemId, opener = document.activeElement) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
+
+  if (!isRegistrationAvailable(item)) {
+    showToast(getRegistrationStatusDescription(item));
+    return;
+  }
+
   const tossConfigured = isTossConfigured();
   const checkoutPayerId = createFieldId('checkout', item.id, 'payer');
   const checkoutPayerHelpId = createFieldId(checkoutPayerId, 'help');
@@ -1110,6 +1285,12 @@ function closeCheckout({ restoreFocus = true } = {}) {
 async function completeCheckout(itemId, form) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
+
+  if (!isRegistrationAvailable(item)) {
+    setCheckoutStatus(form, getRegistrationStatusDescription(item), 'error');
+    showToast(getRegistrationStatusDescription(item));
+    return;
+  }
 
   if (checkoutInProgress) {
     setCheckoutStatus(form, '이미 결제창을 준비하고 있습니다.', 'warning');
@@ -1202,6 +1383,11 @@ async function completeCheckout(itemId, form) {
 async function submitApplication(form) {
   const item = meetups.find((meetup) => meetup.id === form.dataset.applicationForm);
   if (!item) return;
+
+  if (!isRegistrationAvailable(item)) {
+    showToast(getRegistrationStatusDescription(item));
+    return;
+  }
 
   const formData = new FormData(form);
   const name = String(formData.get('name') || '');

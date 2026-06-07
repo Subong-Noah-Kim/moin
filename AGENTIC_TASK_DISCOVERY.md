@@ -566,3 +566,32 @@
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `supabase/capacity-smoke-test.sql`에 public read contract 확인을 추가했다.
   - `npm test` 28개가 모두 통과했다.
+
+## Round 13 - 2026-06-07 09:25 KST
+
+### 요약
+
+이번 사이클은 공개 페이지가 DB의 정원/잔여석 read contract를 실제로 읽게 만든 첫 UI 조각입니다. 쉽게 말하면, 이제 공개 카드와 상세 화면이 사람이 적은 `4자리 남음` 같은 문구가 아니라 Supabase RPC가 계산한 `잔여석`, `마감`, `신청 종료`, `신청 가능 여부`를 기준으로 표시하고 신청/결제 버튼을 열거나 막습니다. 원격 배포와 Supabase 적용은 하지 않았습니다.
+
+### TD-024 - public capacity availability UI 1차 연결
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, UX/UI, Security/Review, QA, Ops Log
+- What: 공개 페이지가 `list_public_meetup_availability()` 결과를 읽고 `meetup_id`로 모임 목록과 합친다.
+- Why: 기존 `status_label`은 운영자가 직접 적는 홍보/상태 문구라 실제 정원 계산과 어긋날 수 있습니다. 사용자가 신청/결제에 들어갈 수 있는지는 DB가 계산한 `can_register`를 기준으로 봐야 합니다.
+- First development unit:
+  - `supabase-client.js`에 public read RPC helper를 추가한다.
+  - `main.js`가 published meetup 목록과 availability RPC를 `Promise.allSettled`로 함께 읽는다.
+  - card badge는 `잔여 N석`, `마감`, `신청 종료`, `접수중`, `접수 확인중`처럼 짧은 구조화 문구를 보여준다.
+  - 상세 drawer의 결제 요약과 신청 폼은 `can_register`가 `true`일 때만 열린다.
+  - Supabase가 설정된 운영 모드에서 DB/availability가 없거나 실패하면 fallback 모임도 신청/결제가 닫힌 상태로 보여준다.
+- Development direction: 다음 조각은 관리자 화면에서 정원 입력, 잔여석 확인, 수동 신청 종료/재개를 운영자가 관리할 수 있게 하는 작업입니다.
+- Risks:
+  - 이 변경은 원격 Supabase에 `20260607020000_capacity_read_contract.sql`이 적용된 뒤에 정상 동작합니다.
+  - 현재 테스트는 소스 계약 중심입니다. 이후 프론트엔드 테스트 범위 확장 때 실제 DOM/상태 변화 테스트로 보강하는 것이 좋습니다.
+  - 관리자 UI는 아직 정원 필드를 입력하거나 확인하지 못합니다.
+- Notes:
+  - UX/UI Agent는 missing availability row에서 서버 409에 맡기자는 대안을 냈지만, Security/Review Agent 의견에 따라 운영 모드에서는 fail-closed를 선택했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 29개가 모두 통과했다.

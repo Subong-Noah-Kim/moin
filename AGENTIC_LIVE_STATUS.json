@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T05:07:47+09:00",
-  "currentFocus": "public/admin 정원 상태 read contract 로컬 완료",
+  "updatedAt": "2026-06-07T09:25:14+09:00",
+  "currentFocus": "공개 페이지 정원/잔여석 UI 1차 연결 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,79 +11,79 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0024 done_local"
+    "currentFocus": "AG-0025 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0024 public/admin 정원 상태 read contract 완료 검수",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
-      "next": "public/admin capacity UI 구현 배정"
+      "currentTask": "AG-0025 공개 페이지 정원/잔여석 UI 완료 검수",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "next": "관리자 capacity UI 구현 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public/admin 정원 상태 read contract migration 로컬 완료",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
-      "next": "availability RPC client merge 구현 대기"
+      "currentTask": "public availability RPC client merge 로컬 완료",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "next": "admin capacity form/list 구현 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "read contract 이후 UI 구현 대기",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
-      "next": "잔여석/마감/신청 종료 표시 설계"
+      "currentTask": "public 잔여석/마감/신청 종료 문구 검토 완료",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "next": "admin capacity 운영 UI 문구 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "read contract 노출 범위 테스트 추가 및 npm test 28개 통과",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
-      "next": "UI 구현 시 fallback/disabled 상태 테스트 추가"
+      "currentTask": "public UI availability guard 테스트 추가 및 npm test 29개 통과",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "next": "admin capacity UI 테스트 추가"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0024 read contract 기록 완료",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
+      "currentTask": "AG-0025 public UI 기록 완료",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정원 상태 read contract 기반 UI 순서 확인",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
-      "next": "public/admin UI 문구와 운영 흐름 검토"
+      "currentTask": "public UI 이후 admin UI 우선순위 확인",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "next": "관리자 운영 흐름 분해"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public/admin read contract 권한 검토 완료",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
-      "next": "UI merge 로직 검토"
+      "currentTask": "public UI merge/fail-closed 기준 검토 완료",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "next": "admin UI 권한/상태 변경 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "public 주문 수 노출 제거와 anon column grant 축소 검토 완료",
-      "updatedAt": "2026-06-07T05:07:47+09:00",
-      "next": "UI가 raw status_label을 판단 기준으로 쓰지 않는지 검토"
+      "currentTask": "status_label 기준 판단 제거와 운영 모드 fail-closed 검토 완료",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
+      "next": "admin capacity update 권한 검토"
     },
     {
       "name": "보조 Agent",
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T02:33:03+09:00",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,39 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T02:33:03+09:00",
+      "updatedAt": "2026-06-07T09:25:14+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T09:25:14+09:00",
+      "agent": "개발 Agent",
+      "level": "review",
+      "title": "public availability UI 연결",
+      "body": "공개 페이지가 모임 목록과 availability RPC 결과를 meetup_id로 합쳐 잔여석/마감 상태와 신청/결제 버튼 상태를 결정하게 했습니다."
+    },
+    {
+      "time": "2026-06-07T09:25:14+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "운영 모드 fail-closed 적용",
+      "body": "Supabase가 설정된 상태에서 DB 또는 availability 확인에 실패하면 fallback 모임도 신청/결제를 열지 않도록 했습니다."
+    },
+    {
+      "time": "2026-06-07T09:25:14+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "public UI guard 테스트 통과",
+      "body": "availability RPC merge, fail-closed fallback, checkout/application guard를 테스트했습니다. npm test 29개가 모두 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T09:25:14+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0025 로컬 완료",
+      "body": "다음 우선순위는 관리자 화면에서 capacity 입력과 잔여석/신청 종료 상태를 운영할 수 있게 만드는 작업입니다."
+    },
     {
       "time": "2026-06-07T05:07:47+09:00",
       "agent": "개발 Agent",
@@ -277,272 +305,6 @@
       "level": "review",
       "title": "테스트 결제 문구 기준 확정",
       "body": "테스트 결제와 실제 과금을 혼동하게 만드는 단독 '결제 완료' 표현을 줄이고, 화면 확인용 데모/토스 테스트/Supabase 승인 함수 흐름을 분리해 설명하는 방향을 승인했습니다."
-    },
-    {
-      "time": "2026-06-07T04:08:22+09:00",
-      "agent": "보안 Agent",
-      "level": "review",
-      "title": "결제 오류 문구 보안 검토",
-      "body": "결제 결과 화면이 내부 서버 설정 이름이나 원문 오류를 그대로 노출하지 않도록 일반 사용자용 안내로 정리했습니다."
-    },
-    {
-      "time": "2026-06-07T04:08:22+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "결제 문구 회귀 테스트 통과",
-      "body": "문서와 공개 결제 화면이 테스트 모드와 실제 과금 전 준비를 구분하는지 확인하는 테스트를 추가했고 npm test 23개가 모두 통과했습니다."
-    },
-    {
-      "time": "2026-06-07T04:08:22+09:00",
-      "agent": "총괄 디렉터",
-      "level": "review",
-      "title": "AG-0018 로컬 완료",
-      "body": "제품/데모 결제 문구와 설정 문서 정리를 완료했습니다. push와 deploy는 하지 않았고, live 반영은 사용자가 선택한 배포 묶음에 포함합니다."
-    },
-    {
-      "time": "2026-06-07T03:54:14+09:00",
-      "agent": "UX/UI Agent",
-      "level": "review",
-      "title": "폼 label 문구 검토",
-      "body": "신청 폼에는 계속 보이는 이름표를 추가하고, 결제 폼 이름 문구는 결제자 이름 (선택)으로 구체화하는 방향을 승인했습니다."
-    },
-    {
-      "time": "2026-06-07T03:54:14+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "폼 label 테스트 통과",
-      "body": "신청/결제 입력이 placeholder-only로 돌아가지 않도록 테스트를 추가했고 npm test 21개가 모두 통과했습니다."
-    },
-    {
-      "time": "2026-06-07T03:54:14+09:00",
-      "agent": "총괄 디렉터",
-      "level": "review",
-      "title": "AG-0017 로컬 완료",
-      "body": "신청/결제 폼 label 접근성 개선을 완료했습니다. push와 deploy는 하지 않았고, live 반영은 사용자가 선택한 배포 묶음에 포함합니다."
-    },
-    {
-      "time": "2026-06-07T03:45:26+09:00",
-      "agent": "보안 Agent",
-      "level": "review",
-      "title": "관리자 세션 보안 검토",
-      "body": "장기 저장소에서 탭 단위 저장소로 줄이고, 갱신용 토큰 저장을 제거하는 방향을 승인했습니다. legacy 세션 마이그레이션은 하지 않도록 했습니다."
-    },
-    {
-      "time": "2026-06-07T03:45:26+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "관리자 세션 테스트 통과",
-      "body": "관리자 세션 저장소 축소, 깨진/만료 세션 정리, URL 토큰 제거 가드를 추가한 뒤 npm test 20개가 모두 통과했습니다."
-    },
-    {
-      "time": "2026-06-07T03:45:26+09:00",
-      "agent": "총괄 디렉터",
-      "level": "review",
-      "title": "AG-0016 로컬 완료",
-      "body": "관리자 세션 저장소 축소 작업을 완료했습니다. push와 deploy는 하지 않았고, live 반영은 나중에 사용자가 선택한 배포 묶음에 포함합니다."
-    },
-    {
-      "time": "2026-06-07T03:39:49+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "AG-0015 테스트 통과",
-      "body": "GitHub Pages workflow runtime 정리와 현황판 상태 카운트 테스트를 맞춘 뒤 npm test 18개가 모두 통과했습니다."
-    },
-    {
-      "time": "2026-06-07T03:39:49+09:00",
-      "agent": "총괄 디렉터",
-      "level": "review",
-      "title": "AG-0015 로컬 완료",
-      "body": "개발 Agent와 작업 정리 Agent 산출물을 통합했습니다. push와 deploy는 하지 않았고, 실제 GitHub Actions runtime warning 확인은 사용자가 배포를 선택할 때 진행합니다."
-    },
-    {
-      "time": "2026-06-07T03:37:12+09:00",
-      "agent": "총괄 디렉터",
-      "level": "running",
-      "title": "TODO 1순위 개발 배정",
-      "body": "GitHub Pages workflow runtime 정리를 이번 사이클의 실제 개발 대상으로 배정했습니다. push와 deploy는 하지 않고 로컬 변경과 검증 준비까지만 진행합니다."
-    },
-    {
-      "time": "2026-06-07T03:37:12+09:00",
-      "agent": "보안 Agent",
-      "level": "review",
-      "title": "workflow 권한/운영 리스크 검토",
-      "body": "배포 권한은 deploy job에만 두고 test job은 최소 권한으로 유지하는 방향을 제안했습니다. action major version 변경은 실제 Actions 로그 확인이 필요합니다."
-    },
-    {
-      "time": "2026-06-07T03:37:12+09:00",
-      "agent": "작업 정리 Agent",
-      "level": "review",
-      "title": "AG-0015 문서화",
-      "body": "작업 의미, 필요한 이유, 개발 방향, 리스크, 배포/푸시 미진행 사실을 AGENTIC_STATUS.json과 작업 로그에 기록했습니다."
-    },
-    {
-      "time": "2026-06-07T03:29:17+09:00",
-      "agent": "개발 Agent",
-      "level": "review",
-      "title": "public localStorage 복원력 구현",
-      "body": "momentclub:saved, momentclub:notified, momentclub:paid 값이 깨져 있어도 공개 페이지와 결제 결과 페이지가 계속 렌더링되도록 안전 파싱을 추가했습니다."
-    },
-    {
-      "time": "2026-06-07T03:29:17+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "localStorage 복원력 검증 완료",
-      "body": "테스트 수가 17개로 늘었고 전체 npm test가 통과했습니다. 직접 JSON.parse 회귀를 막는 소스 가드도 추가했습니다."
-    },
-    {
-      "time": "2026-06-07T03:24:01+09:00",
-      "agent": "개발 Agent",
-      "level": "review",
-      "title": "민감정보 가드 테스트 구현",
-      "body": "AGENTIC_STATUS.json과 AGENTIC_LIVE_STATUS.json에 실제 토큰이나 결제 식별자처럼 보이는 값이 들어오면 npm test가 실패하도록 안전망을 추가했습니다."
-    },
-    {
-      "time": "2026-06-07T03:24:01+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "민감정보 가드 검증 완료",
-      "body": "테스트 수가 16개로 늘었고 전체 npm test가 통과했습니다. 실패 메시지는 실제 매칭값 대신 위치와 규칙명만 보여주도록 구성했습니다."
-    },
-    {
-      "time": "2026-06-07T03:17:14+09:00",
-      "agent": "작업 정리 Agent",
-      "level": "review",
-      "title": "수동 사이클 2 문서화",
-      "body": "Round 2 결과를 AGENTIC_TASK_DISCOVERY.md에 TD-009~TD-014로 정리했습니다. 핵심 추가점은 pending 주문 만료 정책과 Agent status 민감정보 가드입니다."
-    },
-    {
-      "time": "2026-06-07T03:17:14+09:00",
-      "agent": "검토 Agent",
-      "level": "review",
-      "title": "다음 구현 후보 분류",
-      "body": "큰 작업은 TD-009/TD-010 정원 P0 패키지, 작은 작업은 TD-013 Agent status 민감정보 denylist 테스트가 적합하다고 분류했습니다."
-    },
-    {
-      "time": "2026-06-07T03:14:12+09:00",
-      "agent": "총괄 디렉터",
-      "level": "running",
-      "title": "수동 하트비트 사이클 시작",
-      "body": "기획(Newton), UX/UI(Averroes), 보안(Hubble), QA(Rawls) subagent를 읽기 전용 조사에 투입했습니다. 배포와 push는 하지 않습니다."
-    },
-    {
-      "time": "2026-06-07T03:09:28+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "작업 상세 펼침 상태 유지 검증",
-      "body": "agent-monitor.js가 열린 Task id를 localStorage에 저장하고, 렌더링 시 details open 상태로 복원하는지 테스트와 로컬 서버 응답으로 확인했습니다."
-    },
-    {
-      "time": "2026-06-07T03:09:28+09:00",
-      "agent": "개발 Agent",
-      "level": "review",
-      "title": "Task 펼침 상태 저장",
-      "body": "작업 상세를 열거나 닫을 때 Task id를 저장해 새로고침 후에도 같은 상세 카드가 열린 상태로 유지되게 했습니다."
-    },
-    {
-      "time": "2026-06-07T03:06:22+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "로컬 모바일 현황판 수정 검증",
-      "body": "agent-monitor.html에 작업 상세 패널을 추가했고, dev 서버에서 HTML/JS/CSS와 Cache-Control: no-store 응답을 확인했습니다. 휴대폰 화면은 새로고침이 필요합니다."
-    },
-    {
-      "time": "2026-06-07T03:06:22+09:00",
-      "agent": "개발 Agent",
-      "level": "review",
-      "title": "Task 상세 패널 추가",
-      "body": "로컬 모니터가 AGENTIC_STATUS.json도 함께 읽어 Task 카드와 상세 설명을 보여주도록 수정했습니다."
-    },
-    {
-      "time": "2026-06-07T03:00:35+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "AG-0009 검증 완료",
-      "body": "npm test 15개 통과, 로컬 dev 서버에서 admin.js/admin.css/AGENTIC_STATUS.json 최신 반영을 HTTP 200으로 확인했습니다."
-    },
-    {
-      "time": "2026-06-07T02:58:18+09:00",
-      "agent": "개발 Agent",
-      "level": "review",
-      "title": "Task 카드 전체 클릭 수정",
-      "body": "현황판에서 작은 상세 보기 문구만 눌리던 문제를 카드 전체 클릭과 키보드 Enter/Space 토글로 수정했습니다."
-    },
-    {
-      "time": "2026-06-07T02:52:59+09:00",
-      "agent": "작업 정리 Agent",
-      "level": "review",
-      "title": "라운드 1 발굴 문서화",
-      "body": "TD-001~TD-008을 AGENTIC_TASK_DISCOVERY.md에 정리했습니다. 다음 1순위는 정원 데이터 모델과 정원 초과 차단입니다."
-    },
-    {
-      "time": "2026-06-07T02:50:14+09:00",
-      "agent": "총괄 디렉터",
-      "level": "running",
-      "title": "밤샘 발굴 라운드 1 시작",
-      "body": "DB/Backend(Descartes), 보안(Epicurus), UX/UI(Einstein), QA(Godel) Agent를 읽기 전용 세부 태스크 분해 작업에 투입했습니다."
-    },
-    {
-      "time": "2026-06-07T02:43:32+09:00",
-      "agent": "검토 Agent",
-      "level": "review",
-      "title": "다음 1순위 확정",
-      "body": "정원/잔여석/자동 마감을 P0 승인으로 분류했습니다. 10명 정원 모임에 12명이 결제되는 과판매 사고를 막는 작업입니다."
-    },
-    {
-      "time": "2026-06-07T02:41:28+09:00",
-      "agent": "검토 Agent",
-      "level": "running",
-      "title": "최종 우선순위 분류 시작",
-      "body": "기획, UX/UI, 보안 Agent 결과를 받아 승인/보류/폐기와 다음 개발 1순위를 판단합니다."
-    },
-    {
-      "time": "2026-06-07T02:41:28+09:00",
-      "agent": "총괄 디렉터",
-      "level": "review",
-      "title": "3개 조사 결과 수신",
-      "body": "기획 Agent는 정원/마감 자동화, UX/UI Agent는 결제 문구와 모바일 CTA, 보안 Agent는 관리자 토큰 저장 개선을 핵심 후보로 제안했습니다."
-    },
-    {
-      "time": "2026-06-07T02:38:48+09:00",
-      "agent": "총괄 디렉터",
-      "level": "running",
-      "title": "실제 subagent 모드 시작",
-      "body": "기획 Agent(Singer), UX/UI Agent(Hypatia), 보안 Agent(Pauli)를 읽기 전용 조사 작업에 투입했습니다."
-    },
-    {
-      "time": "2026-06-07T02:36:44+09:00",
-      "agent": "작업 정리 Agent",
-      "level": "review",
-      "title": "Task 상세 설명 규격 반영",
-      "body": "현황판 Task에 요약, 작업 내용, 필요한 이유, 개발 방향, 알아둘 점을 기록하고 상세 보기로 열 수 있게 했습니다."
-    },
-    {
-      "time": "2026-06-07T02:33:03+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "로컬 검증 완료",
-      "body": "npm test 15개 통과, localhost에서 monitor HTML/JS/JSON HTTP 200 응답을 확인했습니다."
-    },
-    {
-      "time": "2026-06-07T02:32:00+09:00",
-      "agent": "총괄 디렉터",
-      "level": "running",
-      "title": "로컬 모니터 구현 시작",
-      "body": "배포 관리자 작업판과 별개로 localhost에서만 볼 수 있는 Agent Live Monitor를 구성합니다."
-    },
-    {
-      "time": "2026-06-07T02:32:00+09:00",
-      "agent": "개발 Agent",
-      "level": "running",
-      "title": "주기적 JSON 폴링 방식 선택",
-      "body": "브라우저가 보이는 동안만 AGENTIC_LIVE_STATUS.json을 5초마다 다시 읽도록 구현합니다."
-    },
-    {
-      "time": "2026-06-07T02:32:00+09:00",
-      "agent": "UX/UI Agent",
-      "level": "review",
-      "title": "운영 관리자 화면과 분리",
-      "body": "실시간 작업 모니터는 관리자 배포 화면이 아니라 로컬 전용 페이지로 분리합니다."
     }
   ]
 }

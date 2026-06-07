@@ -1,81 +1,81 @@
 {
-  "updatedAt": "2026-06-07T05:07:47+09:00",
+  "updatedAt": "2026-06-07T09:25:14+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 22,
-    "deployNeeded": 8
+    "doneLocal": 23,
+    "deployNeeded": 9
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0024 public/admin 정원 상태 read contract 완료 검수",
+      "currentTask": "AG-0025 공개 페이지 정원/잔여석 UI 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "public/admin capacity UI 구현 배정"
+      "next": "관리자 capacity UI 구현 배정"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정원 상태 read contract 기반 UI 순서 확인",
+      "currentTask": "public UI 이후 admin UI 우선순위 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "public/admin UI 문구와 운영 흐름 검토"
+      "next": "관리자 운영 흐름 분해"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "done",
-      "currentTask": "read contract 이후 UI 구현 대기",
+      "currentTask": "public 잔여석/마감/신청 종료 문구 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "잔여석/마감/신청 종료 표시 설계"
+      "next": "admin capacity 운영 UI 문구 검토"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public/admin read contract 권한 검토 완료",
+      "currentTask": "public UI merge/fail-closed 기준 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "UI merge 로직 검토"
+      "next": "admin UI 권한/상태 변경 검토"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public/admin 정원 상태 read contract migration 로컬 완료",
+      "currentTask": "public availability RPC client merge 로컬 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "availability RPC client merge 구현 대기"
+      "next": "admin capacity form/list 구현 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "read contract 노출 범위 테스트 추가 및 npm test 28개 통과",
+      "currentTask": "public UI availability guard 테스트 추가 및 npm test 29개 통과",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "UI 구현 시 fallback/disabled 상태 테스트 추가"
+      "next": "admin capacity UI 테스트 추가"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "public 주문 수 노출 제거와 anon column grant 축소 검토 완료",
+      "currentTask": "status_label 기준 판단 제거와 운영 모드 fail-closed 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "UI가 raw status_label을 판단 기준으로 쓰지 않는지 검토"
+      "next": "admin capacity update 권한 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0024 read contract 기록 완료",
+      "currentTask": "AG-0025 public UI 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -568,6 +568,28 @@
           "anon direct meetups select는 공개 콘텐츠 컬럼으로 제한했습니다.",
           "admin RPC는 is_admin()을 통과한 사용자에게만 자세한 운영 카운트를 반환합니다.",
           "로컬 테스트는 28개 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0025",
+      "title": "공개 페이지 정원/잔여석 UI 1차 연결",
+      "priority": "P0",
+      "owner": "개발 Agent + UX/UI Agent + 보안 Agent + QA Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "관리자 정원 입력/잔여석/수동 신청 종료 UI 구현",
+      "details": {
+        "summary": "공개 페이지가 Supabase가 계산한 잔여석과 신청 가능 여부를 읽어 화면과 버튼 상태에 반영합니다.",
+        "what": "공개 모임 목록과 별도 availability RPC 결과를 meetup_id로 합쳤습니다. 카드와 상세 화면은 잔여석, 마감, 신청 종료 상태를 구조화된 값으로 보여주고, 신청/결제는 can_register가 true일 때만 열립니다.",
+        "why": "기존 상태 문구는 운영자가 직접 적는 텍스트라 실제 결제 수와 어긋날 수 있습니다. 신청/결제 버튼은 사람이 적은 문구가 아니라 DB가 계산한 상태를 믿어야 과모집을 줄일 수 있습니다.",
+        "developmentDirection": "다음 단계는 관리자 화면에서 정원을 입력하고, 잔여석과 수동 신청 종료 상태를 운영자가 확인/조정할 수 있게 하는 것입니다.",
+        "notes": [
+          "이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "Supabase가 설정된 운영 모드에서 DB 또는 availability를 확인하지 못하면 신청/결제를 열지 않는 fail-closed 기준을 적용했습니다.",
+          "status_label은 홍보성 문구로만 남기고, 잔여석/마감 판단에는 쓰지 않습니다.",
+          "로컬 테스트는 29개 모두 통과했습니다."
         ]
       }
     }
