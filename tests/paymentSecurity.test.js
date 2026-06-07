@@ -3,6 +3,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  getCapacityPayloadValue,
+  getRegistrationStatusPayloadValue,
+  getSeatBreakdownText,
+  getSeatStatusClass,
+  getSeatStatusLabel,
+  getSeatSummaryText,
+  mergeAdminMeetupAvailability,
+} from '../admin-availability.js';
+import {
   getPaymentButtonTextForMeetup,
   getPublicStatusClass,
   getRegistrationStatusDescription,
@@ -16,6 +25,7 @@ const assetVersionPlaceholder = '__ASSET_VERSION__';
 const cacheBustedSourceFiles = [
   '../index.html',
   '../admin.html',
+  '../admin-availability.js',
   '../payment-result.html',
   '../main.js',
   '../admin.js',
@@ -221,6 +231,98 @@ test('public availability helpers map sold-out, closed, and remaining-seat behav
   assert.equal(getPaymentButtonTextForMeetup(open), '결제하기');
 });
 
+test('admin capacity payload helpers normalize operator input', () => {
+  assert.equal(getCapacityPayloadValue(''), null);
+  assert.equal(getCapacityPayloadValue(' 12 '), 12);
+  assert.equal(getRegistrationStatusPayloadValue('closed'), 'closed');
+  assert.equal(getRegistrationStatusPayloadValue('sold_out'), 'open');
+  assert.equal(getRegistrationStatusPayloadValue('anything-else'), 'open');
+  assert.throws(() => getCapacityPayloadValue('0'), /정원은 비워두거나 1명 이상의 정수/);
+  assert.throws(() => getCapacityPayloadValue('2.5'), /정원은 비워두거나 1명 이상의 정수/);
+});
+
+test('admin availability helpers render seat summaries from structured rows', () => {
+  const [open, nearlyFull, soldOut, closed, unknown] = mergeAdminMeetupAvailability(
+    [
+      { id: 'open' },
+      { id: 'nearly-full' },
+      { id: 'sold-out' },
+      { id: 'closed' },
+      { id: 'unknown', capacity: 8 },
+    ],
+    [
+      {
+        meetup_id: 'open',
+        capacity: null,
+        remaining_spots: null,
+        paid_order_count: 7,
+        pending_order_count: 1,
+        active_order_count: 8,
+        effective_registration_status: 'open',
+        can_register: true,
+      },
+      {
+        meetup_id: 'nearly-full',
+        capacity: '4',
+        remaining_spots: '2',
+        paid_order_count: '1',
+        pending_order_count: '1',
+        active_order_count: '2',
+        effective_registration_status: 'open',
+        can_register: true,
+      },
+      {
+        meetup_id: 'sold-out',
+        capacity: 3,
+        remaining_spots: 0,
+        paid_order_count: 3,
+        pending_order_count: 0,
+        active_order_count: 3,
+        effective_registration_status: 'sold_out',
+        can_register: false,
+      },
+      {
+        meetup_id: 'closed',
+        capacity: 10,
+        remaining_spots: 6,
+        paid_order_count: 3,
+        pending_order_count: 1,
+        active_order_count: 4,
+        effective_registration_status: 'closed',
+        can_register: false,
+        close_reason: '운영 점검',
+      },
+    ],
+  );
+
+  assert.equal(getSeatStatusLabel(open), '접수 가능');
+  assert.equal(getSeatStatusClass(open), 'is-published');
+  assert.equal(getSeatSummaryText(open), '무제한');
+  assert.equal(getSeatBreakdownText(open), '확정 7 · 결제중 1');
+
+  assert.equal(getSeatStatusLabel(nearlyFull), '접수 가능');
+  assert.equal(getSeatStatusClass(nearlyFull), 'is-pending');
+  assert.equal(getSeatSummaryText(nearlyFull), '잔여 2/4');
+  assert.equal(getSeatBreakdownText(nearlyFull), '확정 1 · 결제중 1');
+
+  assert.equal(getSeatStatusLabel(soldOut), '마감');
+  assert.equal(getSeatStatusClass(soldOut), 'is-failed');
+  assert.equal(getSeatSummaryText(soldOut), '잔여 0/3');
+  assert.equal(soldOut.can_register, false);
+
+  assert.equal(getSeatStatusLabel(closed), '신청 종료');
+  assert.equal(getSeatStatusClass(closed), 'is-failed');
+  assert.equal(getSeatSummaryText(closed), '잔여 6/10');
+  assert.equal(closed.close_reason, '운영 점검');
+
+  assert.equal(unknown.availability_known, false);
+  assert.equal(unknown.can_register, false);
+  assert.equal(getSeatStatusLabel(unknown), '확인 지연');
+  assert.equal(getSeatStatusClass(unknown), 'is-deferred');
+  assert.equal(getSeatSummaryText(unknown), '정원 8명 · 잔여 확인 지연');
+  assert.equal(getSeatBreakdownText(unknown), '정원 상태를 다시 불러와야 합니다.');
+});
+
 test('payment hardening migration locks anonymous Toss orders to meetup price and checkout token', async () => {
   const migration = await readProjectFile('../supabase/migrations/20260606070000_harden_toss_payment_security.sql');
 
@@ -398,6 +500,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.deepEqual([...uniqueVersions], [assetVersionPlaceholder]);
   assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
   assert.match(workflow, /cp AGENTIC_STATUS\.json dist\//);
+  assert.match(workflow, /cp admin-availability\.js dist\//);
   assert.match(workflow, /cp public-availability\.js dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });
@@ -961,10 +1064,11 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
 });
 
 test('admin capacity UI uses admin RPC and strips derived availability fields', async () => {
-  const [supabaseClient, adminHtml, adminScript, adminStyles] = await Promise.all([
+  const [supabaseClient, adminHtml, adminScript, adminAvailabilityModule, adminStyles] = await Promise.all([
     readProjectFile('../supabase-client.js'),
     readProjectFile('../admin.html'),
     readProjectFile('../admin.js'),
+    readProjectFile('../admin-availability.js'),
     readProjectFile('../admin.css'),
   ]);
   const operationalLoad = supabaseClient.slice(
@@ -996,9 +1100,15 @@ test('admin capacity UI uses admin RPC and strips derived availability fields', 
   assert.match(adminHtml, /<th>좌석<\/th>/);
   assert.doesNotMatch(adminHtml, /name="remaining_spots"|name="effective_registration_status"|name="active_order_count"|name="can_register"|name="closed_at"/);
 
-  assert.match(adminScript, /function mergeAdminMeetupAvailability\(meetups, availabilityRows = \[\]\)/);
+  assert.match(adminScript, /from '\.\/admin-availability\.js\?v=__ASSET_VERSION__'/);
+  assert.match(adminScript, /mergeAdminMeetupAvailability,/);
+  assert.match(adminScript, /getSeatStatusLabel,/);
+  assert.match(adminScript, /getSeatSummaryText,/);
   assert.match(adminScript, /meetups: mergeAdminMeetupAvailability\(data\.meetups, data\.meetupAvailability\)/);
-  assert.match(adminScript, /availability_known: false/);
+  assert.match(adminAvailabilityModule, /export function mergeAdminMeetupAvailability\(meetups, availabilityRows = \[\]\)/);
+  assert.match(adminAvailabilityModule, /availability_known: false/);
+  assert.match(adminAvailabilityModule, /export function getSeatStatusLabel\(meetup\)/);
+  assert.match(adminAvailabilityModule, /export function getSeatSummaryText\(meetup\)/);
   assert.match(adminScript, /function renderSeatSummary\(meetup\)/);
   assert.match(adminScript, /<td data-label="좌석">\$\{renderSeatSummary\(meetup\)\}<\/td>/);
   assert.match(adminScript, /getCapacityPayloadValue\(formData\.get\('capacity'\)\)/);

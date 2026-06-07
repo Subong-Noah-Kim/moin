@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T09:58:30+09:00",
-  "currentFocus": "public capacity availability helper 로컬 완료",
+  "updatedAt": "2026-06-07T10:10:30+09:00",
+  "currentFocus": "admin capacity availability helper 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,79 +11,79 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0028 done_local"
+    "currentFocus": "AG-0029 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0028 public capacity helper 완료 검수",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
-      "next": "관리자 capacity helper behavior test 배정"
+      "currentTask": "AG-0029 admin capacity helper 커밋 준비",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
+      "next": "최종 검증 후 로컬 커밋"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public-availability.js helper 분리 및 main.js 연결 완료",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
-      "next": "admin capacity helper 분리 후보"
+      "currentTask": "admin-availability.js helper 분리 및 admin.js 연결 완료",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
+      "next": "다음 flow test 후보 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "idle",
       "currentTask": "대기",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
       "next": "필요 시 UI 테스트 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public helper extraction, Pages copy, npm test 33개 검토 완료",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
-      "next": "admin helper behavior test 검토"
+      "currentTask": "admin helper extraction QA 검토 완료, 이슈 없음",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
+      "next": "다음 flow test QA 후보 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0028 작업 설명과 검증 기록 완료",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
-      "next": "다음 Task 기록 대기"
+      "currentTask": "AG-0029 검토 결과 기록 완료",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
+      "next": "커밋 후 다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public capacity behavior test slice 승인",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
-      "next": "admin capacity helper slice 검토"
+      "currentTask": "admin capacity behavior test slice 승인",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
+      "next": "DOM/flow 테스트 후보 분해"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "behavior test helper slice 검토 완료",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
-      "next": "다음 helper slice 우선순위 확인"
+      "currentTask": "admin behavior helper slice 검토 완료",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
+      "next": "QA/Security 결과 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "fail-closed 유지와 민감정보 비노출 확인",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
-      "next": "admin helper 보안 검토"
+      "currentTask": "derived availability read-only 경계와 fail-safe 검토 완료",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
+      "next": "다음 flow test 보안 검토"
     },
     {
       "name": "보조 Agent",
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,60 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T09:58:30+09:00",
+      "updatedAt": "2026-06-07T10:10:30+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T10:10:30+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "admin helper QA 이슈 없음",
+      "body": "browser import, Pages copy, 기존 admin.js 동작 보존, renderSeatSummary escaping boundary를 검토했습니다."
+    },
+    {
+      "time": "2026-06-07T10:10:30+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "admin helper 보안 이슈 없음",
+      "body": "derived availability field는 display-only로 유지되고, unknown availability는 can_register false로 fail-safe 처리됩니다."
+    },
+    {
+      "time": "2026-06-07T10:10:30+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0029 검토 완료",
+      "body": "admin-availability.js를 포함해 최종 검증 후 로컬 커밋합니다."
+    },
+    {
+      "time": "2026-06-07T10:06:30+09:00",
+      "agent": "개발 Agent",
+      "level": "review",
+      "title": "admin availability helper 분리",
+      "body": "관리자 좌석 상태 라벨, 요약, 확정/결제중 문구, 정원 입력값 검증을 admin-availability.js로 분리했습니다."
+    },
+    {
+      "time": "2026-06-07T10:06:30+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "admin behavior test 2개 추가",
+      "body": "capacity 입력값과 open/near-full/sold-out/closed/unknown 좌석 요약을 실제 helper 입력과 출력으로 테스트했습니다. npm test 35개가 모두 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T10:06:30+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "derived availability 경계 유지 확인 중",
+      "body": "관리자 내부 count는 admin helper에서만 쓰고 public helper와 섞지 않으며, write payload allow-list는 그대로 유지했습니다."
+    },
+    {
+      "time": "2026-06-07T10:06:30+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0029 로컬 구현 완료",
+      "body": "QA/Security 검토 후 커밋합니다. 다음 후보는 더 넓은 DOM/flow 테스트입니다."
+    },
     {
       "time": "2026-06-07T09:58:30+09:00",
       "agent": "개발 Agent",
@@ -326,13 +375,6 @@
       "level": "review",
       "title": "정원 P0 DB 순서 확정",
       "body": "capacity, registration_status, orders.expires_at를 DB migration으로 먼저 추가하고, RPC row lock과 pending 만료 계산을 그 다음에 적용해야 한다고 정리했습니다."
-    },
-    {
-      "time": "2026-06-07T04:26:15+09:00",
-      "agent": "보안 Agent",
-      "level": "review",
-      "title": "늦은 Toss success 리스크 확인",
-      "body": "만료된 pending 주문이 좌석을 돌려준 뒤 늦게 결제 성공으로 돌아오면 과판매가 생길 수 있어 confirm-toss-payment 쪽 expiry guard가 필요하다고 확인했습니다."
     }
   ]
 }

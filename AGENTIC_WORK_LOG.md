@@ -851,3 +851,43 @@
 - Next:
   - `public-availability.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
   - 다음 개발 조각은 관리자 capacity helper를 분리해 좌석 요약/마감 상태를 직접 테스트하는 작업입니다.
+
+### AG-0029 - admin capacity availability behavior test helper
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 관리자 화면의 좌석 상태와 정원 입력 규칙을 실제 입력값으로 테스트할 수 있게 한다.
+- Subagents:
+  - Planning/Review Agent: Hooke
+  - QA Agent: Aristotle
+  - Security/Review Agent: Boyle
+- Changed files:
+  - `admin-availability.js`
+  - `admin.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 관리자 정원 입력값, 접수 상태 저장값, availability merge, 좌석 상태 라벨/class/요약/상세 문구를 순수 helper로 분리했습니다.
+  - `admin.js`는 새 helper를 import하되, HTML 생성과 escaping은 계속 `admin.js`의 `renderSeatSummary()`가 담당합니다.
+  - availability가 없으면 관리자 화면은 stale 숫자를 믿지 않고 `확인 지연`으로 표시하는 fail-safe 동작을 유지합니다.
+  - 새 browser module인 `admin-availability.js`가 GitHub Pages artifact에 포함되도록 workflow copy step을 추가했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 admin capacity helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 browser import path, Pages copy step, behavior parity, escaping boundary를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 derived availability field read-only 경계, unknown availability fail-safe, secret 비노출을 확인했습니다.
+  - `node --check admin.js` passed.
+  - `node --check admin-availability.js` passed.
+  - `git diff --check` passed.
+  - Local dev server served `admin-availability.js` and `admin.html` with HTTP 200.
+  - `npm test` passed: 35 tests.
+- Next:
+  - `admin-availability.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
+  - 다음 개발 조각은 더 넓은 DOM/flow 테스트 후보 중 하나를 좁히는 작업입니다.

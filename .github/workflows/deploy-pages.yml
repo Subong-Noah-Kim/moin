@@ -55,6 +55,7 @@ jobs:
           mkdir -p dist
           cp AGENTIC_STATUS.json dist/
           cp admin.css dist/
+          cp admin-availability.js dist/
           cp admin.html dist/
           cp admin.js dist/
           cp index.html dist/

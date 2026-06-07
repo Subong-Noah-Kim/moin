@@ -1,30 +1,30 @@
 {
-  "updatedAt": "2026-06-07T09:58:30+09:00",
+  "updatedAt": "2026-06-07T10:10:30+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 26,
-    "deployNeeded": 11
+    "doneLocal": 27,
+    "deployNeeded": 12
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0028 public capacity helper 완료 검수",
+      "currentTask": "AG-0029 admin capacity helper 커밋 준비",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "관리자 capacity helper behavior test 배정"
+      "next": "최종 검증 후 로컬 커밋"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public capacity behavior test slice 승인",
+      "currentTask": "admin capacity behavior test slice 승인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin capacity helper slice 검토"
+      "next": "DOM/flow 테스트 후보 분해"
     },
     {
       "name": "UX/UI Agent",
@@ -39,46 +39,46 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "behavior test helper slice 검토 완료",
+      "currentTask": "admin behavior helper slice 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 helper slice 우선순위 확인"
+      "next": "QA/Security 결과 확인"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public-availability.js helper 분리 및 main.js 연결 완료",
+      "currentTask": "admin-availability.js helper 분리 및 admin.js 연결 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin capacity helper 분리 후보"
+      "next": "다음 flow test 후보 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public helper extraction, Pages copy, npm test 33개 검토 완료",
+      "currentTask": "admin helper extraction QA 검토 완료, 이슈 없음",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin helper behavior test 검토"
+      "next": "다음 flow test QA 후보 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "fail-closed 유지와 민감정보 비노출 확인",
+      "currentTask": "derived availability read-only 경계와 fail-safe 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "admin helper 보안 검토"
+      "next": "다음 flow test 보안 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0028 작업 설명과 검증 기록 완료",
+      "currentTask": "AG-0029 검토 결과 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 Task 기록 대기"
+      "next": "커밋 후 다음 Task 기록 대기"
     },
     {
       "name": "보조 Agent",
@@ -645,7 +645,7 @@
       "priority": "P1",
       "owner": "개발 Agent + QA Agent + 보안 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "74e3372",
       "deployNeeded": true,
       "next": "관리자 capacity helper 분리와 좌석 요약 behavior test 확장",
       "details": {
@@ -658,6 +658,29 @@
           "이번 작업은 DOM 전체 클릭 테스트가 아니라 안전한 첫 helper 테스트 slice입니다.",
           "원격 Supabase 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
           "다음으로는 관리자 좌석 요약 helper를 같은 방식으로 분리하면 좋습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0029",
+      "title": "admin capacity availability behavior test helper",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "브라우저/DOM flow 테스트 후보 중 하나 선택",
+      "details": {
+        "summary": "관리자 좌석 상태와 정원 입력 규칙을 작은 helper로 분리하고 실제 입력값으로 테스트했습니다.",
+        "what": "정원 입력값, 접수 상태 저장값, 관리자 availability merge, 접수 가능/마감/신청 종료/확인 지연, 잔여석과 확정/결제중 문구를 admin-availability.js로 옮겼습니다.",
+        "why": "관리자는 이 좌석 요약을 보고 모임을 열거나 닫습니다. 숫자가 stale이거나 마감 상태가 틀리면 운영자가 잘못된 결정을 할 수 있어, 데이터 입력과 결과를 직접 검증하는 테스트가 필요합니다.",
+        "developmentDirection": "admin.js는 새 helper를 import해 화면 렌더링에 사용하고, node:test는 helper를 직접 import해 open, near-full, sold-out, closed, unknown 상태를 확인합니다.",
+        "notes": [
+          "GitHub Pages workflow가 admin-availability.js를 dist에 복사하도록 함께 수정했습니다.",
+          "renderSeatSummary()는 admin.js에 남겨 HTML 생성과 escaping 책임을 유지했습니다.",
+          "관리자 내부 count를 public helper와 섞지 않습니다.",
+          "원격 Supabase 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "다음에는 더 넓은 DOM/flow 테스트 후보를 하나 고르는 편이 좋습니다."
         ]
       }
     }

@@ -684,3 +684,33 @@
   - QA Agent와 Security/Review Agent가 helper 추출, Pages copy, fail-closed 유지, 민감정보 비노출을 검토했고 이슈 없음으로 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 33개가 모두 통과했다.
+
+## Round 17 - 2026-06-07 10:04 KST
+
+### 요약
+
+이번 사이클은 관리자 화면의 좌석 상태 판단도 실제 입력값으로 테스트할 수 있게 정리했습니다. 쉽게 말하면, 운영자가 보는 `접수 가능`, `마감`, `신청 종료`, `잔여 2/4`, `확정 1 · 결제중 1`, `확인 지연` 같은 좌석 요약이 데이터에 따라 정확히 나오는지 직접 확인합니다. 공개 페이지 helper와 같은 방식으로 관리자용 helper를 분리해, 큰 관리자 화면 전체를 띄우지 않고 핵심 판단만 빠르게 테스트할 수 있습니다.
+
+### TD-028 - admin capacity availability behavior test helper
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: 관리자 capacity/seat 상태 판단을 순수 helper로 분리하고, 정원 입력값, missing availability, open, near-full, sold-out, closed 좌석 요약을 직접 테스트한다.
+- Why: 관리자가 잘못된 좌석 상태를 보면 정원이 찬 모임을 다시 열거나, stale 숫자를 믿고 운영 결정을 할 수 있습니다. 운영 화면은 public UI와 같은 DB 기준을 믿되, 더 자세한 좌석 정보를 안전하게 보여줘야 합니다.
+- First development unit:
+  - `admin-availability.js`를 추가해 `getCapacityPayloadValue`, `getRegistrationStatusPayloadValue`, `mergeAdminMeetupAvailability`, `getSeatStatusLabel`, `getSeatStatusClass`, `getSeatSummaryText`, `getSeatBreakdownText`를 export한다.
+  - `admin.js`는 HTML 렌더링과 escaping 책임을 유지하고, 좌석 판단 helper만 import한다.
+  - GitHub Pages workflow가 새 helper 파일을 `dist`에 복사하게 한다.
+  - `tests/paymentSecurity.test.js`가 helper를 직접 import해 capacity input, unknown availability fail-safe, open/near-full/sold-out/closed 좌석 요약을 테스트한다.
+- Development direction: 다음 테스트 확장은 DOM/flow 단위로 넘어가기 전에 어떤 사용자 흐름을 검증할지 좁혀야 합니다. 후보는 관리자 모임 저장 form payload, 공개 drawer 신청/결제 guard, payment-result state handling입니다.
+- Risks:
+  - 새 browser module이므로 Pages artifact 복사 누락이 가장 큰 배포형 위험입니다. 이번 사이클에서 workflow와 테스트에 복사 확인을 추가했습니다.
+  - 이번 helper는 HTML을 만들지 않습니다. `renderSeatSummary()`는 계속 `admin.js`에 남겨 escape 처리를 유지합니다.
+  - 관리자 availability는 운영 내부 count를 포함하므로 public helper와 섞지 않아야 합니다.
+- Notes:
+  - Planning/Review Agent가 admin capacity helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 browser import, Pages copy, behavior parity, escaping boundary를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 derived availability field read-only 경계, unknown availability fail-safe, secret 비노출을 검토했고 이슈 없음으로 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 35개가 모두 통과했다.
