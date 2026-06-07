@@ -1448,6 +1448,28 @@ test('capacity read contract exposes safe public and admin availability fields',
   assert.doesNotMatch(adminContract, /grant execute on function public\.list_admin_meetup_availability\(\) to anon/);
 });
 
+test('public meetup list uses a safe read RPC instead of anon table select', async () => {
+  const [migration, supabaseClient] = await Promise.all([
+    readProjectFile('../supabase/migrations/20260607030000_public_meetup_read_rpc.sql'),
+    readProjectFile('../supabase-client.js'),
+  ]);
+  const returnSignature = migration.slice(
+    migration.indexOf('returns table'),
+    migration.indexOf('language sql'),
+  );
+
+  assert.match(migration, /create or replace function public\.list_public_meetups\(\)/);
+  assert.match(returnSignature, /returns table \(\s+id text,\s+type text,\s+category text,\s+title text,\s+description text,\s+host_name text,\s+host_role text,\s+status_label text,\s+date_label text,\s+time_label text,\s+location text,\s+price_amount integer,\s+price_label text,\s+tags text\[\],\s+image_url text,\s+schedule text\[\]/s);
+  assert.match(migration, /where meetups\.is_published = true/);
+  assert.match(migration, /order by meetups\.created_at asc/);
+  assert.match(migration, /grant execute on function public\.list_public_meetups\(\) to anon/);
+  assert.match(migration, /grant execute on function public\.list_public_meetups\(\) to authenticated/);
+  assert.match(migration, /grant execute on function public\.list_public_meetups\(\) to service_role/);
+  assert.doesNotMatch(returnSignature, /capacity|registration_status|closed_at|close_reason|is_published|created_at|buyer_name|provider_payment_key|checkout_token/);
+  assert.match(supabaseClient, /export async function fetchPublishedMeetups\(\) \{\s+return callReadRpc\('list_public_meetups'\);\s+\}/);
+  assert.doesNotMatch(supabaseClient, /selectRows\('meetups'/);
+});
+
 test('capacity smoke test SQL covers safe live migration verification paths', async () => {
   const [smokeTest, supabaseReadme] = await Promise.all([
     readProjectFile('../supabase/capacity-smoke-test.sql'),
@@ -1548,6 +1570,7 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   const statusClassRawIndex = availabilityModule.indexOf("const value = String(item?.status || '');");
 
   assert.match(supabaseClient, /async function callReadRpc\(functionName, payload = \{\}\)/);
+  assert.match(supabaseClient, /export async function fetchPublishedMeetups\(\) \{\s+return callReadRpc\('list_public_meetups'\);\s+\}/);
   assert.match(supabaseClient, /export async function fetchPublicMeetupAvailability\(\) \{\s+return callReadRpc\('list_public_meetup_availability'\);\s+\}/);
   assert.match(mainScript, /fetchPublicMeetupAvailability,/);
   assert.match(mainScript, /from '\.\/public-availability\.js\?v=__ASSET_VERSION__'/);

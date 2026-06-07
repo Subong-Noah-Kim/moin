@@ -1,6 +1,6 @@
 # Agentic Deploy Handoff
 
-Last updated: 2026-06-07 12:16 KST
+Last updated: 2026-06-07 12:27 KST
 
 ## Summary
 
@@ -47,6 +47,10 @@ Completed at 2026-06-07 12:16 KST:
   - second demo order returned HTTP 409 with `MEETUP_SOLD_OUT`
   - temporary rows were deleted and leftovers were checked: 0 rows
 - `list_public_meetup_availability()` returned live rows successfully.
+- First GitHub Pages deploy exposed a browser-only issue: availability RPC was 200, but direct anon `meetups` select returned 401.
+- Added and applied `supabase/migrations/20260607030000_public_meetup_read_rpc.sql`.
+- Updated the frontend to call `list_public_meetups()` instead of direct anon table select.
+- Verified `list_public_meetups()` with the publishable anon key: HTTP 200.
 
 Remaining:
 

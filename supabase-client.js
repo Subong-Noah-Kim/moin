@@ -540,26 +540,7 @@ export function getAmountFromMeetup(meetup) {
 }
 
 export async function fetchPublishedMeetups() {
-  const fields = [
-    'id',
-    'type',
-    'category',
-    'title',
-    'description',
-    'host_name',
-    'host_role',
-    'status_label',
-    'date_label',
-    'time_label',
-    'location',
-    'price_amount',
-    'price_label',
-    'tags',
-    'image_url',
-    'schedule',
-  ].join(',');
-
-  return selectRows('meetups', `?select=${fields}&is_published=eq.true`);
+  return callReadRpc('list_public_meetups');
 }
 
 export async function fetchPublicMeetupAvailability() {

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T12:16:00+09:00",
-  "currentFocus": "capacity backend live rollout 완료, GitHub Pages 배포 대기",
+  "updatedAt": "2026-06-07T12:27:00+09:00",
+  "currentFocus": "public meetup read RPC hotfix 준비 완료, GitHub Pages 재배포 대기",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,16 +11,16 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0041 done_live_backend"
+    "currentFocus": "AG-0042 done_live_backend_pending_pages"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0041 live capacity backend rollout 완료",
-      "updatedAt": "2026-06-07T12:16:00+09:00",
-      "next": "GitHub Pages push/deploy 및 live 화면 검증"
+      "currentTask": "AG-0042 public meetup read RPC hotfix 준비 완료",
+      "updatedAt": "2026-06-07T12:27:00+09:00",
+      "next": "hotfix push/deploy 및 live 화면 재검증"
     },
     {
       "name": "개발 Agent",
@@ -42,17 +42,17 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "npm test 41개 통과, Supabase smoke-test 및 Edge Function smoke-test 통과 확인",
-      "updatedAt": "2026-06-07T12:16:00+09:00",
-      "next": "Pages 배포 후 live public/admin/payment 화면 확인"
+      "currentTask": "npm test 42개 통과, anon list_public_meetups HTTP 200 확인",
+      "updatedAt": "2026-06-07T12:27:00+09:00",
+      "next": "Pages 재배포 후 접수 확인중 제거 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0041 live Supabase/Edge 적용 기록 완료",
-      "updatedAt": "2026-06-07T12:16:00+09:00",
-      "next": "Pages 배포와 live 검증 결과 기록"
+      "currentTask": "AG-0042 공개 목록 RPC hotfix 기록 완료",
+      "updatedAt": "2026-06-07T12:27:00+09:00",
+      "next": "재배포와 live 검증 결과 기록"
     },
     {
       "name": "기획 Agent",
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T12:27:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "public meetup read RPC hotfix",
+      "body": "브라우저에서 meetups direct select가 401이어서 list_public_meetups RPC를 추가하고 fetchPublishedMeetups를 RPC 호출로 바꿨습니다."
+    },
+    {
+      "time": "2026-06-07T12:27:00+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "hotfix 검증",
+      "body": "npm test 42개 통과, node --check supabase-client.js 통과, anon key로 list_public_meetups HTTP 200을 확인했습니다."
+    },
     {
       "time": "2026-06-07T12:16:00+09:00",
       "agent": "작업 정리 Agent",

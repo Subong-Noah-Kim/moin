@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-06-07T12:16:00+09:00",
+  "updatedAt": "2026-06-07T12:27:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 0,
     "blocked": 0,
-    "doneLocal": 39,
-    "deployNeeded": 21
+    "doneLocal": 40,
+    "deployNeeded": 22
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0041 live capacity backend rollout 완료",
+      "currentTask": "AG-0042 public meetup read RPC hotfix 준비 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "GitHub Pages push/deploy 및 live 화면 검증"
+      "next": "hotfix push/deploy 및 live 화면 재검증"
     },
     {
       "name": "기획 Agent",
@@ -57,10 +57,10 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "npm test 41개 통과, Supabase smoke-test 및 Edge Function smoke-test 통과 확인",
+      "currentTask": "npm test 42개 통과, anon list_public_meetups HTTP 200 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "Pages 배포 후 live public/admin/payment 화면 확인"
+      "next": "Pages 재배포 후 접수 확인중 제거 확인"
     },
     {
       "name": "보안 Agent",
@@ -75,10 +75,10 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0041 live Supabase/Edge 적용 기록 완료",
+      "currentTask": "AG-0042 공개 목록 RPC hotfix 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "Pages 배포와 live 검증 결과 기록"
+      "next": "재배포와 live 검증 결과 기록"
     },
     {
       "name": "보조 Agent",
@@ -969,6 +969,28 @@
           "PUBLIC_SUBMISSION_HASH_SALT는 현재 live에 없지만 선택값이며, 함수는 문서화된 fallback salt를 사용합니다.",
           "Supabase migration history가 로컬 migration을 기록하지 않은 상태라, 다음 DB 작업에서도 blind supabase db push는 피해야 합니다.",
           "GitHub Pages frontend/admin은 아직 배포 전입니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0042",
+      "title": "public meetup read RPC hotfix",
+      "priority": "P0",
+      "owner": "총괄 디렉터 + 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent",
+      "status": "done_live_backend_pending_pages",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "Push to main, redeploy Pages, and verify live page text",
+      "details": {
+        "summary": "첫 Pages 배포 후에도 유저 화면이 `접수 확인중`으로 남는 문제를 고쳤습니다. 원인은 정원 RPC가 아니라 공개 모임 목록 조회 권한이었습니다.",
+        "what": "공개 모임 목록 전용 RPC `list_public_meetups()`를 추가하고, 프론트가 `meetups` 테이블을 직접 select하지 않도록 바꿨습니다.",
+        "why": "PostgREST가 anon table-level SELECT를 요구하면서 기존 모임 목록 요청이 401로 실패했습니다. table-level SELECT를 열면 운영 컬럼 노출 범위가 넓어질 수 있어, 필요한 공개 컬럼만 반환하는 RPC가 더 안전합니다.",
+        "developmentDirection": "DB에는 public read RPC를 추가하고, 브라우저 코드는 기존 fetchPublishedMeetups 인터페이스를 유지한 채 내부 호출만 RPC로 교체했습니다.",
+        "notes": [
+          "live Supabase에 20260607030000_public_meetup_read_rpc.sql을 적용했습니다.",
+          "anon publishable key로 list_public_meetups HTTP 200을 확인했습니다.",
+          "npm test 42개가 통과했습니다.",
+          "GitHub Pages 재배포 후 `접수 확인중`이 사라지는지 Playwright로 다시 확인해야 합니다."
         ]
       }
     }

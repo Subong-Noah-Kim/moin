@@ -1348,3 +1348,35 @@
   - Push/merge the branch.
   - Run GitHub Pages workflow.
   - Verify the live public page no longer shows every meetup as `접수 확인중`.
+
+### AG-0042 - public meetup read RPC hotfix
+
+- Status: `done_live_backend_pending_pages`
+- Branch: `main`
+- Time: 2026-06-07 12:27 KST
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 첫 Pages 배포 후에도 유저 화면이 계속 `접수 확인중`으로 보이는 문제를 해결한다.
+- Non-developer summary:
+  - 새 정원/잔여석 정보는 live Supabase에서 정상으로 내려오고 있었습니다.
+  - 하지만 기존 모임 목록 조회가 Supabase 권한에 막혀 401 오류가 났습니다.
+  - 그래서 화면은 “모임 목록과 잔여석 정보를 함께 확인하지 못했다”고 판단해 계속 안전 모드인 `접수 확인중`을 보여줬습니다.
+  - 공개 모임 목록만 돌려주는 전용 RPC를 추가해, 테이블 전체 공개 권한을 넓히지 않고 문제를 해결했습니다.
+- Technical direction:
+  - `list_public_meetups()` RPC를 추가했습니다.
+  - `fetchPublishedMeetups()`가 `meetups` table direct select 대신 `list_public_meetups()`를 호출하게 바꿨습니다.
+  - anon publishable key로 `list_public_meetups` HTTP 200을 확인했습니다.
+- Changed files:
+  - `supabase/migrations/20260607030000_public_meetup_read_rpc.sql`
+  - `supabase-client.js`
+  - `tests/paymentSecurity.test.js`
+  - `AGENTIC_DEPLOY_HANDOFF.md`
+  - `AGENTIC_WORK_LOG.md`
+- Verification:
+  - `npm test` passed: 42 tests.
+  - `node --check supabase-client.js` passed.
+  - live Supabase `list_public_meetups` returned HTTP 200 with anon publishable key.
+- Next:
+  - Commit and push the hotfix to `main`.
+  - Let GitHub Pages redeploy.
+  - Re-run Playwright live page check and confirm `접수 확인중` is gone.
