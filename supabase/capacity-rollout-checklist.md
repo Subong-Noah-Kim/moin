@@ -38,13 +38,31 @@ Stop and do not deploy the next layer if any of these happen:
 
 ## Required Order
 
+## Execution Record - 2026-06-07 12:16 KST
+
+- [x] `npm test` passed locally: 41 tests.
+- [x] Live Supabase project `jqnnolsyvynrhjvfmege` was checked before migration.
+- [x] Supabase migration history did not contain local migration records, so `supabase db push` was not used.
+- [x] Capacity migrations were applied manually with `supabase db query --linked --file`.
+- [x] `supabase/capacity-smoke-test.sql` passed against live Supabase.
+- [x] Smoke-test leftovers were checked: 0 rows.
+- [x] Edge Functions were deployed:
+  - `create-public-submission`
+  - `confirm-toss-payment`
+- [x] Temporary live Edge Function smoke test passed:
+  - first demo order: HTTP 200
+  - second demo order on one-seat meetup: HTTP 409 `MEETUP_SOLD_OUT`
+  - temporary rows cleaned up: 0 leftovers
+- [ ] GitHub Pages frontend/admin deployed.
+- [ ] Live public/admin/payment pages verified after frontend deploy.
+
 ### 1. Apply Capacity Migrations
 
 Run these in the Supabase SQL editor in exactly this order:
 
-- [ ] `supabase/migrations/20260607000000_capacity_remaining_spots.sql`
-- [ ] `supabase/migrations/20260607010000_capacity_rpc_guards.sql`
-- [ ] `supabase/migrations/20260607020000_capacity_read_contract.sql`
+- [x] `supabase/migrations/20260607000000_capacity_remaining_spots.sql`
+- [x] `supabase/migrations/20260607010000_capacity_rpc_guards.sql`
+- [x] `supabase/migrations/20260607020000_capacity_read_contract.sql`
 
 Do not deploy the capacity-aware Edge Functions before all three migrations are applied.
 
@@ -56,9 +74,9 @@ Run:
 
 Expected result:
 
-- [ ] The script completes without exceptions.
-- [ ] It ends with `ROLLBACK`.
-- [ ] No `__capacity_smoke_*` rows remain in `meetups`, `applications`, `orders`, or `payments`.
+- [x] The script completes without exceptions.
+- [x] It ends with `ROLLBACK`.
+- [x] No `__capacity_smoke_*` rows remain in `meetups`, `applications`, `orders`, or `payments`.
 
 The smoke test verifies:
 
@@ -76,13 +94,13 @@ The smoke test verifies:
 
 After the migrations and smoke test pass, deploy:
 
-- [ ] `supabase functions deploy create-public-submission --no-verify-jwt`
-- [ ] `supabase functions deploy confirm-toss-payment --no-verify-jwt`
+- [x] `supabase functions deploy create-public-submission --no-verify-jwt`
+- [x] `supabase functions deploy confirm-toss-payment --no-verify-jwt`
 
 Confirm secrets are still present:
 
-- [ ] `TOSS_SECRET_KEY`
-- [ ] `PUBLIC_SUBMISSION_HASH_SALT` if used in the live project
+- [x] `TOSS_SECRET_KEY`
+- [x] `PUBLIC_SUBMISSION_HASH_SALT` if used in the live project. Current live project does not set it; the Edge Function uses the documented fallback salt.
 
 ### 4. Verify Edge Functions Before Frontend Deploy
 

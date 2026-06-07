@@ -1303,3 +1303,48 @@
   - 배포 선택 시 `AGENTIC_DEPLOY_HANDOFF.md`와 `supabase/capacity-rollout-checklist.md`를 먼저 확인해야 합니다.
 - Next:
   - 사용자가 돌아오면 배포 bundle 선택, Supabase-first capacity rollout, 또는 다음 테스트 확장 중 하나로 재개합니다.
+
+### AG-0041 - live capacity backend rollout
+
+- Status: `done_live_backend`
+- Branch: `codex/overnight-task-discovery`
+- Time: 2026-06-07 12:16 KST
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 유저 화면이 모든 모임을 `접수 확인중`으로 막지 않도록, 정원/잔여석 기능이 기대하는 Supabase DB/RPC/Edge Function 계약을 live 프로젝트에 적용한다.
+- Non-developer summary:
+  - 화면은 이미 “남은 자리 정보를 모르면 신청을 막는” 안전 모드로 개발되어 있었습니다.
+  - live Supabase에는 아직 정원/잔여석을 알려주는 DB 기능이 없어서 모든 모임이 `접수 확인중`으로 보였습니다.
+  - 이번 작업으로 live Supabase가 각 모임의 정원, 남은 자리, 접수 가능 여부를 계산해서 화면에 알려줄 수 있게 되었습니다.
+  - 이제 프론트엔드 배포 후에는 기존 공개 모임들이 `접수 확인중` 대신 접수 가능한 상태로 보여야 합니다.
+- Technical direction:
+  - `capacity`, `registration_status`, `close_reason`, `expires_at`를 live DB 계약에 추가했습니다.
+  - 공개/관리자 availability RPC를 추가했습니다.
+  - 공개 신청/주문 생성과 Toss 결제 확정 RPC가 정원 마감, 수동 종료, 만료된 대기 주문을 확인하도록 교체했습니다.
+  - capacity-aware Edge Functions `create-public-submission`, `confirm-toss-payment`를 배포했습니다.
+- Completed live actions:
+  - `npm test` passed: 41 tests.
+  - live migration state was checked; the Supabase migration history table did not record local migrations, so `db push` was not used.
+  - Applied manually through `supabase db query --linked --file`:
+    - `supabase/migrations/20260607000000_capacity_remaining_spots.sql`
+    - `supabase/migrations/20260607010000_capacity_rpc_guards.sql`
+    - `supabase/migrations/20260607020000_capacity_read_contract.sql`
+  - Ran `supabase/capacity-smoke-test.sql`; it passed and rolled back.
+  - Confirmed smoke-test leftovers: 0 rows in `meetups`, `applications`, `orders`, and `payments`.
+  - Confirmed `TOSS_SECRET_KEY` exists in Supabase secrets.
+  - `PUBLIC_SUBMISSION_HASH_SALT` is not set, but it is optional; the function falls back to `SUPABASE_SERVICE_ROLE_KEY` as salt.
+  - Deployed Supabase Edge Functions:
+    - `create-public-submission`
+    - `confirm-toss-payment`
+  - Created temporary live meetup `__edge_capacity_smoke__` to test the Edge Function path.
+  - First demo order returned HTTP 200.
+  - Second demo order returned HTTP 409 with `MEETUP_SOLD_OUT`.
+  - Deleted all temporary smoke rows and confirmed leftovers: 0 rows.
+- Important note:
+  - The live Supabase backend is now capacity-ready.
+  - GitHub Pages frontend/admin has not yet been pushed or deployed in this log entry.
+  - Because the DB was historically applied manually, future deploys should avoid blind `supabase db push` until migration history is intentionally repaired.
+- Next:
+  - Push/merge the branch.
+  - Run GitHub Pages workflow.
+  - Verify the live public page no longer shows every meetup as `접수 확인중`.

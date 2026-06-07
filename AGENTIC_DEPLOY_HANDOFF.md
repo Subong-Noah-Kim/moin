@@ -1,18 +1,18 @@
 # Agentic Deploy Handoff
 
-Last updated: 2026-06-07 11:35 KST
+Last updated: 2026-06-07 12:16 KST
 
 ## Summary
 
-This branch is ready for a careful morning review, but it should not be deployed casually. The branch contains several low-risk frontend/test/documentation improvements and one larger capacity rollout that is coupled across Supabase migrations, Edge Functions, and the GitHub Pages frontend.
+This branch is in rollout. The Supabase capacity migrations and Edge Functions have been applied to the live project, and the remaining deployment work is the GitHub Pages frontend/admin rollout plus live page verification.
 
 Current branch: `codex/overnight-task-discovery`
 
 Reference local commit when this handoff was refreshed: `3d4351e Add morning deploy handoff`. Run `git log -1` again before deployment because additional local commits may exist.
 
-Remote push/deploy status: not pushed, not deployed
+Remote push/deploy status: Supabase applied, Edge Functions deployed, GitHub Pages not pushed/deployed yet
 
-Most recent test baseline: `npm test` passed with 39 tests after this handoff update. Run it again immediately before any deploy decision.
+Most recent test baseline: `npm test` passed with 41 tests at 2026-06-07 12:10 KST.
 
 Branch upstream: not set locally at the time of this handoff.
 
@@ -25,7 +25,34 @@ If you want the safest path, review and deploy in this order:
 3. If yes, deploy the current branch only after the Supabase capacity steps are applied in order.
 4. If no, split or cherry-pick the low-risk frontend/test/doc commits separately and leave capacity for a later rollout.
 
-The important point: the current branch includes capacity-aware frontend and Edge Function code. Deploying those pieces before the live Supabase project has the capacity migrations can break registration or payment flows.
+The important point: the live Supabase project now has the capacity contract, so the frontend no longer needs to fail closed with `접수 확인중` once the latest Pages artifact is deployed.
+
+## Rollout Record
+
+Completed at 2026-06-07 12:16 KST:
+
+- `npm test` passed: 41 tests.
+- Live Supabase project `jqnnolsyvynrhjvfmege` was checked before migration.
+- Capacity migrations were applied in order:
+  - `supabase/migrations/20260607000000_capacity_remaining_spots.sql`
+  - `supabase/migrations/20260607010000_capacity_rpc_guards.sql`
+  - `supabase/migrations/20260607020000_capacity_read_contract.sql`
+- `supabase/capacity-smoke-test.sql` passed against live Supabase.
+- Smoke-test leftovers were checked: 0 rows in `meetups`, `applications`, `orders`, and `payments`.
+- Edge Functions were deployed:
+  - `create-public-submission`
+  - `confirm-toss-payment`
+- Live Edge Function smoke test passed with temporary meetup `__edge_capacity_smoke__`:
+  - first demo order returned HTTP 200
+  - second demo order returned HTTP 409 with `MEETUP_SOLD_OUT`
+  - temporary rows were deleted and leftovers were checked: 0 rows
+- `list_public_meetup_availability()` returned live rows successfully.
+
+Remaining:
+
+- Push or merge the branch.
+- Run GitHub Pages workflow.
+- Verify the live public page, admin page, and payment result page.
 
 ## Deployment Bundles
 

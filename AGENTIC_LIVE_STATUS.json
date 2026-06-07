@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T11:54:00+09:00",
-  "currentFocus": "pre-noon cutoff summary 로컬 완료",
+  "updatedAt": "2026-06-07T12:16:00+09:00",
+  "currentFocus": "capacity backend live rollout 완료, GitHub Pages 배포 대기",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,16 +11,16 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0040 done_local"
+    "currentFocus": "AG-0041 done_live_backend"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0040 pre-noon cutoff summary 완료",
-      "updatedAt": "2026-06-07T11:54:00+09:00",
-      "next": "12:00 이후 새 task round 중지 및 사용자 지시 대기"
+      "currentTask": "AG-0041 live capacity backend rollout 완료",
+      "updatedAt": "2026-06-07T12:16:00+09:00",
+      "next": "GitHub Pages push/deploy 및 live 화면 검증"
     },
     {
       "name": "개발 Agent",
@@ -42,17 +42,17 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "최신 커밋 72fba2f 기준 테스트 41개 통과 기록",
-      "updatedAt": "2026-06-07T11:54:00+09:00",
-      "next": "배포 전 npm test 재실행"
+      "currentTask": "npm test 41개 통과, Supabase smoke-test 및 Edge Function smoke-test 통과 확인",
+      "updatedAt": "2026-06-07T12:16:00+09:00",
+      "next": "Pages 배포 후 live public/admin/payment 화면 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0040 정오 직전 마감 기록 완료",
-      "updatedAt": "2026-06-07T11:54:00+09:00",
-      "next": "사용자 배포/개발 방향 선택 대기"
+      "currentTask": "AG-0041 live Supabase/Edge 적용 기록 완료",
+      "updatedAt": "2026-06-07T12:16:00+09:00",
+      "next": "Pages 배포와 live 검증 결과 기록"
     },
     {
       "name": "기획 Agent",
@@ -66,17 +66,17 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "pre-noon cutoff 상태 검토 완료",
-      "updatedAt": "2026-06-07T11:54:00+09:00",
-      "next": "배포 선택 전 handoff 문서 재확인"
+      "currentTask": "Supabase-first rollout 순서 준수 확인",
+      "updatedAt": "2026-06-07T12:16:00+09:00",
+      "next": "GitHub Pages workflow 결과 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "배포 전 Supabase-first hard stop 유지",
-      "updatedAt": "2026-06-07T11:54:00+09:00",
-      "next": "배포 전 Supabase migration/Edge 순서 재확인"
+      "currentTask": "capacity migration, smoke-test, Edge Function 순서 통과 확인",
+      "updatedAt": "2026-06-07T12:16:00+09:00",
+      "next": "Pages 배포 후 공개 상태 파일과 결제 URL 노출 확인"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T12:16:00+09:00",
+      "agent": "작업 정리 Agent",
+      "level": "complete",
+      "title": "live capacity backend rollout 완료",
+      "body": "live Supabase capacity migrations, smoke-test, Edge Function deploy, 임시 1석 모임 HTTP 200/409 검증과 cleanup 0건 확인을 기록했습니다."
+    },
+    {
+      "time": "2026-06-07T12:16:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0041 backend live 완료",
+      "body": "이제 남은 단계는 branch push, GitHub Pages workflow, live public/admin/payment 화면 검증입니다."
+    },
     {
       "time": "2026-06-07T11:54:00+09:00",
       "agent": "작업 정리 Agent",

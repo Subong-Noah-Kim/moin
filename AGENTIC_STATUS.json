@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-06-07T11:54:00+09:00",
+  "updatedAt": "2026-06-07T12:16:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 0,
     "blocked": 0,
-    "doneLocal": 38,
-    "deployNeeded": 20
+    "doneLocal": 39,
+    "deployNeeded": 21
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0040 pre-noon cutoff summary 완료",
+      "currentTask": "AG-0041 live capacity backend rollout 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "12:00 이후 새 task round 중지 및 사용자 지시 대기"
+      "next": "GitHub Pages push/deploy 및 live 화면 검증"
     },
     {
       "name": "기획 Agent",
@@ -39,10 +39,10 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "pre-noon cutoff 상태 검토 완료",
+      "currentTask": "Supabase-first rollout 순서 준수 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 선택 전 handoff 문서 재확인"
+      "next": "GitHub Pages workflow 결과 확인"
     },
     {
       "name": "개발 Agent",
@@ -57,28 +57,28 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "최신 커밋 72fba2f 기준 테스트 41개 통과 기록",
+      "currentTask": "npm test 41개 통과, Supabase smoke-test 및 Edge Function smoke-test 통과 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 전 npm test 재실행"
+      "next": "Pages 배포 후 live public/admin/payment 화면 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "배포 전 Supabase-first hard stop 유지",
+      "currentTask": "capacity migration, smoke-test, Edge Function 순서 통과 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 전 Supabase migration/Edge 순서 재확인"
+      "next": "Pages 배포 후 공개 상태 파일과 결제 URL 노출 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0040 정오 직전 마감 기록 완료",
+      "currentTask": "AG-0041 live Supabase/Edge 적용 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 배포/개발 방향 선택 대기"
+      "next": "Pages 배포와 live 검증 결과 기록"
     },
     {
       "name": "보조 Agent",
@@ -943,6 +943,32 @@
           "push, GitHub Pages deploy, Supabase migration 적용, Edge Function deploy는 하지 않았습니다.",
           "배포를 고르면 AGENTIC_DEPLOY_HANDOFF.md와 supabase/capacity-rollout-checklist.md를 먼저 확인해야 합니다.",
           "다음 개발 후보는 payment-result 실패/cancel DOM-like test 또는 public drawer/checkout flow test입니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0041",
+      "title": "live capacity backend rollout",
+      "priority": "P0",
+      "owner": "총괄 디렉터 + 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent",
+      "status": "done_live_backend",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "GitHub Pages frontend/admin deploy and live page verification",
+      "details": {
+        "summary": "정원/잔여석 기능에 필요한 live Supabase DB와 Edge Function 적용을 완료했습니다. 이제 남은 것은 최신 프론트엔드를 GitHub Pages에 배포하고 실제 화면을 확인하는 일입니다.",
+        "what": "live Supabase에 capacity 관련 컬럼과 RPC를 추가했고, 공개 신청/주문 및 Toss 결제 확정 Edge Function을 정원 보호 버전으로 배포했습니다.",
+        "why": "프론트엔드는 남은 자리 정보를 못 읽으면 안전하게 모든 신청을 `접수 확인중`으로 막습니다. live DB가 새 availability RPC를 제공해야 사용자 화면에서 실제 접수 가능 상태와 잔여석을 보여줄 수 있습니다.",
+        "developmentDirection": "Supabase migration을 `db push`로 한꺼번에 밀지 않고, migration history가 비어 있는 live 상태를 고려해 필요한 3개 SQL 파일만 순서대로 적용했습니다. 그 뒤 smoke-test와 임시 1석 모임 HTTP 검증으로 실제 Edge Function 경로를 확인했습니다.",
+        "notes": [
+          "npm test 41개가 통과했습니다.",
+          "supabase/capacity-smoke-test.sql이 live DB에서 예외 없이 통과했고 ROLLBACK되었습니다.",
+          "임시 모임 __edge_capacity_smoke__의 첫 데모 주문은 HTTP 200, 두 번째 주문은 HTTP 409 MEETUP_SOLD_OUT으로 확인했습니다.",
+          "임시 테스트 데이터는 모두 삭제했고 leftovers 0건을 확인했습니다.",
+          "TOSS_SECRET_KEY는 live secret에 있습니다.",
+          "PUBLIC_SUBMISSION_HASH_SALT는 현재 live에 없지만 선택값이며, 함수는 문서화된 fallback salt를 사용합니다.",
+          "Supabase migration history가 로컬 migration을 기록하지 않은 상태라, 다음 DB 작업에서도 blind supabase db push는 피해야 합니다.",
+          "GitHub Pages frontend/admin은 아직 배포 전입니다."
         ]
       }
     }
