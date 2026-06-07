@@ -4,22 +4,21 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 ## Current Priority Queue - 2026-06-07 Audit
 
-1. Review `AGENTIC_DEPLOY_HANDOFF.md` before choosing what to push/deploy.
-2. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout if the user chooses the full Supabase-first deploy bundle.
-3. Continue behavior-oriented frontend tests for broader DOM/flow slices after public/admin capacity helper coverage.
-4. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
-5. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
-6. Revisit optional live regions for important loading/error states after operational rollout.
+1. Continue behavior-oriented frontend tests for shipped public/admin/payment flows.
+2. Split large frontend modules into small testable helper slices only when the next test needs it.
+3. Keep `TODO.md`, `AGENTIC_STATUS.json`, `AGENTIC_LIVE_STATUS.json`, and `AGENTIC_WORK_LOG.md` current after each completed task.
+4. Add a browser-level smoke test plan for the most important public flows before the next larger feature rollout.
+5. Revisit optional live regions for important loading/error states after operational/test coverage work.
 
-Noon cutoff note: the last automatic development cycle before 12:00 KST ended with local commit `72fba2f` and `npm test` passing 41 tests. Do not start another automatic task round after 12:00 without a fresh user instruction.
+Status note: the P0 capacity, remaining-spots, and automatic sold-out rollout is now deployed and live-verified on Supabase, Edge Functions, and GitHub Pages. Existing published meetups currently have unlimited capacity, so the public label is usually `접수중`; capacity-enabled test meetups showed `잔여 N석`, `마감`, `신청 종료`, and reopened remaining-seat states correctly.
 
 ## P0 - Before Real Payment Use
 
-- [ ] Add capacity, remaining spots, and automatic sold-out controls
+- [x] Add capacity, remaining spots, and automatic sold-out controls
   - Problem: meetup capacity is still a manual display label such as "4자리 남음"; public application/order creation does not atomically block over-capacity submissions, and Toss `pending` orders have no expiry.
   - Files: `supabase/migrations/`, `supabase/functions/create-public-submission/index.ts`, `supabase/functions/confirm-toss-payment/index.ts`, `supabase-client.js`, `main.js`, `admin.html`, `admin.js`, `tests/paymentSecurity.test.js`
   - Done when: capacity is stored in Supabase, remaining spots are computed from seat-holding orders, sold-out/closed states return stable 409 errors, expired pending Toss holds do not consume seats forever, and public/admin UI use structured status instead of freeform `status_label`.
-  - Status: local backend implementation has started with the DB contract migration in `supabase/migrations/20260607000000_capacity_remaining_spots.sql`, the public RPC guard migration in `supabase/migrations/20260607010000_capacity_rpc_guards.sql`, the structured read contract in `supabase/migrations/20260607020000_capacity_read_contract.sql`, Edge Function sold-out/closed/expired-pending handling, `supabase/capacity-smoke-test.sql`, and regression coverage in `tests/paymentSecurity.test.js`. Public UI now reads `list_public_meetup_availability()`, shows structured remaining/closed status, and fails closed for configured Supabase mode when availability is missing. Admin UI now has capacity input, manual open/closed status, close reason, and read-only remaining-seat summary from `list_admin_meetup_availability()`. `supabase/capacity-rollout-checklist.md` now documents the live migration, smoke-test, Edge Function, and GitHub Pages rollout order. The full feature is not complete yet: live Supabase migration application, Edge Function deploy, GitHub Pages deploy, and manual smoke-test execution are still pending. Do not deploy Edge Functions for this package before the DB migrations exist remotely.
+  - Status: deployed and live-verified on Supabase project `jqnnolsyvynrhjvfmege`. Applied migrations `20260607000000_capacity_remaining_spots.sql`, `20260607010000_capacity_rpc_guards.sql`, `20260607020000_capacity_read_contract.sql`, and `20260607030000_public_meetup_read_rpc.sql`; deployed `create-public-submission` and `confirm-toss-payment`; redeployed GitHub Pages; verified public cards no longer fail closed as `접수 확인중`; ran a temporary live meetup check for `잔여 2석` -> `잔여 1석` -> `마감`, server-side over-capacity HTTP 409 `MEETUP_SOLD_OUT`, manual `신청 종료`, reopen to `잔여 1석`, and cleanup leftovers 0.
 
 - [x] Lock payment amount to server-side meetup price
   - Problem: anonymous clients can insert `orders.amount`, and the Edge Function currently validates Toss amount against that untrusted order row.
@@ -69,7 +68,7 @@ Noon cutoff note: the last automatic development cycle before 12:00 KST ended wi
   - Files: `supabase/functions/create-public-submission/index.ts`, `tests/paymentSecurity.test.js`
   - Done when: the Edge Function stores only `간편결제`, `카드`, or `계좌이체`, and falls back to `간편결제` for missing/unknown values.
   - Priority note: this is data hygiene and consistency hardening, not a payment authorization blocker, because amount/provider approval still does not trust this field.
-  - Status: local implementation is complete on `codex/overnight-task-discovery`; `create-public-submission` now normalizes `paymentMethod` before calling `create_public_order`, and tests pin the server allowlist contract. Supabase Edge Function deploy is still needed before this affects live order metadata.
+  - Status: deployed with the capacity Edge Function rollout. `create-public-submission` normalizes `paymentMethod` before calling `create_public_order`, and tests pin the server allowlist contract.
 
 - [x] Restrict manual admin order status transitions
   - Problem: admins can set `paid`/`demo_paid` without a payment row or audit trail.
@@ -89,7 +88,7 @@ Noon cutoff note: the last automatic development cycle before 12:00 KST ended wi
   - Problem: `AGENTIC_STATUS.json` is copied into the GitHub Pages artifact, so the admin UI can load it after login, but the raw JSON can also be requested directly by URL. It currently avoids secrets, but still contains branch, task, rollout, and operational notes.
   - Files: `.github/workflows/deploy-pages.yml`, `admin.js`, `AGENTIC_STATUS.json`, `AGENTIC_LIVE_STATUS.json`, `tests/paymentSecurity.test.js`
   - Done when: the project intentionally chooses either a redacted public status JSON, no public status artifact, or an authenticated status source; tests should match that decision.
-  - Status: local implementation is complete on `codex/overnight-task-discovery`; GitHub Pages workflow now generates `PUBLIC_AGENTIC_STATUS.json` from an allow-list redactor instead of copying raw `AGENTIC_STATUS.json`, admin.js uses the public file in deployed mode and falls back to raw status locally, and tests verify branch/owner/commit/currentTask/blocker/detailed notes are excluded. Deploy is still needed before this affects the live admin page.
+  - Status: deployed and verified. GitHub Pages workflow now generates `PUBLIC_AGENTIC_STATUS.json` from an allow-list redactor instead of copying raw `AGENTIC_STATUS.json`, admin.js uses the public file in deployed mode and falls back to raw status locally, tests verify branch/owner/commit/currentTask/blocker/detailed notes are excluded, live `PUBLIC_AGENTIC_STATUS.json` returns 200, and raw `AGENTIC_STATUS.json` returns 404.
 
 - [x] Add public submission abuse controls
   - Problem: anonymous visitors can insert applications and valid demo/pending orders directly through public Supabase policies, so a public launch can be spammed even though payment amount tampering is blocked.
@@ -102,19 +101,19 @@ Noon cutoff note: the last automatic development cycle before 12:00 KST ended wi
   - Problem: admin access and refresh tokens are stored in `localStorage`, while refresh is not actually used; this increases token persistence without improving the operator experience.
   - Files: `supabase-client.js`, `admin.js`
   - Done when: admin sessions either use a deliberate refresh flow or shorter-lived storage such as `sessionStorage`, expired sessions are handled clearly, and sign-out reliably clears stored credentials.
-  - Status: local implementation is complete on `codex/overnight-task-discovery`; admin sessions now use tab-scoped storage, refresh token persistence was removed, expired/corrupted sessions are cleaned up, and `npm test` passes. Deploy is still needed before this affects the live admin page.
+  - Status: deployed with the Pages rollout. Admin sessions now use tab-scoped storage, refresh token persistence was removed, expired/corrupted sessions are cleaned up, and regression tests pass. Authenticated admin login was not re-tested with credentials during the latest live smoke pass.
 
 - [x] Update product/demo copy and setup docs to match current integration state
   - Problem: some README and UI copy still says "temporary," "demo," or "connection preparation" even though Supabase, Toss test payment, and Edge Function confirmation are wired.
   - Files: `README.md`, `supabase/README.md`, `main.js`, `payment-result.html`
   - Done when: public/admin copy clearly distinguishes real service behavior, Toss test mode, and remaining production setup work.
-  - Status: local implementation is complete on `codex/overnight-task-discovery`; public checkout/result copy and setup docs now distinguish screen-only demo state, Toss test payment approval, Supabase Edge Function confirmation, and remaining live payment setup. `npm test` passes. Deploy is still needed before this affects the live public page.
+  - Status: deployed with the Pages rollout. Public checkout/result copy and setup docs now distinguish screen-only demo state, Toss test payment approval, Supabase Edge Function confirmation, and remaining live payment setup.
 
 - [x] Minimize payment result identifier exposure
   - Problem: Toss `paymentKey` was needed for approval, but the raw value also appeared on the result screen, stayed in the callback URL, and was saved in browser storage.
   - Files: `payment-result.html`, `payment-result.js`, `tests/paymentSecurity.test.js`
   - Done when: `paymentKey` is still sent to the confirmation Edge Function, but the raw value is not rendered, not stored in `sessionStorage`, and callback query values are cleaned after capture.
-  - Status: local implementation is complete on `codex/overnight-task-discovery`; the result page now shows receipt status instead of the raw payment key, stores only a summary, cleans callback URLs after reading them, and has regression tests. `npm test` passes. Deploy is still needed before this affects the live payment result page.
+  - Status: deployed with the Pages rollout. The result page now shows receipt status instead of the raw payment key, stores only a summary, cleans callback URLs after reading them, and has regression tests.
 
 ## P2 - Accessibility and Mobile UX
 
@@ -135,7 +134,7 @@ Noon cutoff note: the last automatic development cycle before 12:00 KST ended wi
   - Files: `main.js`, `styles.css`
   - Done when: all form fields have visible labels or robust accessible names.
   - Priority note: this has broader everyday UX value than live regions because labels remain visible after typing and help all users recover context.
-  - Status: local implementation is complete on `codex/overnight-task-discovery`; application and checkout fields now have explicit labels, helper text, and `aria-describedby` connections. `npm test` passes. Deploy is still needed before this affects the live public page.
+  - Status: deployed with the Pages rollout. Application and checkout fields now have explicit labels, helper text, and `aria-describedby` connections.
 
 - [x] Restore or remove mobile bottom navigation
   - Problem: mobile bottom nav markup exists but is hidden, while top navigation is also hidden on smaller screens.
@@ -157,23 +156,23 @@ Noon cutoff note: the last automatic development cycle before 12:00 KST ended wi
   - Done when: one deployment version controls all static asset imports, or a build step fingerprints files.
   - Status: source files now use a shared `__ASSET_VERSION__` placeholder, the Pages workflow replaces it with the short commit SHA in `dist`, and tests verify all cache-busting query strings stay consistent.
 
-- [ ] Update GitHub Pages workflow action/runtime compatibility
+- [x] Update GitHub Pages workflow action/runtime compatibility
   - Problem: the latest successful Pages workflow reports GitHub Actions Node 20 deprecation warnings for checkout/setup/deploy actions, with forced Node 24 behavior coming soon.
   - Files: `.github/workflows/deploy-pages.yml`
   - Done when: the workflow uses action versions/settings compatible with the current GitHub runner runtime and a fresh deploy completes without deprecation warnings.
-  - Status: local workflow/test implementation is complete on `codex/overnight-task-discovery`; `npm test` passes. Push/deploy were not performed, so the final remaining check is one fresh GitHub Actions deploy run with no runtime warnings.
+  - Status: deployed through the latest Pages rollout. Workflow uses `actions/checkout@v6`, `actions/setup-node@v6`, `actions/configure-pages@v6`, `actions/upload-pages-artifact@v5`, `actions/deploy-pages@v5`, and Node 24; tests pin those versions.
 
 - [ ] Add frontend tests for shipped flows
   - Problem: current tests cover selected payment, rendering, accessibility, and admin assertions mostly through source-text regex checks; shipped flows still need broader behavior coverage.
   - Files: `tests/`, `package.json`
   - Done when: tests exercise exported helpers or DOM-like behavior for escaping, numeric payment amount selection, Toss SDK load handling, result-page state handling, cache version consistency, public/admin capacity state rendering, and admin status rendering.
-  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, payment button text, and shared registration block reasons used by checkout/application guards. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Payment-result state behavior now has a pure helper slice in `payment-result-state.js`, with direct tests for amount display, confirmation error messages, failure status labels, and safe Toss auth summary storage. Payment-result success callback now has a DOM-like `node:test` slice that imports the real `payment-result.js` module with fake document/window/fetch/storage and verifies confirmation payload, URL cleanup, safe auth summary storage, paid meetup marking, and success status rendering. Admin meetup form payload behavior now has a pure helper slice in `admin-meetup-form.js`, with direct tests for create/edit payloads, price labels, generated IDs, capacity, close reasons, tags/schedule, FormData checkbox behavior, and safe image URL handling. Admin status label and manual order-action behavior now has a pure helper slice in `admin-status.js`, with direct tests for application/order/payment/Agentic labels, option selection, status class normalization, and preventing manual `paid`/`demo_paid` order transitions. Public application/checkout form payload behavior now has a pure helper slice in `public-form.js`, with direct tests for field IDs, FormData/plain object input, trimmed application/checkout fields, and checkout payment-method allowlisting. Public browser storage recovery now has a pure helper slice in `public-storage.js`, with direct tests for corrupted JSON, non-array cleanup, value trimming/length limits, max item limits, and best-effort persistence. Continue with broader DOM/browser tests only after choosing a concrete flow.
+  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, payment button text, and shared registration block reasons used by checkout/application guards. Public detail/application/checkout state now has `public-flow.js`, which keeps drawer payment summary, payment button disabled state, application availability, checkout availability, paid state, and block reasons aligned in one tested helper. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Payment-result state behavior now has a pure helper slice in `payment-result-state.js`, with direct tests for amount display, confirmation error messages, failure status labels, and safe Toss auth summary storage. Payment-result success callback now has a DOM-like `node:test` slice that imports the real `payment-result.js` module with fake document/window/fetch/storage and verifies confirmation payload, URL cleanup, safe auth summary storage, paid meetup marking, and success status rendering. Admin meetup form payload behavior now has a pure helper slice in `admin-meetup-form.js`, with direct tests for create/edit payloads, price labels, generated IDs, capacity, close reasons, tags/schedule, FormData checkbox behavior, and safe image URL handling. Admin status label and manual order-action behavior now has a pure helper slice in `admin-status.js`, with direct tests for application/order/payment/Agentic labels, option selection, status class normalization, and preventing manual `paid`/`demo_paid` order transitions. Public application/checkout form payload behavior now has a pure helper slice in `public-form.js`, with direct tests for field IDs, FormData/plain object input, trimmed application/checkout fields, and checkout payment-method allowlisting. Public browser storage recovery now has a pure helper slice in `public-storage.js`, with direct tests for corrupted JSON, non-array cleanup, value trimming/length limits, max item limits, and best-effort persistence. Continue with broader DOM/browser tests only after choosing a concrete flow.
 
 - [ ] Split large frontend modules into testable slices
   - Problem: `main.js`, `admin.js`, `supabase-client.js`, and CSS files are large and difficult to test safely.
   - Files: `main.js`, `admin.js`, `supabase-client.js`, `styles.css`, `admin.css`
   - Done when: shared helpers and payment/rendering logic can be imported and tested without loading full pages.
-  - Status: started with `public-availability.js`, `admin-availability.js`, `payment-result-state.js`, `admin-meetup-form.js`, `admin-status.js`, `public-form.js`, and `public-storage.js`; keep future slices small and avoid moving DOM-heavy code until a browser/jsdom test harness is chosen.
+  - Status: started with `public-availability.js`, `public-flow.js`, `admin-availability.js`, `payment-result-state.js`, `admin-meetup-form.js`, `admin-status.js`, `public-form.js`, and `public-storage.js`; keep future slices small and avoid moving DOM-heavy code until a browser/jsdom test harness is chosen.
 
 - [x] Lazy-load repeated dynamic images
   - Problem: repeated meetup/event/recommendation images are eager-loaded.
@@ -192,4 +191,5 @@ Noon cutoff note: the last automatic development cycle before 12:00 KST ended wi
 - Payment hardening migration and Edge Function deploy were applied after the SQL migration and function deployment steps. Keep using test keys until business/live payment setup is intentional.
 - Supabase Edge Function deploy may require running locally from the terminal because the CLI can pause on macOS keychain/auth prompts.
 - Public submission abuse controls were applied with the two-step migration path. Keep that same order for future environments: setup migration, Edge Function deploy, frontend deploy/verification, then lock migration.
-- `AGENTIC_DEPLOY_HANDOFF.md` is the morning deploy decision guide for the current `codex/overnight-task-discovery` branch. It separates lower-risk frontend/test/doc changes from the larger capacity rollout and repeats the Supabase-first hard stop.
+- Capacity work was deployed Supabase-first and then verified on GitHub Pages. For future environments, keep the same order documented in `supabase/capacity-rollout-checklist.md`; do not deploy capacity-aware Edge Functions before the capacity migrations exist remotely.
+- `AGENTIC_DEPLOY_HANDOFF.md` now mostly serves as historical rollout context for the capacity deployment. Use this `TODO.md` priority queue for the next development choice.

@@ -1448,3 +1448,41 @@
 - Notes:
   - This check used direct Supabase operations for the temporary test setup instead of admin login credentials.
   - The user-facing behavior and Edge Function guard path were still verified against the live deployed site/functions.
+
+### AG-0045 - public detail/application/checkout flow helper tests
+
+- Status: `done_local`
+- Branch: `main`
+- Time: 2026-06-07 12:55 KST
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 작업 정리 Agent
+- Purpose: 정원/잔여석 rollout 이후 유저 화면의 신청/결제 상태 판단이 서로 어긋나지 않도록 회귀 테스트를 넓힌다.
+- Non-developer summary:
+  - 유저 화면에는 같은 모임 상태가 여러 곳에 동시에 나타납니다.
+  - 예를 들어 모임이 `마감`이면 신청서도 막혀야 하고, 결제 버튼도 비활성화되어야 하고, 결제 요약도 “신청 상태: 마감”처럼 보여야 합니다.
+  - 이번 작업은 이 판단을 `public-flow.js` 한 곳에서 계산하게 만들고, `마감`, `신청 종료`, `잔여석 있음`, `테스트 결제 완료` 상태가 서로 맞게 움직이는지 테스트했습니다.
+  - 사용자가 보는 디자인을 크게 바꾸려는 작업이 아니라, 다음 수정 때 실수로 신청/결제 상태가 어긋나는 일을 줄이는 안전장치입니다.
+- Technical direction:
+  - `public-flow.js`를 추가해 `getPublicMeetupActionState()`를 만들었습니다.
+  - `main.js`의 drawer/payment summary/checkout/application guard가 이 helper를 사용하게 했습니다.
+  - GitHub Pages workflow가 `public-flow.js`를 `dist`에 복사하도록 추가했습니다.
+  - `tests/paymentSecurity.test.js`에 public flow helper 테스트와 workflow copy/cache-busting 검증을 추가했습니다.
+  - `TODO.md`를 실제 배포 상태에 맞게 갱신했습니다.
+- Changed files:
+  - `public-flow.js`
+  - `main.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Verification:
+  - `node --check main.js` passed.
+  - `node --check public-flow.js` passed.
+  - `npm test` passed: 43 tests.
+- Notes:
+  - 배포 전 로컬 변경입니다.
+  - 배포하면 live 사이트에서 새 모듈 `public-flow.js`가 추가로 로드됩니다.
+  - Pages workflow copy 목록을 함께 고쳤기 때문에 배포 시 새 모듈 404가 나지 않아야 합니다.
+  - 정원/잔여석 live 동작 자체는 AG-0044에서 이미 검증됐고, 이번 작업은 회귀 방지용입니다.

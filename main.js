@@ -9,14 +9,11 @@ import {
   recordTossPaymentFailure,
 } from './supabase-client.js?v=__ASSET_VERSION__';
 import {
-  getPaymentButtonTextForMeetup,
   getPublicStatusClass as getStatusClass,
-  getRegistrationBlockReason,
-  getRegistrationStatusDescription,
   getRegistrationStatusLabel,
-  isRegistrationAvailable,
   mergeMeetupAvailability,
 } from './public-availability.js?v=__ASSET_VERSION__';
+import { getPublicMeetupActionState } from './public-flow.js?v=__ASSET_VERSION__';
 import {
   createPublicApplicationPayload,
   createPublicCheckoutPayload,
@@ -722,7 +719,7 @@ function createTagMarkup(tags) {
 
 function getPaymentButtonText(itemId) {
   const item = meetups.find((meetup) => meetup.id === itemId);
-  return getPaymentButtonTextForMeetup(item, { isPaid: paid.has(itemId) });
+  return getPublicMeetupActionState(item, { isPaid: paid.has(itemId) }).paymentButtonText;
 }
 
 function renderMeetups() {
@@ -902,9 +899,12 @@ function openDrawer(itemId, opener = document.activeElement) {
     : opener;
   const recommendations = meetups.filter((meetup) => meetup.id !== item.id).slice(0, 2);
   const isPaid = paid.has(item.id);
-  const canRegister = isRegistrationAvailable(item);
-  const registrationLabel = getRegistrationStatusLabel(item);
-  const registrationDescription = getRegistrationStatusDescription(item);
+  const actionState = getPublicMeetupActionState(item, { isPaid });
+  const {
+    canRegister,
+    registrationLabel,
+    registrationDescription,
+  } = actionState;
   const applicationNameId = createFieldId('application', item.id, 'name');
   const applicationNameHelpId = createFieldId(applicationNameId, 'help');
   const applicationInterestId = createFieldId('application', item.id, 'interest');
@@ -983,19 +983,19 @@ function openDrawer(itemId, opener = document.activeElement) {
 
       <div class="tag-row">${createTagMarkup(item.tags)}</div>
 
-      <section class="payment-summary ${isPaid ? 'is-paid' : ''} ${!canRegister && !isPaid ? 'is-closed' : ''}" aria-label="결제 요약">
+      <section class="${escapeAttribute(actionState.paymentSummaryClass)}" aria-label="결제 요약">
         <div>
-          <span>${isPaid ? '결제 상태' : canRegister ? '참가비 결제' : '신청 상태'}</span>
-          <strong>${isPaid ? '테스트 결제 확인 표시가 있는 모임입니다' : canRegister ? escapeHtml(item.price) : escapeHtml(registrationLabel)}</strong>
-          <p>${isPaid ? '이 브라우저에 테스트 결제 확인 표시가 저장되어 있어요.' : canRegister ? '토스 테스트 결제와 서버 승인 흐름을 확인합니다. 실제 출금은 없습니다.' : escapeHtml(registrationDescription)}</p>
+          <span>${escapeHtml(actionState.paymentSummaryLabel)}</span>
+          <strong>${escapeHtml(actionState.paymentSummaryTitle)}</strong>
+          <p>${escapeHtml(actionState.paymentSummaryDescription)}</p>
         </div>
         <button
           class="drawer-pay-button"
           type="button"
           data-checkout="${escapeAttribute(item.id)}"
-          ${isPaid || !canRegister ? 'disabled' : ''}
+          ${actionState.paymentButtonDisabled ? 'disabled' : ''}
         >
-          ${getPaymentButtonText(item.id)}
+          ${escapeHtml(actionState.paymentButtonText)}
         </button>
       </section>
 
@@ -1034,9 +1034,9 @@ function openCheckout(itemId, opener = document.activeElement) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
 
-  const blockReason = getRegistrationBlockReason(item);
-  if (blockReason) {
-    showToast(blockReason);
+  const actionState = getPublicMeetupActionState(item);
+  if (actionState.blockReason) {
+    showToast(actionState.blockReason);
     return;
   }
 
@@ -1129,10 +1129,10 @@ async function completeCheckout(itemId, form) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
 
-  const blockReason = getRegistrationBlockReason(item);
-  if (blockReason) {
-    setCheckoutStatus(form, blockReason, 'error');
-    showToast(blockReason);
+  const actionState = getPublicMeetupActionState(item);
+  if (actionState.blockReason) {
+    setCheckoutStatus(form, actionState.blockReason, 'error');
+    showToast(actionState.blockReason);
     return;
   }
 
@@ -1227,9 +1227,9 @@ async function submitApplication(form) {
   const item = meetups.find((meetup) => meetup.id === form.dataset.applicationForm);
   if (!item) return;
 
-  const blockReason = getRegistrationBlockReason(item);
-  if (blockReason) {
-    showToast(blockReason);
+  const actionState = getPublicMeetupActionState(item);
+  if (actionState.blockReason) {
+    showToast(actionState.blockReason);
     return;
   }
 

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T12:44:00+09:00",
-  "currentFocus": "live capacity manual flow check 완료",
+  "updatedAt": "2026-06-07T12:55:00+09:00",
+  "currentFocus": "public flow helper/test 정리 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,24 +11,24 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0044 verified_live_cleaned_up"
+    "currentFocus": "AG-0045 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0044 live capacity manual flow check 완료",
-      "updatedAt": "2026-06-07T12:44:00+09:00",
-      "next": "사용자 후속 지시 대기"
+      "currentTask": "AG-0045 public flow helper/test 정리 완료",
+      "updatedAt": "2026-06-07T12:55:00+09:00",
+      "next": "배포 여부 결정 또는 다음 frontend flow test 선택"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "새 코드 작업 중지, 상태 기록 마감",
-      "updatedAt": "2026-06-07T11:54:00+09:00",
-      "next": "사용자 지시 전 대기"
+      "currentTask": "public-flow.js 추가 및 main.js 연결",
+      "updatedAt": "2026-06-07T12:55:00+09:00",
+      "next": "다음 승인된 frontend helper/test 작업 대기"
     },
     {
       "name": "UX/UI Agent",
@@ -42,41 +42,41 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "임시 live 모임으로 잔여석/마감/수동종료/재오픈 검증 완료",
-      "updatedAt": "2026-06-07T12:44:00+09:00",
-      "next": "사용자 후속 지시 대기"
+      "currentTask": "npm test 43개 통과",
+      "updatedAt": "2026-06-07T12:55:00+09:00",
+      "next": "배포 시 Pages workflow와 live module 200 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0044 live capacity manual flow 기록 완료",
-      "updatedAt": "2026-06-07T12:44:00+09:00",
-      "next": "사용자 후속 지시 대기"
+      "currentTask": "AG-0045 public flow test 기록 완료",
+      "updatedAt": "2026-06-07T12:55:00+09:00",
+      "next": "커밋/배포 결정에 맞춰 commit hash 또는 deploy status 갱신"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정오 이후 다음 후보 정리",
-      "updatedAt": "2026-06-07T11:54:00+09:00",
-      "next": "사용자가 계속 개발을 요청하면 실패/cancel 결과 테스트 또는 public flow 테스트 선택"
+      "currentTask": "정원 rollout 이후 TODO 우선순위 최신화",
+      "updatedAt": "2026-06-07T12:55:00+09:00",
+      "next": "브라우저 수준 smoke test 또는 admin flow helper test 후보 검토"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "Supabase-first rollout 순서 준수 확인",
-      "updatedAt": "2026-06-07T12:16:00+09:00",
-      "next": "GitHub Pages workflow 결과 확인"
+      "currentTask": "public flow helper 범위 검토",
+      "updatedAt": "2026-06-07T12:55:00+09:00",
+      "next": "배포 전 diff와 테스트 결과 재확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "capacity migration, smoke-test, Edge Function 순서 통과 확인",
-      "updatedAt": "2026-06-07T12:16:00+09:00",
-      "next": "Pages 배포 후 공개 상태 파일과 결제 URL 노출 확인"
+      "currentTask": "신청/결제 guard 통합 helper 확인",
+      "updatedAt": "2026-06-07T12:55:00+09:00",
+      "next": "배포 시 public-flow.js 404 여부와 raw status 비노출 재확인"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,27 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T12:55:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "public-flow.js helper 추가",
+      "body": "유저 화면의 신청 가능 여부, 결제 버튼, 결제 요약, 차단 사유를 한 곳에서 계산하도록 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T12:55:00+09:00",
+      "agent": "QA Agent",
+      "level": "complete",
+      "title": "public flow 테스트 통과",
+      "body": "마감, 신청 종료, 잔여석 있음, 테스트 결제 완료 상태에서 신청/결제 판단이 같은 규칙을 쓰는지 확인했고 npm test 43개가 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T12:55:00+09:00",
+      "agent": "작업 정리 Agent",
+      "level": "complete",
+      "title": "TODO와 Agentic 상태 최신화",
+      "body": "정원/잔여석 rollout은 배포/검증 완료로 바꾸고, 다음 우선순위를 frontend flow 테스트와 작은 helper 분리로 정리했습니다."
+    },
     {
       "time": "2026-06-07T12:44:00+09:00",
       "agent": "QA Agent",

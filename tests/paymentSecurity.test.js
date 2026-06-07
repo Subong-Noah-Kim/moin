@@ -38,6 +38,7 @@ import {
   isRegistrationAvailable,
   mergeMeetupAvailability,
 } from '../public-availability.js';
+import { getPublicMeetupActionState } from '../public-flow.js';
 import {
   createPublicApplicationPayload,
   createPublicCheckoutPayload,
@@ -71,6 +72,7 @@ const cacheBustedSourceFiles = [
   '../payment-result.js',
   '../payment-result-state.js',
   '../public-availability.js',
+  '../public-flow.js',
   '../public-form.js',
   '../public-storage.js',
   '../supabase-client.js',
@@ -364,6 +366,72 @@ test('public availability helpers map sold-out, closed, and remaining-seat behav
   assert.equal(getRegistrationStatusLabel(open), '잔여 5석');
   assert.equal(getPublicStatusClass(open), 'is-seat');
   assert.equal(getPaymentButtonTextForMeetup(open), '결제하기');
+});
+
+test('public flow helper keeps detail, application, and checkout states aligned', () => {
+  const [soldOut, closed, open] = mergeMeetupAvailability(
+    [
+      { id: 'sold-out', title: 'Sold Out Meetup', price: '20,000원' },
+      { id: 'closed', title: 'Closed Meetup', price: '30,000원' },
+      { id: 'open', title: 'Open Meetup', price: '40,000원' },
+    ],
+    [
+      {
+        meetup_id: 'sold-out',
+        capacity: 2,
+        remaining_spots: 0,
+        effective_registration_status: 'sold_out',
+        can_register: false,
+      },
+      {
+        meetup_id: 'closed',
+        capacity: null,
+        remaining_spots: null,
+        effective_registration_status: 'closed',
+        can_register: false,
+      },
+      {
+        meetup_id: 'open',
+        capacity: 5,
+        remaining_spots: 3,
+        effective_registration_status: 'open',
+        can_register: true,
+      },
+    ],
+  );
+
+  const soldOutState = getPublicMeetupActionState(soldOut);
+  assert.equal(soldOutState.canSubmitApplication, false);
+  assert.equal(soldOutState.canOpenCheckout, false);
+  assert.equal(soldOutState.paymentButtonDisabled, true);
+  assert.equal(soldOutState.paymentButtonText, '마감');
+  assert.equal(soldOutState.paymentSummaryClass, 'payment-summary is-closed');
+  assert.equal(soldOutState.paymentSummaryLabel, '신청 상태');
+  assert.equal(soldOutState.paymentSummaryTitle, '마감');
+  assert.match(soldOutState.blockReason, /정원이 모두 차서/);
+
+  const closedState = getPublicMeetupActionState(closed);
+  assert.equal(closedState.canSubmitApplication, false);
+  assert.equal(closedState.canOpenCheckout, false);
+  assert.equal(closedState.paymentButtonText, '신청 종료');
+  assert.match(closedState.blockReason, /운영자가 접수를 닫아/);
+
+  const openState = getPublicMeetupActionState(open);
+  assert.equal(openState.canSubmitApplication, true);
+  assert.equal(openState.canOpenCheckout, true);
+  assert.equal(openState.paymentButtonDisabled, false);
+  assert.equal(openState.blockReason, '');
+  assert.equal(openState.paymentSummaryClass, 'payment-summary');
+  assert.equal(openState.paymentSummaryLabel, '참가비 결제');
+  assert.equal(openState.paymentSummaryTitle, '40,000원');
+  assert.equal(openState.paymentButtonText, '결제하기');
+
+  const paidState = getPublicMeetupActionState(open, { isPaid: true });
+  assert.equal(paidState.canSubmitApplication, true);
+  assert.equal(paidState.canOpenCheckout, false);
+  assert.equal(paidState.paymentButtonDisabled, true);
+  assert.equal(paidState.paymentSummaryClass, 'payment-summary is-paid');
+  assert.equal(paidState.paymentButtonText, '테스트 결제 완료');
 });
 
 test('public form helpers build stable IDs and normalized payloads', () => {
@@ -751,19 +819,20 @@ test('docs distinguish wired test integration from remaining production setup', 
 });
 
 test('public payment copy separates Toss test mode from live payments', async () => {
-  const [mainScript, resultHtml, resultScript, resultStateModule] = await Promise.all([
+  const [mainScript, publicFlowModule, resultHtml, resultScript, resultStateModule] = await Promise.all([
     readProjectFile('../main.js'),
+    readProjectFile('../public-flow.js'),
     readProjectFile('../payment-result.html'),
     readProjectFile('../payment-result.js'),
     readProjectFile('../payment-result-state.js'),
   ]);
 
-  assert.match(mainScript, /토스 테스트 결제와 서버 승인 흐름/);
-  assert.match(mainScript, /실제 출금은 없습니다/);
+  assert.match(publicFlowModule, /토스 테스트 결제와 서버 승인 흐름/);
+  assert.match(publicFlowModule, /실제 출금은 없습니다/);
   assert.match(mainScript, /Supabase Edge Function이 승인 API를 호출/);
   assert.match(mainScript, /데모 결제 표시하기/);
   assert.match(mainScript, /데모 결제 표시를 저장했어요/);
-  assert.match(mainScript, /테스트 결제 확인 표시가 있는 모임입니다/);
+  assert.match(publicFlowModule, /테스트 결제 확인 표시가 있는 모임입니다/);
   assert.doesNotMatch(mainScript, /결제가 완료된 모임입니다/);
   assert.doesNotMatch(mainScript, /데모 결제 완료/);
   assert.doesNotMatch(mainScript, /서버 함수 연결 후 완료됩니다/);
@@ -963,6 +1032,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.match(workflow, /cp admin-meetup-form\.js dist\//);
   assert.match(workflow, /cp payment-result-state\.js dist\//);
   assert.match(workflow, /cp public-availability\.js dist\//);
+  assert.match(workflow, /cp public-flow\.js dist\//);
   assert.match(workflow, /cp public-form\.js dist\//);
   assert.match(workflow, /cp public-storage\.js dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
@@ -1546,10 +1616,11 @@ test('capacity rollout checklist documents safe live deployment order', async ()
 });
 
 test('public meetup UI reads availability RPC and fails closed in configured mode', async () => {
-  const [supabaseClient, mainScript, availabilityModule, formModule, styles] = await Promise.all([
+  const [supabaseClient, mainScript, availabilityModule, flowModule, formModule, styles] = await Promise.all([
     readProjectFile('../supabase-client.js'),
     readProjectFile('../main.js'),
     readProjectFile('../public-availability.js'),
+    readProjectFile('../public-flow.js'),
     readProjectFile('../public-form.js'),
     readProjectFile('../styles.css'),
   ]);
@@ -1560,11 +1631,11 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   const openCheckoutBody = mainScript.slice(openCheckoutStart, completeCheckoutStart);
   const checkoutBody = mainScript.slice(completeCheckoutStart, submitApplicationStart);
   const applicationBody = mainScript.slice(submitApplicationStart, setFilterStart);
-  const openCheckoutGuardIndex = openCheckoutBody.indexOf('const blockReason = getRegistrationBlockReason(item);');
-  const checkoutGuardIndex = checkoutBody.indexOf('const blockReason = getRegistrationBlockReason(item);');
+  const openCheckoutGuardIndex = openCheckoutBody.indexOf('const actionState = getPublicMeetupActionState(item);');
+  const checkoutGuardIndex = checkoutBody.indexOf('const actionState = getPublicMeetupActionState(item);');
   const checkoutCreateIndex = checkoutBody.indexOf('await createTossPendingOrder');
   const demoCreateIndex = checkoutBody.indexOf('await createDemoOrder');
-  const applicationGuardIndex = applicationBody.indexOf('const blockReason = getRegistrationBlockReason(item);');
+  const applicationGuardIndex = applicationBody.indexOf('const actionState = getPublicMeetupActionState(item);');
   const applicationCreateIndex = applicationBody.indexOf('await createApplication');
   const statusClassStructuredIndex = availabilityModule.indexOf("if (item?.availabilityKnown === true) return 'is-open';");
   const statusClassRawIndex = availabilityModule.indexOf("const value = String(item?.status || '');");
@@ -1574,16 +1645,19 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(supabaseClient, /export async function fetchPublicMeetupAvailability\(\) \{\s+return callReadRpc\('list_public_meetup_availability'\);\s+\}/);
   assert.match(mainScript, /fetchPublicMeetupAvailability,/);
   assert.match(mainScript, /from '\.\/public-availability\.js\?v=__ASSET_VERSION__'/);
+  assert.match(mainScript, /from '\.\/public-flow\.js\?v=__ASSET_VERSION__'/);
   assert.match(mainScript, /from '\.\/public-form\.js\?v=__ASSET_VERSION__'/);
   assert.match(mainScript, /mergeMeetupAvailability,/);
-  assert.match(mainScript, /getRegistrationBlockReason,/);
-  assert.match(mainScript, /getPaymentButtonTextForMeetup/);
   assert.match(availabilityModule, /function normalizeAvailability\(row\)/);
   assert.match(availabilityModule, /meetup_id/);
   assert.match(availabilityModule, /effective_registration_status/);
   assert.match(availabilityModule, /can_register === true/);
   assert.match(availabilityModule, /export function mergeMeetupAvailability\(items, availabilityRows, \{ requireAvailability = false \} = \{\}\)/);
   assert.match(availabilityModule, /export function getRegistrationBlockReason\(item\)/);
+  assert.match(flowModule, /export function getPublicMeetupActionState\(item, \{ isPaid = false \} = \{\}\)/);
+  assert.match(flowModule, /canSubmitApplication: canRegister/);
+  assert.match(flowModule, /canOpenCheckout: canRegister && !isPaid/);
+  assert.match(flowModule, /paymentButtonDisabled: isPaid \|\| !canRegister/);
   assert.match(availabilityModule, /new Map\([\s\S]*\.map\(normalizeAvailability\)[\s\S]*\[availability\.id, availability\]/);
   assert.match(mainScript, /let meetups = isSupabaseConfigured\(\)\s+\? mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
   assert.match(mainScript, /Promise\.allSettled\(\[\s+fetchPublishedMeetups\(\),\s+fetchPublicMeetupAvailability\(\),\s+\]\)/);
@@ -1593,7 +1667,11 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(formModule, /export function createPublicCheckoutPayload\(source\)/);
   assert.match(mainScript, /const \{ payerName, paymentMethod \} = createPublicCheckoutPayload\(formData\)/);
   assert.match(mainScript, /const \{ name, interest \} = createPublicApplicationPayload\(formData\)/);
-  assert.match(mainScript, /const blockReason = getRegistrationBlockReason\(item\)/);
+  assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item, \{ isPaid \}\)/);
+  assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item\)/);
+  assert.match(mainScript, /actionState\.paymentSummaryClass/);
+  assert.match(mainScript, /actionState\.paymentButtonDisabled/);
+  assert.match(mainScript, /actionState\.blockReason/);
   assert.doesNotMatch(mainScript, /if \(!isRegistrationAvailable\(item\)\) \{\n    setCheckoutStatus/);
   assert.doesNotMatch(mainScript, /if \(!isRegistrationAvailable\(item\)\) \{\n    showToast\(getRegistrationStatusDescription\(item\)\);/);
   assert.match(availabilityModule, /잔여석 정보를 확인하지 못해 신청과 결제를 잠시 막았습니다/);

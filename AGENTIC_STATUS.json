@@ -1,30 +1,30 @@
 {
-  "updatedAt": "2026-06-07T12:44:00+09:00",
-  "branch": "codex/overnight-task-discovery",
+  "updatedAt": "2026-06-07T12:55:00+09:00",
+  "branch": "main",
   "summary": {
     "active": 0,
     "blocked": 0,
-    "doneLocal": 42,
-    "deployNeeded": 21
+    "doneLocal": 43,
+    "deployNeeded": 22
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0044 live capacity manual flow check 완료",
+      "currentTask": "AG-0045 public flow helper/test 정리 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 후속 지시 대기"
+      "next": "배포 여부 결정 또는 다음 frontend flow test 선택"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정오 이후 다음 후보 정리",
+      "currentTask": "정원 rollout 이후 TODO 우선순위 최신화",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자가 계속 개발을 요청하면 실패/cancel 결과 테스트 또는 public flow 테스트 선택"
+      "next": "브라우저 수준 smoke test 또는 admin flow helper test 후보 검토"
     },
     {
       "name": "UX/UI Agent",
@@ -39,46 +39,46 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "Supabase-first rollout 순서 준수 확인",
+      "currentTask": "public flow helper 범위 검토",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "GitHub Pages workflow 결과 확인"
+      "next": "배포 전 diff와 테스트 결과 재확인"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "새 코드 작업 중지, 상태 기록 마감",
+      "currentTask": "public-flow.js 추가 및 main.js 연결",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 지시 전 대기"
+      "next": "다음 승인된 frontend helper/test 작업 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "임시 live 모임으로 잔여석/마감/수동종료/재오픈 검증 완료",
+      "currentTask": "npm test 43개 통과",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 후속 지시 대기"
+      "next": "배포 시 Pages workflow와 live module 200 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "capacity migration, smoke-test, Edge Function 순서 통과 확인",
+      "currentTask": "신청/결제 guard 통합 helper 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "Pages 배포 후 공개 상태 파일과 결제 URL 노출 확인"
+      "next": "배포 시 public-flow.js 404 여부와 raw status 비노출 재확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0044 live capacity manual flow 기록 완료",
+      "currentTask": "AG-0045 public flow test 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 후속 지시 대기"
+      "next": "커밋/배포 결정에 맞춰 commit hash 또는 deploy status 갱신"
     },
     {
       "name": "보조 Agent",
@@ -1039,6 +1039,28 @@
           "테스트 데이터 삭제 후 leftovers는 0건이었습니다.",
           "최종 공개 페이지는 8개 카드, 테스트 모임 없음, 접수 확인중 없음으로 확인했습니다.",
           "관리자 로그인 정보는 사용하지 않았고, 테스트 setup/update는 Supabase 직접 작업으로 수행했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0045",
+      "title": "public detail/application/checkout flow helper tests",
+      "priority": "P2",
+      "owner": "개발 Agent + QA Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "5d43a00",
+      "deployNeeded": true,
+      "next": "Push/deploy if the user wants the helper refactor and updated TODO/status to go live",
+      "details": {
+        "summary": "유저 화면에서 신청 가능 여부, 결제 버튼, 결제 요약 문구가 서로 어긋나지 않도록 공통 helper와 테스트를 추가했습니다.",
+        "what": "새 `public-flow.js`가 모임 상태를 받아 신청 가능 여부, 결제창 열기 가능 여부, 결제 버튼 문구, 결제 요약 문구, 차단 사유를 한 번에 계산합니다.",
+        "why": "정원/잔여석 기능이 배포된 뒤에는 `마감`, `신청 종료`, `잔여 N석`, `테스트 결제 완료` 같은 상태가 여러 화면 조각에 동시에 반영되어야 합니다. 한 곳에서 계산하고 테스트하면 다음 UI 수정 때 신청은 막혔는데 결제 버튼은 살아있는 식의 실수를 줄일 수 있습니다.",
+        "developmentDirection": "`main.js`의 직접 판단 일부를 `public-flow.js`로 옮기고, 기존 cache-busting/Pages 복사 계약에도 새 파일을 포함했습니다. 테스트는 sold-out, closed, open, paid 상태에서 application과 checkout이 같은 판단을 쓰는지 확인합니다.",
+        "notes": [
+          "사용자에게 보이는 디자인 변화는 의도하지 않은 리팩터링입니다.",
+          "GitHub Pages 배포 시 `public-flow.js`가 dist에 포함되어야 하므로 workflow 복사 목록과 테스트를 함께 갱신했습니다.",
+          "`npm test` 43개가 통과했습니다.",
+          "정원/잔여석 live 동작 자체는 이미 AG-0044에서 검증됐고, 이번 작업은 그 이후의 회귀 방지용입니다."
         ]
       }
     }
