@@ -1209,3 +1209,40 @@
 - Next:
   - 사용자가 배포 bundle을 선택하면 그 기준으로 push/deploy 또는 branch split/cherry-pick 계획을 세웁니다.
   - full current branch deploy를 고르면 반드시 Supabase-first rollout 순서로 진행합니다.
+
+### AG-0038 - admin status helper behavior tests
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 관리자 화면의 상태 문구와 수동 주문 상태 변경 규칙을 테스트 가능한 작은 helper로 고정한다.
+- Subagents:
+  - QA/Review Agent: Pasteur
+- Changed files:
+  - `admin-status.js`
+  - `admin.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_DEPLOY_HANDOFF.md`
+- Notes:
+  - `admin.js` 안에 있던 신청 상태, 주문 상태, 결제 기록, Agentic 상태 라벨을 `admin-status.js`로 분리했습니다.
+  - 관리자가 수동으로 바꿀 수 있는 주문 상태는 계속 `pending`, `cancelled`, `failed`뿐입니다.
+  - `paid`와 `demo_paid`는 결제 완료/데모 결제 의미가 있어 수동 변경 옵션에 넣지 않는 규칙을 테스트로 고정했습니다.
+  - 새 browser module인 `admin-status.js`가 GitHub Pages artifact에 포함되도록 workflow copy step과 cache-busting source list를 업데이트했습니다.
+  - QA/Review Agent는 다음 후보로 `payment-result.js` success callback fake DOM test를 추천했지만, 남은 시간이 짧아 다음 작업 후보로 보류했습니다.
+  - AG-0037 기록의 `11:45` 타임스탬프는 실제 heartbeat 흐름에 맞춰 `11:35`로 보정했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - `node --check admin.js` passed.
+  - `node --check admin-status.js` passed.
+  - `node --check tests/paymentSecurity.test.js` passed.
+  - `npm test` passed: 40 tests.
+- Next:
+  - 정오 이후 사용자가 계속 개발을 원하면 `payment-result.js` success callback DOM-like test를 test-only slice로 진행합니다.
+  - 배포를 고르면 `AGENTIC_DEPLOY_HANDOFF.md`와 `supabase/capacity-rollout-checklist.md` 순서를 먼저 확인합니다.

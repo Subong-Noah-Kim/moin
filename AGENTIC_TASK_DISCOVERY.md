@@ -939,7 +939,7 @@
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 39개가 모두 통과했다.
 
-## Round 25 - 2026-06-07 11:45 KST
+## Round 25 - 2026-06-07 11:35 KST
 
 ### 요약
 
@@ -967,3 +967,30 @@
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - 새 앱 runtime 코드는 만들지 않았고, 문서와 상태 기록만 정리했다.
   - `npm test` 39개가 모두 통과했다.
+
+## Round 26 - 2026-06-07 11:36 KST
+
+### 요약
+
+이번 사이클은 관리자 화면의 상태 문구와 수동 주문 상태 변경 규칙을 작은 helper로 분리했습니다. 쉽게 말하면 운영자가 보는 “접수/검토중/결제완료/로컬 완료” 같은 문구와, 관리자가 수동으로 바꿀 수 있는 주문 상태가 무엇인지 테스트로 고정했습니다.
+
+### TD-037 - admin status helper behavior tests
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, QA/Review, Security, Ops Log
+- What: `admin.js` 내부 상태 라벨/옵션/수동 주문 상태 변경 규칙을 `admin-status.js`로 분리하고 직접 테스트한다.
+- Why: 운영자가 잘못된 상태 문구를 보거나 `paid`/`demo_paid` 같은 결제 완료 상태를 수동으로 만들 수 있으면 운영 데이터가 흐려질 수 있습니다. 화면 전체 테스트 전에도 이 핵심 규칙은 작은 helper로 빠르게 확인할 수 있습니다.
+- First development unit:
+  - `admin-status.js`를 추가한다.
+  - `admin.js`가 신청/주문/결제/Agentic 상태 라벨과 status class, 수동 주문 변경 가능 여부를 새 helper에서 가져오게 한다.
+  - GitHub Pages workflow가 `admin-status.js`를 `dist`에 복사하게 한다.
+  - 테스트는 옵션 선택, fallback 라벨, manual `paid`/`demo_paid` 차단, status class 정규화를 확인한다.
+- Development direction: 다음으로 넓힐 test-only 후보는 QA/Review Agent가 추천한 `payment-result.js` success callback fake DOM test입니다.
+- Risks:
+  - 새 browser module이므로 Pages artifact copy 누락이 가장 큰 배포형 위험입니다. workflow copy와 cache-busting source list를 함께 업데이트했습니다.
+  - 이번 작업은 DOM runtime test가 아니라 helper direct test입니다.
+- Notes:
+  - QA/Review Agent는 payment-result DOM-like test를 추천했지만, 남은 시간이 짧아 다음 후보로 보류했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 40개가 모두 통과했다.

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T11:45:00+09:00",
-  "currentFocus": "morning deploy handoff 로컬 완료",
+  "updatedAt": "2026-06-07T11:36:00+09:00",
+  "currentFocus": "admin status helper 테스트 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,79 +11,79 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0037 done_local"
+    "currentFocus": "AG-0038 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0037 morning deploy handoff 정리 완료",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
-      "next": "사용자 배포 결정 대기"
+      "currentTask": "AG-0038 admin status helper 테스트 완료",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
+      "next": "정오 cutoff 전 추가 개발 중지 또는 사용자 지시 대기"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "새 기능 개발 대신 배포 인수인계 문서화로 마감",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
-      "next": "정오 이후 사용자 지시에 따라 개발 재개"
+      "currentTask": "admin-status.js helper 분리와 admin.js 연결 완료",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
+      "next": "배포 artifact copy 확인 후 사용자 지시 대기"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
       "status": "idle",
       "currentTask": "대기",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
       "next": "필요 시 UI 테스트 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "배포 전 확인 순서와 hard stop 조건 검토 완료",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
-      "next": "배포 전 npm test와 Supabase smoke-test 재확인"
+      "currentTask": "admin status helper 테스트 40개 통과 확인",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
+      "next": "payment-result DOM-like success test 후보 대기"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0037 배포 인수인계 기록 완료",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
-      "next": "사용자 배포 bundle 선택 대기"
+      "currentTask": "AG-0038 작업 기록 완료",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
+      "next": "커밋 후 작업 트리 확인"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "배포 bundle 분리 관점 정리",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
-      "next": "사용자가 선택한 bundle 기준으로 다음 작업 조정"
+      "currentTask": "admin status helper 테스트 slice 승인",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
+      "next": "다음 후보는 payment-result DOM-like success test"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "morning deploy handoff 검토 완료",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
-      "next": "배포 선택 후 hard stop 조건 재확인"
+      "currentTask": "admin status helper 범위 검토 완료",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
+      "next": "다음 test-only 후보 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "capacity 배포 순서와 공개 status redaction 주의점 재확인",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
-      "next": "Supabase migration 전 Edge Function deploy 금지 확인"
+      "currentTask": "manual paid/demo_paid order transition 차단 유지 확인",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
+      "next": "배포 전 Supabase migration/Edge 순서 재확인"
     },
     {
       "name": "보조 Agent",
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,34 +91,62 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T11:45:00+09:00",
+      "updatedAt": "2026-06-07T11:36:00+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
     {
-      "time": "2026-06-07T11:45:00+09:00",
+      "time": "2026-06-07T11:36:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "admin-status.js helper 분리",
+      "body": "관리자 화면의 신청/주문/결제/Agentic 상태 라벨과 주문 수동 변경 가능 여부를 테스트 가능한 helper로 옮겼습니다."
+    },
+    {
+      "time": "2026-06-07T11:36:00+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "admin status helper 테스트 통과",
+      "body": "수동 paid/demo_paid 주문 변경 차단, 상태 옵션 선택, status class 정규화, workflow copy를 확인했고 npm test 40개가 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T11:36:00+09:00",
+      "agent": "검토 Agent",
+      "level": "review",
+      "title": "다음 후보 보류",
+      "body": "QA/Review Agent가 payment-result success callback DOM-like test를 추천했지만, 남은 시간이 짧아 다음 후보로 기록했습니다."
+    },
+    {
+      "time": "2026-06-07T11:36:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0038 로컬 완료",
+      "body": "새 browser module admin-status.js를 Pages workflow copy 목록에 포함했습니다. push/deploy는 하지 않습니다."
+    },
+    {
+      "time": "2026-06-07T11:35:00+09:00",
       "agent": "QA/Release Agent",
       "level": "review",
       "title": "morning deploy handoff 검토",
       "body": "HEAD 7e0b2ea 기준으로 push/deploy가 없었고, current branch는 capacity migration, smoke-test, Edge Function, Pages 순서가 맞아야 한다고 확인했습니다."
     },
     {
-      "time": "2026-06-07T11:45:00+09:00",
+      "time": "2026-06-07T11:35:00+09:00",
       "agent": "작업 정리 Agent",
       "level": "complete",
       "title": "AGENTIC_DEPLOY_HANDOFF.md 작성",
       "body": "사용자가 아침에 배포 bundle을 선택할 수 있도록 낮은 위험 묶음, capacity rollout 묶음, Agentic monitor 묶음과 검증 순서를 정리했습니다."
     },
     {
-      "time": "2026-06-07T11:45:00+09:00",
+      "time": "2026-06-07T11:35:00+09:00",
       "agent": "보안 Agent",
       "level": "review",
       "title": "Supabase-first hard stop 재확인",
       "body": "capacity-aware Edge Function은 세 개 capacity migration과 smoke-test가 live Supabase에서 통과하기 전 배포하면 안 됩니다."
     },
     {
-      "time": "2026-06-07T11:45:00+09:00",
+      "time": "2026-06-07T11:35:00+09:00",
       "agent": "총괄 디렉터",
       "level": "complete",
       "title": "AG-0037 로컬 완료",

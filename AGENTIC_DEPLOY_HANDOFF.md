@@ -1,6 +1,6 @@
 # Agentic Deploy Handoff
 
-Last updated: 2026-06-07 11:45 KST
+Last updated: 2026-06-07 11:35 KST
 
 ## Summary
 
@@ -8,7 +8,7 @@ This branch is ready for a careful morning review, but it should not be deployed
 
 Current branch: `codex/overnight-task-discovery`
 
-Last local commit checked before this handoff: `7e0b2ea Add public storage helper`
+Reference local commit when this handoff was refreshed: `3d4351e Add morning deploy handoff`. Run `git log -1` again before deployment because additional local commits may exist.
 
 Remote push/deploy status: not pushed, not deployed
 
@@ -34,6 +34,7 @@ The important point: the current branch includes capacity-aware frontend and Edg
 What it contains:
 
 - Admin session storage hardening
+- Admin status helper tests for operator-facing labels and manual order status rules
 - Public form labels and helper tests
 - Payment result identifier minimization
 - Public localStorage resilience
@@ -133,6 +134,7 @@ Static modules:
 - The deployed site should not 404 for these browser modules:
   - `public-availability.js`
   - `admin-availability.js`
+  - `admin-status.js`
   - `payment-result-state.js`
   - `admin-meetup-form.js`
   - `public-form.js`

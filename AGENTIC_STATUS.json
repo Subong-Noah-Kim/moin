@@ -1,30 +1,30 @@
 {
-  "updatedAt": "2026-06-07T11:45:00+09:00",
+  "updatedAt": "2026-06-07T11:36:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 0,
     "blocked": 0,
-    "doneLocal": 35,
-    "deployNeeded": 19
+    "doneLocal": 36,
+    "deployNeeded": 20
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0037 morning deploy handoff 정리 완료",
+      "currentTask": "AG-0038 admin status helper 테스트 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 배포 결정 대기"
+      "next": "정오 cutoff 전 추가 개발 중지 또는 사용자 지시 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "배포 bundle 분리 관점 정리",
+      "currentTask": "admin status helper 테스트 slice 승인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자가 선택한 bundle 기준으로 다음 작업 조정"
+      "next": "다음 후보는 payment-result DOM-like success test"
     },
     {
       "name": "UX/UI Agent",
@@ -39,46 +39,46 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "morning deploy handoff 검토 완료",
+      "currentTask": "admin status helper 범위 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 선택 후 hard stop 조건 재확인"
+      "next": "다음 test-only 후보 검토"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "새 기능 개발 대신 배포 인수인계 문서화로 마감",
+      "currentTask": "admin-status.js helper 분리와 admin.js 연결 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "정오 이후 사용자 지시에 따라 개발 재개"
+      "next": "배포 artifact copy 확인 후 사용자 지시 대기"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "배포 전 확인 순서와 hard stop 조건 검토 완료",
+      "currentTask": "admin status helper 테스트 40개 통과 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 전 npm test와 Supabase smoke-test 재확인"
+      "next": "payment-result DOM-like success test 후보 대기"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "capacity 배포 순서와 공개 status redaction 주의점 재확인",
+      "currentTask": "manual paid/demo_paid order transition 차단 유지 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "Supabase migration 전 Edge Function deploy 금지 확인"
+      "next": "배포 전 Supabase migration/Edge 순서 재확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0037 배포 인수인계 기록 완료",
+      "currentTask": "AG-0038 작업 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "사용자 배포 bundle 선택 대기"
+      "next": "커밋 후 작업 트리 확인"
     },
     {
       "name": "보조 Agent",
@@ -859,7 +859,7 @@
       "priority": "P1",
       "owner": "총괄 디렉터 + QA/Release Agent + 작업 정리 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "3d4351e",
       "deployNeeded": false,
       "next": "사용자가 배포 bundle과 Supabase 적용 여부를 선택",
       "details": {
@@ -874,6 +874,28 @@
           "PUBLIC_AGENTIC_STATUS.json은 공개용 축약본이고, raw AGENTIC_STATUS.json은 Pages artifact에 복사하지 않는 것이 의도입니다.",
           "이번 작업은 documentation handoff라 앱 동작 변경은 없습니다.",
           "npm test 39개가 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0038",
+      "title": "admin status helper behavior tests",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "정오 이후 사용자가 원하면 payment-result DOM-like success callback test 진행",
+      "details": {
+        "summary": "관리자 화면의 상태 라벨과 수동 주문 상태 변경 규칙을 작은 helper로 분리하고 테스트했습니다.",
+        "what": "admin.js 안에 있던 신청 상태, 주문 상태, 결제 기록, Agentic 작업 상태 라벨과 수동 변경 가능 주문 상태 목록을 admin-status.js로 옮겼습니다.",
+        "why": "운영자가 보는 상태 문구와 수동 변경 가능 범위는 운영 실수를 줄이는 중요한 규칙입니다. 특히 paid/demo_paid를 수동 변경 목록에 넣지 않는 규칙을 직접 테스트로 고정했습니다.",
+        "developmentDirection": "admin.js는 화면 렌더링을 계속 담당하고, 상태 라벨/옵션/수동 변경 가능 여부만 새 helper에서 가져옵니다. 새 browser module은 GitHub Pages workflow copy 목록에 추가했습니다.",
+        "notes": [
+          "npm test가 40개 모두 통과했습니다.",
+          "새 browser module admin-status.js가 배포 artifact에 빠지면 admin.js import가 404가 되므로 workflow copy와 cache-busting source list를 함께 업데이트했습니다.",
+          "QA/Review Agent는 다음 후보로 payment-result.js success callback을 fake DOM으로 검증하는 test-only slice를 추천했습니다.",
+          "원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다."
         ]
       }
     }

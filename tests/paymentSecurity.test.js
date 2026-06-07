@@ -19,6 +19,17 @@ import {
   splitAdminMeetupList,
 } from '../admin-meetup-form.js';
 import {
+  canManuallyUpdateOrderStatus,
+  getAgentStatusLabel,
+  getApplicationStatusLabel,
+  getApplicationStatusOptions,
+  getOrderStatusLabel,
+  getOrderStatusOptions,
+  getPaymentStatusLabel,
+  getStatusClass,
+  getTaskStatusLabel,
+} from '../admin-status.js';
+import {
   getPaymentButtonTextForMeetup,
   getPublicStatusClass,
   getRegistrationBlockReason,
@@ -53,6 +64,7 @@ const cacheBustedSourceFiles = [
   '../admin.html',
   '../admin-availability.js',
   '../admin-meetup-form.js',
+  '../admin-status.js',
   '../payment-result.html',
   '../main.js',
   '../admin.js',
@@ -504,6 +516,45 @@ test('admin meetup form helpers build safe create and update payloads', () => {
       is_published: true,
     },
   );
+});
+
+test('admin status helpers keep operator labels and manual order actions constrained', () => {
+  assert.equal(getApplicationStatusLabel('submitted'), '접수');
+  assert.equal(getApplicationStatusLabel('accepted'), '승인');
+  assert.equal(getApplicationStatusLabel('unknown_state'), 'unknown_state');
+  assert.equal(getApplicationStatusLabel(''), '-');
+
+  assert.deepEqual(getApplicationStatusOptions('reviewing'), [
+    { value: 'submitted', label: '접수', selected: false },
+    { value: 'reviewing', label: '검토중', selected: true },
+    { value: 'accepted', label: '승인', selected: false },
+    { value: 'rejected', label: '거절', selected: false },
+    { value: 'cancelled', label: '취소', selected: false },
+  ]);
+
+  assert.equal(getOrderStatusLabel('pending'), '입금대기');
+  assert.equal(getOrderStatusLabel('paid'), '결제완료');
+  assert.equal(getOrderStatusLabel('demo_paid'), '데모결제');
+  assert.equal(getOrderStatusLabel('chargeback'), 'chargeback');
+  assert.deepEqual(getOrderStatusOptions('failed'), [
+    { value: 'pending', label: '입금대기', selected: false },
+    { value: 'cancelled', label: '취소', selected: false },
+    { value: 'failed', label: '실패', selected: true },
+  ]);
+
+  assert.equal(canManuallyUpdateOrderStatus('pending'), true);
+  assert.equal(canManuallyUpdateOrderStatus('cancelled'), true);
+  assert.equal(canManuallyUpdateOrderStatus('failed'), true);
+  assert.equal(canManuallyUpdateOrderStatus('paid'), false);
+  assert.equal(canManuallyUpdateOrderStatus('demo_paid'), false);
+
+  assert.equal(getPaymentStatusLabel('paid'), '기록 있음');
+  assert.equal(getPaymentStatusLabel('refunded'), '환불');
+  assert.equal(getPaymentStatusLabel(''), '결제 기록');
+  assert.equal(getAgentStatusLabel('running'), '진행중');
+  assert.equal(getTaskStatusLabel('done_local'), '로컬 완료');
+  assert.equal(getStatusClass('needs review / blocked'), 'needs_review___blocked');
+  assert.equal(getStatusClass(''), 'idle');
 });
 
 test('admin availability helpers render seat summaries from structured rows', () => {
