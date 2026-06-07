@@ -5,7 +5,7 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 ## Current Priority Queue - 2026-06-07 Audit
 
 1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
-2. Expand behavior-oriented frontend tests after the capacity rollout is split into safer helper slices.
+2. Continue behavior-oriented frontend tests for the remaining admin capacity helper slice.
 3. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
 4. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
 5. Revisit optional live regions for important loading/error states after operational rollout.
@@ -150,7 +150,8 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 - [ ] Add frontend tests for shipped flows
   - Problem: current tests cover selected payment, rendering, accessibility, and admin assertions mostly through source-text regex checks; shipped flows still need broader behavior coverage.
   - Files: `tests/`, `package.json`
-  - Done when: tests exercise exported helpers or DOM-like behavior for escaping, numeric payment amount selection, Toss SDK load handling, result-page state handling, cache version consistency, and admin status rendering.
+  - Done when: tests exercise exported helpers or DOM-like behavior for escaping, numeric payment amount selection, Toss SDK load handling, result-page state handling, cache version consistency, public/admin capacity state rendering, and admin status rendering.
+  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, and payment button text. Continue with the admin capacity helper slice before attempting broader DOM/browser tests.
 
 - [ ] Split large frontend modules into testable slices
   - Problem: `main.js`, `admin.js`, `supabase-client.js`, and CSS files are large and difficult to test safely.

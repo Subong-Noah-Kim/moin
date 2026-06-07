@@ -655,3 +655,32 @@
   - QA/Release Agent가 checklist 구조와 중단/rollback 조건을 검토했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 31개가 모두 통과했다.
+
+## Round 16 - 2026-06-07 09:57 KST
+
+### 요약
+
+이번 사이클은 `정원/잔여석/자동 마감` UI의 테스트 품질을 한 단계 올렸습니다. 쉽게 말하면, 공개 페이지가 “좌석 정보를 못 확인하면 신청/결제를 막는지”, “마감/신청 종료/잔여석을 올바르게 표시하는지”를 실제 데이터 입력과 함수 결과로 확인하게 만든 작업입니다. 기존처럼 코드 안에 문구가 있는지만 보는 검사가 아니라, 작은 helper에 값을 넣고 결과를 직접 확인합니다.
+
+### TD-027 - public capacity availability behavior test helper
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: 공개 페이지의 capacity 상태 판단을 순수 helper로 분리하고, missing availability, sold-out, closed, remaining seats, payment button text를 직접 테스트한다.
+- Why: capacity 기능은 사용자에게 자리가 있다고 믿게 만들거나 결제를 열어주는 핵심 판단입니다. 이 판단이 깨지면 UI 문구와 실제 신청 가능 상태가 어긋날 수 있습니다.
+- First development unit:
+  - `public-availability.js`를 추가해 `mergeMeetupAvailability`, `isRegistrationAvailable`, `getRegistrationStatusLabel`, `getRegistrationStatusDescription`, `getPublicStatusClass`, `getPaymentButtonTextForMeetup`을 export한다.
+  - `main.js`는 같은 helper를 import해 기존 공개 화면 동작에 사용한다.
+  - GitHub Pages workflow가 새 helper 파일을 `dist`에 복사하게 한다.
+  - `tests/paymentSecurity.test.js`가 helper를 직접 import해 fail-closed, sold-out, closed, remaining-seat 동작을 테스트한다.
+- Development direction: 다음 테스트 조각은 관리자 capacity helper입니다. `admin.js`의 좌석 요약/상태 문구도 같은 방식으로 순수 helper로 분리하면 실제 입력/출력 테스트가 쉬워집니다.
+- Risks:
+  - 새 browser module을 추가했기 때문에 Pages artifact에 파일을 복사하지 않으면 배포 후 공개 페이지 import가 404가 될 수 있습니다. 이번 사이클에서 workflow와 테스트에 복사 확인을 추가했습니다.
+  - 이번 테스트는 public helper의 데이터 판단을 검증합니다. 실제 DOM 클릭/브라우저 플로우 검증은 아직 별도입니다.
+  - `main.js`를 통째로 `node --test`에 import하지 않았습니다. 이 파일은 module load 때 `document`를 잡기 때문에, 순수 helper 분리 방식을 유지해야 안전합니다.
+- Notes:
+  - Planning/Review Agent가 public capacity availability behavior slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent와 Security/Review Agent가 helper 추출, Pages copy, fail-closed 유지, 민감정보 비노출을 검토했고 이슈 없음으로 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 33개가 모두 통과했다.

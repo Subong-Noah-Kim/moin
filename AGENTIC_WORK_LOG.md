@@ -810,3 +810,44 @@
 - Next:
   - 다음 개발 조각은 배포 없이 가능한 behavior-oriented frontend test 확장입니다.
   - 실제 배포가 허용되면 이 checklist를 기준으로 migration/smoke-test/deploy를 수행합니다.
+
+### AG-0028 - public capacity availability behavior test helper
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 공개 페이지의 정원/마감 판단을 실제 입력값으로 테스트할 수 있게 한다.
+- Subagents:
+  - Planning/Review Agent: Sagan
+  - QA Agent: Turing
+  - Security/Review Agent: Curie
+- Changed files:
+  - `public-availability.js`
+  - `main.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 공개 페이지의 availability merge, 신청 가능 여부, 상태 라벨, 설명 문구, 배지 class, 결제 버튼 문구를 순수 helper로 분리했습니다.
+  - `main.js`는 새 helper를 import해서 기존 화면 동작에 사용합니다.
+  - Supabase 운영 모드에서 availability를 확인하지 못하면 계속 fail-closed로 신청/결제를 막습니다.
+  - 새 browser module인 `public-availability.js`가 GitHub Pages artifact에 포함되도록 workflow copy step을 추가했습니다.
+  - 이번 slice는 DOM/browser 전체 플로우가 아니라 데이터 판단 helper의 입력/출력 테스트입니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 public capacity availability behavior slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 browser import path, Pages copy step, behavior parity, helper tests를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 fail-closed 유지, 민감 필드 비노출, service role/runtime secret 미도입을 확인했습니다.
+  - `node --check main.js` passed.
+  - `node --check public-availability.js` passed.
+  - `git diff --check` passed.
+  - Local dev server served `public-availability.js` and `index.html` with HTTP 200.
+  - `npm test` passed: 33 tests.
+- Next:
+  - `public-availability.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
+  - 다음 개발 조각은 관리자 capacity helper를 분리해 좌석 요약/마감 상태를 직접 테스트하는 작업입니다.

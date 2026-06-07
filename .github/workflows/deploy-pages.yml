@@ -61,6 +61,7 @@ jobs:
           cp main.js dist/
           cp payment-result.html dist/
           cp payment-result.js dist/
+          cp public-availability.js dist/
           cp supabase-client.js dist/
           cp supabase-config.js dist/
           cp styles.css dist/

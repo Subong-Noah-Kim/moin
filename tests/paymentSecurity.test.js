@@ -2,6 +2,14 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import {
+  getPaymentButtonTextForMeetup,
+  getPublicStatusClass,
+  getRegistrationStatusDescription,
+  getRegistrationStatusLabel,
+  isRegistrationAvailable,
+  mergeMeetupAvailability,
+} from '../public-availability.js';
 import { clearAdminSession, getAmountFromMeetup, getStoredAdminSession } from '../supabase-client.js';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
@@ -12,6 +20,7 @@ const cacheBustedSourceFiles = [
   '../main.js',
   '../admin.js',
   '../payment-result.js',
+  '../public-availability.js',
   '../supabase-client.js',
 ];
 
@@ -134,6 +143,82 @@ test('getAmountFromMeetup falls back to display price for static demo meetups', 
     }),
     148000,
   );
+});
+
+test('public availability helpers fail closed when required availability is missing', () => {
+  const [meetup] = mergeMeetupAvailability(
+    [{ id: 'capacity-audit', status: '4자리 남음', title: 'Capacity Audit' }],
+    [],
+    { requireAvailability: true },
+  );
+
+  assert.equal(meetup.availabilityKnown, false);
+  assert.equal(meetup.canRegister, false);
+  assert.equal(isRegistrationAvailable(meetup), false);
+  assert.equal(getRegistrationStatusLabel(meetup), '접수 확인중');
+  assert.equal(getPublicStatusClass(meetup), 'is-checking');
+  assert.equal(getPaymentButtonTextForMeetup(meetup), '확인중');
+  assert.match(getRegistrationStatusDescription(meetup), /신청과 결제를 잠시 막았습니다/);
+});
+
+test('public availability helpers map sold-out, closed, and remaining-seat behavior', () => {
+  const [soldOut, closed, nearlyFull, open] = mergeMeetupAvailability(
+    [
+      { id: 'sold-out' },
+      { id: 'closed' },
+      { id: 'nearly-full' },
+      { id: 'open' },
+    ],
+    [
+      {
+        meetup_id: 'sold-out',
+        capacity: 3,
+        remaining_spots: 0,
+        effective_registration_status: 'sold_out',
+        can_register: false,
+      },
+      {
+        meetup_id: 'closed',
+        capacity: null,
+        remaining_spots: null,
+        effective_registration_status: 'closed',
+        can_register: false,
+      },
+      {
+        meetup_id: 'nearly-full',
+        capacity: 4,
+        remaining_spots: 2,
+        effective_registration_status: 'open',
+        can_register: true,
+      },
+      {
+        meetup_id: 'open',
+        capacity: 10,
+        remaining_spots: 5,
+        effective_registration_status: 'open',
+        can_register: true,
+      },
+    ],
+  );
+
+  assert.equal(isRegistrationAvailable(soldOut), false);
+  assert.equal(getRegistrationStatusLabel(soldOut), '마감');
+  assert.equal(getPaymentButtonTextForMeetup(soldOut), '마감');
+  assert.match(getRegistrationStatusDescription(soldOut), /정원이 모두 차서/);
+
+  assert.equal(isRegistrationAvailable(closed), false);
+  assert.equal(getRegistrationStatusLabel(closed), '신청 종료');
+  assert.equal(getPaymentButtonTextForMeetup(closed), '신청 종료');
+  assert.match(getRegistrationStatusDescription(closed), /운영자가 접수를 닫아/);
+
+  assert.equal(isRegistrationAvailable(nearlyFull), true);
+  assert.equal(getRegistrationStatusLabel(nearlyFull), '잔여 2석');
+  assert.equal(getPublicStatusClass(nearlyFull), 'is-urgent');
+  assert.equal(getPaymentButtonTextForMeetup(nearlyFull, { isPaid: true }), '테스트 결제 완료');
+
+  assert.equal(getRegistrationStatusLabel(open), '잔여 5석');
+  assert.equal(getPublicStatusClass(open), 'is-seat');
+  assert.equal(getPaymentButtonTextForMeetup(open), '결제하기');
 });
 
 test('payment hardening migration locks anonymous Toss orders to meetup price and checkout token', async () => {
@@ -313,6 +398,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.deepEqual([...uniqueVersions], [assetVersionPlaceholder]);
   assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
   assert.match(workflow, /cp AGENTIC_STATUS\.json dist\//);
+  assert.match(workflow, /cp public-availability\.js dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });
 
@@ -832,9 +918,10 @@ test('capacity rollout checklist documents safe live deployment order', async ()
 });
 
 test('public meetup UI reads availability RPC and fails closed in configured mode', async () => {
-  const [supabaseClient, mainScript, styles] = await Promise.all([
+  const [supabaseClient, mainScript, availabilityModule, styles] = await Promise.all([
     readProjectFile('../supabase-client.js'),
     readProjectFile('../main.js'),
+    readProjectFile('../public-availability.js'),
     readProjectFile('../styles.css'),
   ]);
   const checkoutGuardIndex = mainScript.indexOf('if (!isRegistrationAvailable(item)) {\n    setCheckoutStatus');
@@ -842,25 +929,28 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   const demoCreateIndex = mainScript.indexOf('await createDemoOrder');
   const applicationGuardIndex = mainScript.indexOf('if (!isRegistrationAvailable(item)) {\n    showToast(getRegistrationStatusDescription(item));');
   const applicationCreateIndex = mainScript.indexOf('await createApplication');
-  const statusClassStructuredIndex = mainScript.indexOf("if (item.availabilityKnown === true) return 'is-open';");
-  const statusClassRawIndex = mainScript.indexOf('const value = String(item.status || \'\');');
+  const statusClassStructuredIndex = availabilityModule.indexOf("if (item?.availabilityKnown === true) return 'is-open';");
+  const statusClassRawIndex = availabilityModule.indexOf("const value = String(item?.status || '');");
 
   assert.match(supabaseClient, /async function callReadRpc\(functionName, payload = \{\}\)/);
   assert.match(supabaseClient, /export async function fetchPublicMeetupAvailability\(\) \{\s+return callReadRpc\('list_public_meetup_availability'\);\s+\}/);
   assert.match(mainScript, /fetchPublicMeetupAvailability,/);
-  assert.match(mainScript, /function normalizeAvailability\(row\)/);
-  assert.match(mainScript, /meetup_id/);
-  assert.match(mainScript, /effective_registration_status/);
-  assert.match(mainScript, /can_register === true/);
-  assert.match(mainScript, /function mergeMeetupAvailability\(items, availabilityRows, \{ requireAvailability = false \} = \{\}\)/);
-  assert.match(mainScript, /new Map\([\s\S]*\.map\(normalizeAvailability\)[\s\S]*\[availability\.id, availability\]/);
+  assert.match(mainScript, /from '\.\/public-availability\.js\?v=__ASSET_VERSION__'/);
+  assert.match(mainScript, /mergeMeetupAvailability,/);
+  assert.match(mainScript, /getPaymentButtonTextForMeetup/);
+  assert.match(availabilityModule, /function normalizeAvailability\(row\)/);
+  assert.match(availabilityModule, /meetup_id/);
+  assert.match(availabilityModule, /effective_registration_status/);
+  assert.match(availabilityModule, /can_register === true/);
+  assert.match(availabilityModule, /export function mergeMeetupAvailability\(items, availabilityRows, \{ requireAvailability = false \} = \{\}\)/);
+  assert.match(availabilityModule, /new Map\([\s\S]*\.map\(normalizeAvailability\)[\s\S]*\[availability\.id, availability\]/);
   assert.match(mainScript, /let meetups = isSupabaseConfigured\(\)\s+\? mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
   assert.match(mainScript, /Promise\.allSettled\(\[\s+fetchPublishedMeetups\(\),\s+fetchPublicMeetupAvailability\(\),\s+\]\)/);
   assert.match(mainScript, /mergeMeetupAvailability\(rows\.map\(normalizeMeetup\), availabilityRows, \{ requireAvailability: true \}\)/);
   assert.match(mainScript, /meetups = mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
-  assert.match(mainScript, /잔여석 정보를 확인하지 못해 신청과 결제를 잠시 막았습니다/);
-  assert.match(mainScript, /정원이 모두 차서 새 신청과 테스트 결제를 받을 수 없습니다/);
-  assert.match(mainScript, /운영자가 접수를 닫아 새 신청과 테스트 결제를 받을 수 없습니다/);
+  assert.match(availabilityModule, /잔여석 정보를 확인하지 못해 신청과 결제를 잠시 막았습니다/);
+  assert.match(availabilityModule, /정원이 모두 차서 새 신청과 테스트 결제를 받을 수 없습니다/);
+  assert.match(availabilityModule, /운영자가 접수를 닫아 새 신청과 테스트 결제를 받을 수 없습니다/);
   assert.ok(checkoutGuardIndex >= 0 && checkoutGuardIndex < checkoutCreateIndex);
   assert.ok(checkoutGuardIndex < demoCreateIndex);
   assert.ok(applicationGuardIndex >= 0 && applicationGuardIndex < applicationCreateIndex);
