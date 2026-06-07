@@ -627,3 +627,31 @@
   - Security/Review Agent는 admin RPC access token 사용, write payload allow-list, availability 실패 시 stale count 금지를 요구했고 반영했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 30개가 모두 통과했다.
+
+## Round 15 - 2026-06-07 09:43 KST
+
+### 요약
+
+이번 사이클은 capacity 기능을 실제 Supabase와 GitHub Pages에 올릴 때 따라야 할 실행 순서를 문서화했습니다. 쉽게 말하면, 아침에 배포를 선택할 때 “DB migration 3개 먼저, SQL smoke-test, Edge Function 2개, 그 다음 GitHub Pages” 순서를 헷갈리지 않게 만든 안전 점검표입니다. 이번 사이클에서도 원격 적용, push, deploy는 하지 않았습니다.
+
+### TD-026 - live capacity rollout checklist
+
+- Priority: `P0`
+- Status: `done_local`
+- Source agents: Director, QA/Release, Ops Log
+- What: capacity migration, smoke-test, Edge Function, frontend/admin deploy 순서를 한 파일에서 체크할 수 있게 정리한다.
+- Why: 이번 capacity 작업은 DB/RPC, Edge Function, public/admin UI가 서로 의존합니다. 순서가 틀리면 공개 페이지가 fail-closed 되거나 Edge Function이 없는 컬럼/RPC를 읽어 실패할 수 있습니다.
+- First development unit:
+  - `supabase/capacity-rollout-checklist.md`를 추가한다.
+  - live 프로젝트 `jqnnolsyvynrhjvfmege` 기준으로 precondition, hard stop rule, migration 순서, smoke-test 기대값, Edge Function deploy 순서, frontend deploy 후 확인 항목을 적는다.
+  - README의 capacity rollout 섹션에서 checklist 파일을 공식 참조한다.
+  - 테스트가 checklist의 핵심 중단 조건과 금지사항을 감시하게 한다.
+- Development direction: 다음 개발 조각은 배포를 하지 않는 선에서 가능한 behavior-oriented frontend test 확장입니다.
+- Risks:
+  - 이 문서는 실행 기록이 아니라 실행 전 체크리스트입니다. 실제 배포 시 누가 언제 어떤 결과를 얻었는지 기록하는 deployment record는 아직 별도입니다.
+  - HTTP-level Edge Function 409 smoke command는 아직 문서화하지 않았습니다.
+  - `closed_at`은 현재 admin UI가 쓰지 않는 제한으로 문서에 명시했습니다.
+- Notes:
+  - QA/Release Agent가 checklist 구조와 중단/rollback 조건을 검토했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 31개가 모두 통과했다.

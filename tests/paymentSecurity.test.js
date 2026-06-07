@@ -797,6 +797,38 @@ test('capacity smoke test SQL covers safe live migration verification paths', as
   assert.match(supabaseReadme, /20260606090000_lock_public_direct_inserts\.sql/);
   assert.match(supabaseReadme, /20260607000000_capacity_remaining_spots\.sql[\s\S]*20260607010000_capacity_rpc_guards\.sql[\s\S]*20260607020000_capacity_read_contract\.sql/);
   assert.match(supabaseReadme, /Do not deploy `functions\/create-public-submission` or `functions\/confirm-toss-payment`/);
+  assert.match(supabaseReadme, /capacity-rollout-checklist\.md/);
+  assert.match(supabaseReadme, /Stop the rollout if any capacity migration fails/);
+});
+
+test('capacity rollout checklist documents safe live deployment order', async () => {
+  const checklist = await readProjectFile('../supabase/capacity-rollout-checklist.md');
+
+  assert.match(checklist, /# Capacity Rollout Checklist/);
+  assert.match(checklist, /jqnnolsyvynrhjvfmege/);
+  assert.match(checklist, /## Do Not Start Unless/);
+  assert.match(checklist, /20260606070000[\s\S]*20260606080000[\s\S]*20260606090000/);
+  assert.match(checklist, /## Hard Stop Rules/);
+  assert.match(checklist, /A migration fails in the SQL editor/);
+  assert.match(checklist, /capacity-smoke-test\.sql` raises an exception/);
+  assert.match(checklist, /20260607000000_capacity_remaining_spots\.sql[\s\S]*20260607010000_capacity_rpc_guards\.sql[\s\S]*20260607020000_capacity_read_contract\.sql/);
+  assert.match(checklist, /Do not deploy the capacity-aware Edge Functions before all three migrations are applied/);
+  assert.match(checklist, /supabase functions deploy create-public-submission --no-verify-jwt/);
+  assert.match(checklist, /supabase functions deploy confirm-toss-payment --no-verify-jwt/);
+  assert.match(checklist, /Confirm secrets are still present:[\s\S]*TOSS_SECRET_KEY[\s\S]*PUBLIC_SUBMISSION_HASH_SALT/);
+  assert.match(checklist, /Verify Edge Functions Before Frontend Deploy/);
+  assert.match(checklist, /Run the GitHub Pages workflow/);
+  assert.match(checklist, /without Node runtime deprecation warnings/);
+  assert.match(checklist, /Do not use the service role key in browser config files/);
+  assert.match(checklist, /Do not treat `status_label` as the source of truth/);
+  assert.match(checklist, /Do not re-open anonymous direct inserts/);
+  assert.match(checklist, /Do not drop capacity columns as the first rollback move/);
+  assert.match(checklist, /Do not switch Toss live keys during this test-mode rollout/);
+  assert.match(checklist, /The admin UI saves `capacity`, `registration_status`, and `close_reason`/);
+  assert.match(checklist, /does not currently write `closed_at`/);
+  assert.match(checklist, /## Rollback Notes/);
+  assert.doesNotMatch(checklist, /SUPABASE_SERVICE_ROLE_KEY\s*=/);
+  assert.doesNotMatch(checklist, /test_sk_[A-Za-z0-9_=-]{8,}/);
 });
 
 test('public meetup UI reads availability RPC and fails closed in configured mode', async () => {

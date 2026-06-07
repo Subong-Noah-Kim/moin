@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T09:36:12+09:00",
+  "updatedAt": "2026-06-07T09:42:59+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 24,
+    "doneLocal": 25,
     "deployNeeded": 10
   },
   "agents": [
@@ -12,70 +12,70 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0026 관리자 정원/잔여석 운영 UI 완료 검수",
+      "currentTask": "AG-0027 live capacity rollout checklist 완료 검수",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "live Supabase 적용 체크리스트 배정"
+      "next": "behavior-oriented frontend test 확장 배정"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "admin UI 이후 원격 적용 순서 확인",
+      "currentTask": "배포 금지 조건에서 다음 개발 후보 재정렬",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포/검증 단계 분해"
+      "next": "frontend behavior test 후보 분해"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
-      "status": "done",
-      "currentTask": "admin 정원 입력과 좌석 요약 문구 검토 완료",
+      "status": "idle",
+      "currentTask": "대기",
       "lastUpdate": "2026-06-07",
-      "blocker": "",
-      "next": "배포 전 운영 문구 검토"
+      "blocker": "요청 없음",
+      "next": "필요 시 UI 테스트 검토"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "admin capacity UI 범위와 실패 상태 검토 완료",
+      "currentTask": "rollout 순서와 stop rule 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 순서 검토"
+      "next": "테스트 확장 검토"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
-      "status": "done",
-      "currentTask": "admin capacity form/list 로컬 완료",
+      "status": "idle",
+      "currentTask": "대기",
       "lastUpdate": "2026-06-07",
-      "blocker": "",
-      "next": "배포 체크리스트 구현 대기"
+      "blocker": "현재 문서/QA 중심 작업 완료",
+      "next": "테스트 helper 분리 또는 behavior test 구현"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "admin capacity UI 테스트 추가 및 npm test 30개 통과",
+      "currentTask": "capacity rollout checklist 검토 및 npm test 31개 통과",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "smoke-test 실행 체크리스트 검토"
+      "next": "behavior-oriented frontend test 범위 제안"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "admin RPC token과 write payload allow-list 검토 완료",
+      "currentTask": "service role/browser 금지와 anon direct insert 금지 문서 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "원격 적용 전 권한 점검"
+      "next": "테스트 확장 보안 범위 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0026 admin capacity UI 기록 완료",
+      "currentTask": "AG-0027 rollout checklist 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 Task 기록 대기"
@@ -613,6 +613,29 @@
           "저장 payload는 supabase-client.js에서 allow-list로 걸러 파생 좌석 상태와 주문 수가 저장되지 않게 했습니다.",
           "closed_at은 보안상 클라이언트에서 쓰지 않습니다. 접수 닫힘 여부는 registration_status가 담당합니다.",
           "로컬 테스트는 30개 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0027",
+      "title": "live capacity rollout checklist",
+      "priority": "P0",
+      "owner": "QA/Release Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "behavior-oriented frontend test 확장",
+      "details": {
+        "summary": "capacity 기능을 실제 Supabase와 GitHub Pages에 적용할 때 따라야 할 순서를 체크리스트로 정리했습니다.",
+        "what": "live 프로젝트 기준으로 사전 조건, hard stop rule, migration 순서, smoke-test 기대값, Edge Function deploy, GitHub Pages deploy, 배포 후 확인 항목을 문서화했습니다.",
+        "why": "capacity 기능은 DB, Edge Function, 공개/관리자 UI가 서로 의존합니다. 순서가 틀리면 결제/신청 경로가 실패하거나 공개 UI가 의도치 않게 막힐 수 있습니다.",
+        "developmentDirection": "다음 단계는 배포 없이 가능한 프론트엔드 동작 테스트를 조금 더 늘려, 이후 배포 묶음의 리스크를 줄이는 것입니다.",
+        "notes": [
+          "이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "체크리스트는 실행 기록이 아니라 실행 전 점검표입니다.",
+          "anonymous direct insert 재오픈, service role key 브라우저 노출, Toss live key 전환 금지를 명시했습니다.",
+          "closed_at은 현재 admin UI가 자동으로 쓰지 않는 제한으로 문서화했습니다.",
+          "로컬 테스트는 31개 모두 통과했습니다."
         ]
       }
     }

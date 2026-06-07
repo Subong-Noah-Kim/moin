@@ -135,6 +135,8 @@ The function reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `TOSS_SECRET
 
 ## 12. Capacity and Sold-Out Guard Rollout
 
+Use `capacity-rollout-checklist.md` as the live execution checklist before touching the production Supabase project.
+
 Only run this section after the earlier public-submission and Toss hardening migrations are already present in the target Supabase project, especially:
 
 - `migrations/20260606070000_harden_toss_payment_security.sql`
@@ -152,5 +154,7 @@ Then run `capacity-smoke-test.sql` in the Supabase SQL editor. The smoke test us
 Do not deploy `functions/create-public-submission` or `functions/confirm-toss-payment` from this branch before all capacity migrations exist in the live Supabase project. The updated functions read `orders.expires_at` and expect the new capacity RPCs to be available.
 
 After the smoke test passes, deploy the two Edge Functions, then deploy the frontend/admin bundle that reads or displays structured capacity state.
+
+Stop the rollout if any capacity migration fails, if `capacity-smoke-test.sql` raises an exception, or if public application/order/payment checks fail after the Edge Function deploy. Do not continue to the next layer with a partially verified capacity state.
 
 This repository documents the Toss Payments test flow only. Before switching to live payment keys, confirm business approval, user-facing terms, cancellation/refund policy, privacy notices, and operational reconciliation outside this setup checklist.

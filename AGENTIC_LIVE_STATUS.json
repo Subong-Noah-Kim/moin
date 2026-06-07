@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T09:36:12+09:00",
-  "currentFocus": "관리자 정원/잔여석 운영 UI 로컬 완료",
+  "updatedAt": "2026-06-07T09:42:59+09:00",
+  "currentFocus": "live capacity rollout checklist 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,79 +11,79 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0026 done_local"
+    "currentFocus": "AG-0027 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0026 관리자 정원/잔여석 운영 UI 완료 검수",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
-      "next": "live Supabase 적용 체크리스트 배정"
+      "currentTask": "AG-0027 live capacity rollout checklist 완료 검수",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
+      "next": "behavior-oriented frontend test 확장 배정"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
-      "status": "done",
-      "currentTask": "admin capacity form/list 로컬 완료",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
-      "next": "배포 체크리스트 구현 대기"
+      "status": "idle",
+      "currentTask": "대기",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
+      "next": "테스트 helper 분리 또는 behavior test 구현"
     },
     {
       "name": "UX/UI Agent",
       "role": "UX/UI",
-      "status": "done",
-      "currentTask": "admin 정원 입력과 좌석 요약 문구 검토 완료",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
-      "next": "배포 전 운영 문구 검토"
+      "status": "idle",
+      "currentTask": "대기",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
+      "next": "필요 시 UI 테스트 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "admin capacity UI 테스트 추가 및 npm test 30개 통과",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
-      "next": "smoke-test 실행 체크리스트 검토"
+      "currentTask": "capacity rollout checklist 검토 및 npm test 31개 통과",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
+      "next": "behavior-oriented frontend test 범위 제안"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0026 admin capacity UI 기록 완료",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "currentTask": "AG-0027 rollout checklist 기록 완료",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
       "next": "다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "admin UI 이후 원격 적용 순서 확인",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
-      "next": "배포/검증 단계 분해"
+      "currentTask": "배포 금지 조건에서 다음 개발 후보 재정렬",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
+      "next": "frontend behavior test 후보 분해"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "admin capacity UI 범위와 실패 상태 검토 완료",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
-      "next": "배포 순서 검토"
+      "currentTask": "rollout 순서와 stop rule 검토 완료",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
+      "next": "테스트 확장 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "admin RPC token과 write payload allow-list 검토 완료",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
-      "next": "원격 적용 전 권한 점검"
+      "currentTask": "service role/browser 금지와 anon direct insert 금지 문서 확인",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
+      "next": "테스트 확장 보안 범위 검토"
     },
     {
       "name": "보조 Agent",
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,39 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T09:36:12+09:00",
+      "updatedAt": "2026-06-07T09:42:59+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T09:42:59+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "capacity rollout checklist 추가",
+      "body": "live Supabase migration, smoke-test, Edge Function, GitHub Pages 배포 순서와 중단 조건을 체크리스트로 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T09:42:59+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "rollout 금지사항 보강",
+      "body": "service role key 브라우저 노출 금지, anonymous direct insert 재오픈 금지, status_label 기준 판단 금지, Toss live key 전환 금지를 문서에 남겼습니다."
+    },
+    {
+      "time": "2026-06-07T09:42:59+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "checklist 테스트 통과",
+      "body": "README와 checklist의 핵심 순서, 중단 조건, rollback 문구를 테스트했습니다. npm test 31개가 모두 통과했습니다."
+    },
+    {
+      "time": "2026-06-07T09:42:59+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0027 로컬 완료",
+      "body": "다음 우선순위는 배포 없이 가능한 behavior-oriented frontend test 확장입니다."
+    },
     {
       "time": "2026-06-07T09:36:12+09:00",
       "agent": "개발 Agent",
@@ -277,34 +305,6 @@
       "level": "review",
       "title": "늦은 Toss success 리스크 확인",
       "body": "만료된 pending 주문이 좌석을 돌려준 뒤 늦게 결제 성공으로 돌아오면 과판매가 생길 수 있어 confirm-toss-payment 쪽 expiry guard가 필요하다고 확인했습니다."
-    },
-    {
-      "time": "2026-06-07T04:26:15+09:00",
-      "agent": "UX/UI Agent",
-      "level": "review",
-      "title": "잔여석/마감 UX 기준 정리",
-      "body": "기존 status_label은 홍보 문구로 남기고, 신청/결제 가능 여부는 계산된 잔여석과 신청 상태를 기준으로 표시하는 방향을 제안했습니다."
-    },
-    {
-      "time": "2026-06-07T04:26:15+09:00",
-      "agent": "QA Agent",
-      "level": "review",
-      "title": "정원 P0 검증 기준 정리",
-      "body": "capacity 2 시나리오, unlimited capacity, expired pending 회수, 마지막 1석 동시 주문, sold-out 409 응답을 필수 검증으로 정리했습니다."
-    },
-    {
-      "time": "2026-06-07T04:26:15+09:00",
-      "agent": "총괄 디렉터",
-      "level": "review",
-      "title": "AG-0020 로컬 완료",
-      "body": "정원/잔여석 P0 롤아웃 명세를 완료했습니다. 기능 코드, 원격 DB, Edge Function deploy, push는 하지 않았습니다."
-    },
-    {
-      "time": "2026-06-07T04:22:31+09:00",
-      "agent": "보안 Agent",
-      "level": "review",
-      "title": "결제 인증값 노출 리스크 검토",
-      "body": "paymentKey는 Supabase 승인 호출에는 필요하지만 화면, 브라우저 저장소, 주소창에 오래 남기지 않는 방향을 승인했습니다. 초기 callback URL은 잠깐 존재할 수 있다는 한계도 기록했습니다."
     }
   ]
 }

@@ -777,3 +777,36 @@
 - Next:
   - 다음 구현 조각은 live Supabase migration 적용, SQL/RPC smoke-test, Edge Function deploy, GitHub Pages deploy 순서를 사용자가 검토하기 쉽게 체크리스트로 정리하는 작업입니다.
   - 실제 배포 전에는 capacity migration 3개가 원격에 먼저 적용되어야 합니다.
+
+### AG-0027 - live capacity rollout checklist
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: QA/Release Agent + 작업 정리 Agent
+- Purpose: capacity 기능을 실제 Supabase와 GitHub Pages에 적용할 때 순서를 헷갈리지 않게 한다.
+- Subagents:
+  - QA/Release Agent: Chandrasekhar
+- Changed files:
+  - `supabase/capacity-rollout-checklist.md`
+  - `supabase/README.md`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - live 프로젝트 `jqnnolsyvynrhjvfmege` 기준의 실행 체크리스트를 추가했습니다.
+  - migration 3개, SQL smoke-test, Edge Function 2개, GitHub Pages deploy 순서를 명확히 나눴습니다.
+  - 실패 시 다음 단계로 넘어가지 않는 hard stop rule을 적었습니다.
+  - anonymous direct insert를 다시 열지 말 것, `status_label`을 상태 기준으로 쓰지 말 것, Toss live key로 전환하지 말 것 같은 금지사항도 적었습니다.
+  - `closed_at`은 현재 admin UI가 자동으로 쓰지 않는 제한으로 문서화했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - QA/Release Agent가 checklist 구조, 중단 조건, rollback 선호 순서를 검토했습니다.
+  - `git diff --check` passed.
+  - `npm test` passed: 31 tests.
+- Next:
+  - 다음 개발 조각은 배포 없이 가능한 behavior-oriented frontend test 확장입니다.
+  - 실제 배포가 허용되면 이 checklist를 기준으로 migration/smoke-test/deploy를 수행합니다.
