@@ -1048,7 +1048,7 @@
       "priority": "P2",
       "owner": "개발 Agent + QA Agent + 작업 정리 Agent",
       "status": "done_local",
-      "commit": "5d43a00",
+      "commit": "ee98d93",
       "deployNeeded": true,
       "next": "Push/deploy if the user wants the helper refactor and updated TODO/status to go live",
       "details": {
