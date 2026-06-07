@@ -1295,6 +1295,31 @@ test('local agent monitor polls live status without publishing it to Pages', asy
   assert.ok(Array.isArray(status.events));
 });
 
+test('browser smoke runner covers critical local page flows without new npm dependencies', async () => {
+  const [packageJson, smokeScript] = await Promise.all([
+    readProjectFile('../package.json'),
+    readProjectFile('../scripts/browser-smoke.mjs'),
+  ]);
+  const pkg = JSON.parse(packageJson);
+
+  assert.equal(pkg.scripts['smoke:browser'], 'node scripts/browser-smoke.mjs');
+  assert.equal(pkg.devDependencies.playwright, undefined);
+  assert.equal(pkg.devDependencies.puppeteer, undefined);
+
+  assert.match(smokeScript, /startServer\(appPort\)/);
+  assert.match(smokeScript, /startChrome\(chrome, debuggingPort, userDataDir\)/);
+  assert.match(smokeScript, /class CdpConnection/);
+  assert.match(smokeScript, /smokePublicPage\(connection, baseUrl\)/);
+  assert.match(smokeScript, /smokeAdminPage\(connection, baseUrl\)/);
+  assert.match(smokeScript, /smokePaymentResultPage\(connection, baseUrl\)/);
+  assert.match(smokeScript, /document\.querySelectorAll\('\[data-meetup-grid\] \.meetup-card'\)\.length > 0/);
+  assert.match(smokeScript, /document\.querySelector\('\[data-drawer\]\[aria-hidden="false"\]'\)/);
+  assert.match(smokeScript, /document\.querySelector\('\[data-checkout-modal\]\[aria-hidden="false"\]'\)/);
+  assert.match(smokeScript, /document\.querySelector\('\[data-login-form\]'\)/);
+  assert.match(smokeScript, /document\.querySelector\('\[data-fail-view\]'\)/);
+  assert.match(smokeScript, /favicon\.ico/);
+});
+
 test('agent status artifacts do not contain sensitive tokens or payment identifiers', async () => {
   const statusFiles = [
     '../AGENTIC_STATUS.json',

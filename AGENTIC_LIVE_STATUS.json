@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T13:13:00+09:00",
-  "currentFocus": "public flow helper/test 배포 완료",
+  "updatedAt": "2026-06-07T13:30:00+09:00",
+  "currentFocus": "browser smoke runner 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,24 +11,24 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0045 deployed_verified"
+    "currentFocus": "AG-0046 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0045 public flow helper/test 배포 완료",
-      "updatedAt": "2026-06-07T13:13:00+09:00",
-      "next": "다음 frontend flow test 선택"
+      "currentTask": "AG-0046 browser smoke runner 로컬 완료",
+      "updatedAt": "2026-06-07T13:30:00+09:00",
+      "next": "커밋/배포 여부 결정 또는 다음 테스트 후보 선택"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public-flow.js 추가 및 main.js 연결",
-      "updatedAt": "2026-06-07T12:55:00+09:00",
-      "next": "다음 승인된 frontend helper/test 작업 대기"
+      "currentTask": "scripts/browser-smoke.mjs 추가",
+      "updatedAt": "2026-06-07T13:30:00+09:00",
+      "next": "필요 시 smoke 범위 확장"
     },
     {
       "name": "UX/UI Agent",
@@ -42,41 +42,41 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "AG-0045 live HTTP 검증 완료",
-      "updatedAt": "2026-06-07T13:13:00+09:00",
-      "next": "다음 작업 시 브라우저 수준 smoke test 후보 검토"
+      "currentTask": "npm test 44개 및 npm run smoke:browser 통과",
+      "updatedAt": "2026-06-07T13:30:00+09:00",
+      "next": "배포 시 Pages workflow 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0045 deploy verification 기록 완료",
-      "updatedAt": "2026-06-07T13:13:00+09:00",
-      "next": "다음 작업 발생 시 상태판 갱신"
+      "currentTask": "AG-0046 browser smoke 기록 완료",
+      "updatedAt": "2026-06-07T13:30:00+09:00",
+      "next": "커밋/배포 결정에 맞춰 commit hash 또는 deploy status 갱신"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "정원 rollout 이후 TODO 우선순위 최신화",
-      "updatedAt": "2026-06-07T12:55:00+09:00",
-      "next": "브라우저 수준 smoke test 또는 admin flow helper test 후보 검토"
+      "currentTask": "browser smoke 이후 다음 테스트 후보 정리",
+      "updatedAt": "2026-06-07T13:30:00+09:00",
+      "next": "authenticated admin edit smoke 또는 Toss callback browser smoke 후보 검토"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public flow helper 배포 검토 완료",
-      "updatedAt": "2026-06-07T13:13:00+09:00",
-      "next": "다음 변경 전 TODO 우선순위 확인"
+      "currentTask": "browser smoke 범위 검토",
+      "updatedAt": "2026-06-07T13:30:00+09:00",
+      "next": "배포 전 diff와 테스트 결과 재확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "public-flow.js 200 및 raw status 404 확인",
-      "updatedAt": "2026-06-07T13:13:00+09:00",
-      "next": "다음 배포에서도 공개 상태 파일 정책 유지"
+      "currentTask": "새 smoke runner에 새 npm browser dependency 없음 확인",
+      "updatedAt": "2026-06-07T13:30:00+09:00",
+      "next": "배포 시 raw status 비노출 정책 유지"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T13:30:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "browser smoke runner 추가",
+      "body": "새 npm 브라우저 의존성 없이 로컬 서버와 headless Chrome/CDP로 공개/관리자/결제 결과 기본 화면을 확인하는 npm run smoke:browser 명령을 추가했습니다."
+    },
+    {
+      "time": "2026-06-07T13:30:00+09:00",
+      "agent": "QA Agent",
+      "level": "complete",
+      "title": "browser smoke 통과",
+      "body": "Supabase 데이터 8개 카드, 상세 drawer, checkout modal, admin login, payment-result fallback을 실제 Chrome으로 확인했고 npm test 44개도 통과했습니다."
+    },
     {
       "time": "2026-06-07T13:13:00+09:00",
       "agent": "QA Agent",

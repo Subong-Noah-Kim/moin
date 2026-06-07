@@ -1491,3 +1491,44 @@
   - live 사이트에서 새 모듈 `public-flow.js`가 정상 로드됩니다.
   - Pages workflow copy 목록을 함께 고쳤기 때문에 배포 시 새 모듈 404가 나지 않아야 합니다.
   - 정원/잔여석 live 동작 자체는 AG-0044에서 이미 검증됐고, 이번 작업은 회귀 방지용입니다.
+
+### AG-0046 - minimal browser smoke runner
+
+- Status: `done_local`
+- Branch: `main`
+- Time: 2026-06-07 13:30 KST
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 실제 브라우저에서 공개/관리자/결제 결과 페이지의 가장 중요한 화면 흐름이 깨지지 않는지 배포 전에 빠르게 확인한다.
+- Non-developer summary:
+  - 기존 테스트는 코드 조각과 helper가 맞는지 확인하는 성격이 강했습니다.
+  - 이번 작업은 실제 Chrome을 열어서 공개 페이지가 카드 8개를 보여주는지, 모임 상세가 열리는지, 결제 모달이 열리는지 확인합니다.
+  - 관리자 페이지는 로그인 화면까지만 확인하고, 결제 결과 페이지는 파라미터 없는 fallback 화면까지만 확인합니다.
+  - 실제 결제 제출이나 관리자 로그인 후 저장은 하지 않으므로 운영 데이터에 영향을 주지 않습니다.
+- Technical direction:
+  - `scripts/browser-smoke.mjs`를 추가했습니다.
+  - `npm run smoke:browser` 명령을 추가했습니다.
+  - 새 npm 브라우저 의존성은 추가하지 않았습니다.
+  - 로컬 서버를 임시 포트로 띄우고, macOS Chrome 또는 `CHROME_BIN`으로 지정한 브라우저를 headless로 실행합니다.
+  - Node의 WebSocket과 Chrome DevTools Protocol로 페이지를 열고 DOM 상태, local static 404, runtime exception, console error를 확인합니다.
+- Changed files:
+  - `scripts/browser-smoke.mjs`
+  - `package.json`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Verification:
+  - `node --check scripts/browser-smoke.mjs` passed.
+  - `npm test` passed: 44 tests.
+  - `npm run smoke:browser` passed:
+    - public page rendered 8 cards from Supabase.
+    - public detail drawer opened.
+    - checkout modal opened.
+    - admin login rendered.
+    - payment result fallback rendered.
+- Notes:
+  - 이 smoke test는 CI 기본 `npm test`에 포함하지 않았습니다. Headless Chrome이 필요한 환경 의존 작업이라 배포 pipeline을 불필요하게 무겁게 만들지 않기 위해 별도 명령으로 둡니다.
+  - `/favicon.ico` 자동 404는 기능과 무관해서 진단에서 제외합니다.
+  - 다음 확장 후보는 인증된 관리자 모임 수정 smoke 또는 Toss callback 상태별 browser smoke입니다.

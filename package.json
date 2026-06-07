@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
+    "smoke:browser": "node scripts/browser-smoke.mjs",
     "test": "node --test"
   },
   "devDependencies": {
