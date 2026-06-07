@@ -151,12 +151,13 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Problem: current tests cover selected payment, rendering, accessibility, and admin assertions mostly through source-text regex checks; shipped flows still need broader behavior coverage.
   - Files: `tests/`, `package.json`
   - Done when: tests exercise exported helpers or DOM-like behavior for escaping, numeric payment amount selection, Toss SDK load handling, result-page state handling, cache version consistency, public/admin capacity state rendering, and admin status rendering.
-  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, and payment button text. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Continue with broader DOM/browser tests only after choosing a concrete flow.
+  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, and payment button text. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Payment-result state behavior now has a pure helper slice in `payment-result-state.js`, with direct tests for amount display, confirmation error messages, failure status labels, and safe Toss auth summary storage. Continue with broader DOM/browser tests only after choosing a concrete flow.
 
 - [ ] Split large frontend modules into testable slices
   - Problem: `main.js`, `admin.js`, `supabase-client.js`, and CSS files are large and difficult to test safely.
   - Files: `main.js`, `admin.js`, `supabase-client.js`, `styles.css`, `admin.css`
   - Done when: shared helpers and payment/rendering logic can be imported and tested without loading full pages.
+  - Status: started with `public-availability.js`, `admin-availability.js`, and `payment-result-state.js`; keep future slices small and avoid moving DOM-heavy code until a browser/jsdom test harness is chosen.
 
 - [x] Lazy-load repeated dynamic images
   - Problem: repeated meetup/event/recommendation images are eager-loaded.

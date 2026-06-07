@@ -2,6 +2,12 @@ import {
   confirmTossPayment,
   recordTossPaymentFailure,
 } from './supabase-client.js?v=__ASSET_VERSION__';
+import {
+  createTossAuthSummary,
+  formatPaymentResultAmount,
+  getConfirmErrorMessage,
+  getFailureStatusLabel,
+} from './payment-result-state.js?v=__ASSET_VERSION__';
 
 const params = new URLSearchParams(window.location.search);
 const result = params.get('result');
@@ -11,7 +17,6 @@ const successTitle = document.querySelector('[data-success-title]');
 const successDescription = document.querySelector('[data-success-description]');
 const confirmStatus = document.querySelector('[data-confirm-status]');
 const failSyncStatus = document.querySelector('[data-fail-sync-status]');
-const moneyFormatter = new Intl.NumberFormat('ko-KR');
 const publicStateMaxItems = 100;
 const publicStateMaxValueLength = 120;
 
@@ -34,21 +39,11 @@ function rememberTossAuthSummary({ orderId, amount }) {
   try {
     sessionStorage.setItem(
       'momentclub:toss-last-auth',
-      JSON.stringify({
-        orderId,
-        amount,
-        receivedAt: new Date().toISOString(),
-      }),
+      JSON.stringify(createTossAuthSummary({ orderId, amount })),
     );
   } catch {
     // The confirmation flow should keep moving even if browser storage is unavailable.
   }
-}
-
-function formatAmount(value) {
-  const amount = Number(value || 0);
-  if (!amount) return '-';
-  return `${moneyFormatter.format(amount)}원`;
 }
 
 function setConfirmStatus(message, type = 'pending') {
@@ -111,30 +106,6 @@ function markMeetupPaid(meetupId) {
   persistStringSet('momentclub:paid', paid);
 }
 
-function getConfirmErrorMessage(error) {
-  const message = error?.message || String(error);
-
-  if (message.includes('network request failed') || message.includes('Load failed')) {
-    return 'Supabase Edge Function(confirm-toss-payment) 호출에 실패했습니다. 함수 배포와 CORS 응답을 확인해주세요.';
-  }
-
-  if (message.includes('Requested function was not found')) {
-    return 'Supabase Edge Function(confirm-toss-payment)을 찾지 못했습니다. 함수 배포 상태를 확인해주세요.';
-  }
-
-  if (message.includes('TOSS_SECRET_KEY')) {
-    return '결제 승인 서버 설정을 확인해주세요.';
-  }
-
-  return '결제 승인 처리에 실패했습니다. 잠시 후 다시 시도하거나 운영자에게 문의해주세요.';
-}
-
-function getFailureStatusLabel(status) {
-  if (status === 'cancelled') return '취소';
-  if (status === 'failed') return '실패';
-  return status || '실패';
-}
-
 async function handleSuccessResult() {
   const paymentKey = params.get('paymentKey') || '';
   const orderId = params.get('orderId') || '';
@@ -144,7 +115,7 @@ async function handleSuccessResult() {
   clearPaymentResultQuery();
 
   setText('[data-order-id]', orderId);
-  setText('[data-amount]', formatAmount(amount));
+  setText('[data-amount]', formatPaymentResultAmount(amount));
   successView.hidden = false;
 
   if (!paymentKey || !orderId || !amount) {

@@ -19,6 +19,12 @@ import {
   isRegistrationAvailable,
   mergeMeetupAvailability,
 } from '../public-availability.js';
+import {
+  createTossAuthSummary,
+  formatPaymentResultAmount,
+  getConfirmErrorMessage,
+  getFailureStatusLabel,
+} from '../payment-result-state.js';
 import { clearAdminSession, getAmountFromMeetup, getStoredAdminSession } from '../supabase-client.js';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
@@ -30,6 +36,7 @@ const cacheBustedSourceFiles = [
   '../main.js',
   '../admin.js',
   '../payment-result.js',
+  '../payment-result-state.js',
   '../public-availability.js',
   '../supabase-client.js',
 ];
@@ -55,6 +62,49 @@ function createMemoryStorage(initial = {}) {
     },
   };
 }
+
+test('payment result state helpers format safe display values', () => {
+  assert.equal(formatPaymentResultAmount('39000'), '39,000원');
+  assert.equal(formatPaymentResultAmount(148000), '148,000원');
+  assert.equal(formatPaymentResultAmount(''), '-');
+  assert.equal(formatPaymentResultAmount(0), '-');
+
+  assert.deepEqual(
+    createTossAuthSummary(
+      { orderId: 'order_123', amount: '39000' },
+      new Date('2026-06-07T01:09:29.901Z'),
+    ),
+    {
+      orderId: 'order_123',
+      amount: '39000',
+      receivedAt: '2026-06-07T01:09:29.901Z',
+    },
+  );
+});
+
+test('payment result state helpers explain confirmation and failure states', () => {
+  assert.equal(
+    getConfirmErrorMessage(new Error('network request failed')),
+    'Supabase Edge Function(confirm-toss-payment) 호출에 실패했습니다. 함수 배포와 CORS 응답을 확인해주세요.',
+  );
+  assert.equal(
+    getConfirmErrorMessage(new Error('Requested function was not found')),
+    'Supabase Edge Function(confirm-toss-payment)을 찾지 못했습니다. 함수 배포 상태를 확인해주세요.',
+  );
+  assert.equal(
+    getConfirmErrorMessage(new Error('missing TOSS_SECRET_KEY')),
+    '결제 승인 서버 설정을 확인해주세요.',
+  );
+  assert.equal(
+    getConfirmErrorMessage(new Error('unexpected failure')),
+    '결제 승인 처리에 실패했습니다. 잠시 후 다시 시도하거나 운영자에게 문의해주세요.',
+  );
+
+  assert.equal(getFailureStatusLabel('cancelled'), '취소');
+  assert.equal(getFailureStatusLabel('failed'), '실패');
+  assert.equal(getFailureStatusLabel('pending_review'), 'pending_review');
+  assert.equal(getFailureStatusLabel(''), '실패');
+});
 
 const sensitiveAgentStatusKeys = [
   { name: 'access token field', pattern: /^(access[_-]?token|accessToken)$/i },
@@ -389,10 +439,11 @@ test('docs distinguish wired test integration from remaining production setup', 
 });
 
 test('public payment copy separates Toss test mode from live payments', async () => {
-  const [mainScript, resultHtml, resultScript] = await Promise.all([
+  const [mainScript, resultHtml, resultScript, resultStateModule] = await Promise.all([
     readProjectFile('../main.js'),
     readProjectFile('../payment-result.html'),
     readProjectFile('../payment-result.js'),
+    readProjectFile('../payment-result-state.js'),
   ]);
 
   assert.match(mainScript, /토스 테스트 결제와 서버 승인 흐름/);
@@ -413,16 +464,17 @@ test('public payment copy separates Toss test mode from live payments', async ()
 
   assert.match(resultScript, /테스트 결제 승인이 완료됐어요/);
   assert.match(resultScript, /테스트 주문 상태가 결제완료로 변경되었습니다/);
-  assert.match(resultScript, /message\.includes\('TOSS_SECRET_KEY'\)[\s\S]*return '결제 승인 서버 설정을 확인해주세요\.'/);
+  assert.match(resultStateModule, /message\.includes\('TOSS_SECRET_KEY'\)[\s\S]*return '결제 승인 서버 설정을 확인해주세요\.'/);
   assert.doesNotMatch(resultScript, /결제가 완료됐어요/);
   assert.doesNotMatch(resultScript, /아직 배포되지 않았|아직 설정되지 않았/);
-  assert.doesNotMatch(resultScript, /return message \|\| '결제 승인 처리에 실패했습니다\.'/);
+  assert.doesNotMatch(resultStateModule, /return message \|\| '결제 승인 처리에 실패했습니다\.'/);
 });
 
 test('payment result uses paymentKey for confirmation without exposing the raw identifier', async () => {
-  const [resultHtml, resultScript] = await Promise.all([
+  const [resultHtml, resultScript, resultStateModule] = await Promise.all([
     readProjectFile('../payment-result.html'),
     readProjectFile('../payment-result.js'),
+    readProjectFile('../payment-result-state.js'),
   ]);
   const successFlow = resultScript.slice(
     resultScript.indexOf('async function handleSuccessResult'),
@@ -443,14 +495,17 @@ test('payment result uses paymentKey for confirmation without exposing the raw i
   assert.match(resultHtml, /인증 정보가 도착했어요/);
   assert.doesNotMatch(resultHtml, /data-payment-key|테스트 결제키/);
 
+  assert.match(resultScript, /from '\.\/payment-result-state\.js\?v=__ASSET_VERSION__'/);
   assert.match(resultScript, /const paymentKey = params\.get\('paymentKey'\) \|\| '';/);
   assert.match(resultScript, /function clearPaymentResultQuery\(\)/);
   assert.match(resultScript, /window\.history\.replaceState\(\{\}, document\.title, `\$\{window\.location\.pathname\}\$\{window\.location\.hash \|\| ''\}`\)/);
   assert.match(resultScript, /function rememberTossAuthSummary\(\{ orderId, amount \}\)/);
+  assert.match(resultScript, /JSON\.stringify\(createTossAuthSummary\(\{ orderId, amount \}\)\)/);
   assert.match(resultScript, /confirmTossPayment\(\{ paymentKey, orderId, amount \}\)/);
   assert.doesNotMatch(resultScript, /setText\(\s*['"]\[data-payment-key\]['"]\s*,\s*paymentKey\s*\)/);
   assert.doesNotMatch(resultScript, /(?:textContent|innerText|innerHTML)\s*=\s*paymentKey\b/);
   assert.deepEqual(sessionStorageWrites.filter((write) => /\bpaymentKey\b/.test(write)), []);
+  assert.doesNotMatch(resultStateModule, /\bpaymentKey\b/);
 
   assert.ok(captureIndex >= 0);
   assert.ok(cleanIndex > captureIndex);
@@ -501,6 +556,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
   assert.match(workflow, /cp AGENTIC_STATUS\.json dist\//);
   assert.match(workflow, /cp admin-availability\.js dist\//);
+  assert.match(workflow, /cp payment-result-state\.js dist\//);
   assert.match(workflow, /cp public-availability\.js dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });

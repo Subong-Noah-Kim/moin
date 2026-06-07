@@ -891,3 +891,43 @@
 - Next:
   - `admin-availability.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
   - 다음 개발 조각은 더 넓은 DOM/flow 테스트 후보 중 하나를 좁히는 작업입니다.
+
+### AG-0030 - payment result state behavior test helper
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 결제 결과 화면의 핵심 문구와 상태 판단을 실제 입력값으로 테스트할 수 있게 한다.
+- Subagents:
+  - Planning/Review Agent: Helmholtz
+  - QA Agent: Avicenna
+  - Security/Review Agent: Jason
+- Changed files:
+  - `payment-result-state.js`
+  - `payment-result.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 결제 금액 표시, 승인 오류 문구, 실패 상태 라벨, Toss 인증 요약 생성을 `payment-result-state.js`로 분리했습니다.
+  - `payment-result.js`는 화면 표시, URL query 정리, Supabase Edge Function 호출, local/sessionStorage 저장 책임을 그대로 유지합니다.
+  - `paymentKey`는 여전히 `confirmTossPayment` 요청에만 쓰이고 화면, `sessionStorage`, 새 helper, status 기록에는 저장하지 않습니다.
+  - 새 browser module인 `payment-result-state.js`가 GitHub Pages artifact에 포함되도록 workflow copy step을 추가했습니다.
+  - 이번 slice는 payment-result 전체 DOM/async flow 테스트가 아니라 안전한 순수 helper 테스트입니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 payment-result state helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 browser import, Pages copy, cache-busting, behavior parity를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 paymentKey 비노출, callback URL cleanup 순서, 새 helper의 민감정보 비저장을 검토했고 이슈 없음으로 확인했습니다.
+  - `node --check payment-result.js` passed.
+  - `node --check payment-result-state.js` passed.
+  - Local dev server served `payment-result-state.js` and `payment-result.html` with HTTP 200.
+  - `npm test` passed: 37 tests.
+- Next:
+  - `payment-result-state.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
+  - 다음 개발 조각은 관리자 모임 저장 form payload, 공개 drawer 신청/결제 guard, 또는 payment-result DOM flow 중 하나를 좁히는 작업입니다.

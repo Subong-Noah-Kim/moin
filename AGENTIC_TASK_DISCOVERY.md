@@ -714,3 +714,34 @@
   - Security/Review Agent가 derived availability field read-only 경계, unknown availability fail-safe, secret 비노출을 검토했고 이슈 없음으로 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 35개가 모두 통과했다.
+
+## Round 18 - 2026-06-07 10:15 KST
+
+### 요약
+
+이번 사이클은 결제 결과 화면의 상태 판단을 실제 입력값으로 테스트할 수 있게 만든 작업입니다. 쉽게 말하면, `39,000원`처럼 금액이 잘 보이는지, Supabase Edge Function 오류가 났을 때 사용자에게 어떤 문구를 보여줄지, 결제 취소/실패 상태를 어떤 말로 표시할지 작은 helper에 값을 넣어 직접 확인합니다. 결제 결과 화면 전체를 브라우저에서 띄우는 큰 테스트로 바로 가지 않고, 깨지기 쉬운 판단만 먼저 안전하게 분리했습니다.
+
+### TD-029 - payment result state behavior test helper
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: payment-result 화면의 금액 표시, 승인 오류 문구, 실패 상태 라벨, Toss 인증 요약 생성을 순수 helper로 분리하고 직접 테스트한다.
+- Why: 결제 결과 화면은 사용자가 “결제가 승인됐는지”, “서버 처리만 다시 확인하면 되는지”, “운영자에게 문의해야 하는지”를 판단하는 화면입니다. 문구와 상태 판단이 틀리면 실제 결제/주문 상태와 사용자의 이해가 어긋날 수 있습니다.
+- First development unit:
+  - `payment-result-state.js`를 추가해 `createTossAuthSummary`, `formatPaymentResultAmount`, `getConfirmErrorMessage`, `getFailureStatusLabel`을 export한다.
+  - `payment-result.js`는 새 helper를 import하되, 화면 표시, URL cleanup, Supabase 호출, 저장소 접근 책임은 유지한다.
+  - GitHub Pages workflow가 새 helper 파일을 `dist`에 복사하게 한다.
+  - `tests/paymentSecurity.test.js`가 helper를 직접 import해 금액 표시, 오류 문구, 실패 상태 라벨, paymentKey 비저장을 테스트한다.
+- Development direction: 다음 테스트 확장은 더 넓은 DOM/flow 후보를 하나 고르면 됩니다. 후보는 관리자 모임 저장 form payload, 공개 drawer 신청/결제 guard, payment-result DOM success/fail flow입니다.
+- Risks:
+  - 새 browser module이므로 Pages artifact 복사 누락이 가장 큰 배포형 위험입니다. 이번 사이클에서 workflow copy와 cache-busting 테스트를 추가했습니다.
+  - 이번 helper는 결제 결과 화면의 순수 판단만 테스트합니다. URL cleanup, 화면 hidden 상태, Supabase async 호출을 포함한 실제 DOM flow 테스트는 아직 별도입니다.
+  - `paymentKey`는 계속 승인 요청에만 써야 합니다. 새 helper와 저장소에는 paymentKey를 넣지 않는 기준을 테스트와 보안 검토에 남겼습니다.
+- Notes:
+  - Planning/Review Agent가 payment-result helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 browser import, Pages copy, cache-busting, 기존 동작 보존을 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 paymentKey 비노출, callback URL cleanup 순서, 민감정보 비저장을 검토했고 이슈 없음으로 확인했습니다.
+  - 로컬 개발 서버에서 `payment-result-state.js`와 `payment-result.html`이 HTTP 200으로 제공되는 것을 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 37개가 모두 통과했다.
