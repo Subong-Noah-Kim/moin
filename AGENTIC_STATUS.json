@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-06-07T13:30:00+09:00",
+  "updatedAt": "2026-06-07T13:36:00+09:00",
   "branch": "main",
   "summary": {
     "active": 0,
     "blocked": 0,
     "doneLocal": 44,
-    "deployNeeded": 22
+    "deployNeeded": 21
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0046 browser smoke runner 로컬 완료",
+      "currentTask": "AG-0046 browser smoke runner 배포 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "커밋/배포 여부 결정 또는 다음 테스트 후보 선택"
+      "next": "다음 테스트 후보 선택"
     },
     {
       "name": "기획 Agent",
@@ -39,10 +39,10 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "browser smoke 범위 검토",
+      "currentTask": "browser smoke 배포 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 전 diff와 테스트 결과 재확인"
+      "next": "다음 변경 전 TODO 우선순위 확인"
     },
     {
       "name": "개발 Agent",
@@ -57,28 +57,28 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "npm test 44개 및 npm run smoke:browser 통과",
+      "currentTask": "AG-0046 Pages 배포 및 live HTTP 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 시 Pages workflow 확인"
+      "next": "다음 작업 시 smoke 확장 후보 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "새 smoke runner에 새 npm browser dependency 없음 확인",
+      "currentTask": "raw status 404 유지 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 시 raw status 비노출 정책 유지"
+      "next": "다음 배포에서도 공개 상태 파일 정책 유지"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0046 browser smoke 기록 완료",
+      "currentTask": "AG-0046 deploy verification 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "커밋/배포 결정에 맞춰 commit hash 또는 deploy status 갱신"
+      "next": "다음 작업 발생 시 상태판 갱신"
     },
     {
       "name": "보조 Agent",
@@ -1072,10 +1072,10 @@
       "title": "minimal browser smoke runner",
       "priority": "P2",
       "owner": "개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent",
-      "status": "done_local",
-      "commit": "",
-      "deployNeeded": true,
-      "next": "Commit and deploy if the user wants the smoke command and status updates in main",
+      "status": "deployed_verified",
+      "commit": "751d555",
+      "deployNeeded": false,
+      "next": "Use smoke:browser before future higher-risk frontend deploys",
       "details": {
         "summary": "실제 Chrome으로 공개/관리자/결제 결과 페이지가 최소한 깨지지 않는지 확인하는 smoke test 명령을 추가했습니다.",
         "what": "`npm run smoke:browser`가 로컬 서버를 띄우고 headless Chrome을 열어 공개 페이지 카드, 상세 drawer, 결제 모달, 관리자 로그인 화면, 결제 결과 fallback 화면을 확인합니다.",
@@ -1084,6 +1084,9 @@
         "notes": [
           "`npm test`는 44개가 통과했습니다.",
           "`npm run smoke:browser`는 Supabase 데이터 8개 카드, 상세 drawer, checkout modal, admin login, payment-result fallback을 확인하고 통과했습니다.",
+          "GitHub Pages workflow run 27082788070이 성공했습니다.",
+          "live 공개 페이지, admin.html, payment-result.html은 HTTP 200이었습니다.",
+          "live 원문 AGENTIC_STATUS.json은 HTTP 404였습니다.",
           "headless Chrome 실행이 필요하므로 로컬 환경에 Chrome 또는 CHROME_BIN 설정이 필요합니다.",
           "실제 결제 제출과 관리자 로그인 후 저장은 수행하지 않습니다."
         ]

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T13:30:00+09:00",
-  "currentFocus": "browser smoke runner 로컬 완료",
+  "updatedAt": "2026-06-07T13:36:00+09:00",
+  "currentFocus": "browser smoke runner 배포 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,16 +11,16 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0046 done_local"
+    "currentFocus": "AG-0046 deployed_verified"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0046 browser smoke runner 로컬 완료",
-      "updatedAt": "2026-06-07T13:30:00+09:00",
-      "next": "커밋/배포 여부 결정 또는 다음 테스트 후보 선택"
+      "currentTask": "AG-0046 browser smoke runner 배포 완료",
+      "updatedAt": "2026-06-07T13:36:00+09:00",
+      "next": "다음 테스트 후보 선택"
     },
     {
       "name": "개발 Agent",
@@ -42,17 +42,17 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "npm test 44개 및 npm run smoke:browser 통과",
-      "updatedAt": "2026-06-07T13:30:00+09:00",
-      "next": "배포 시 Pages workflow 확인"
+      "currentTask": "AG-0046 Pages 배포 및 live HTTP 검증 완료",
+      "updatedAt": "2026-06-07T13:36:00+09:00",
+      "next": "다음 작업 시 smoke 확장 후보 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0046 browser smoke 기록 완료",
-      "updatedAt": "2026-06-07T13:30:00+09:00",
-      "next": "커밋/배포 결정에 맞춰 commit hash 또는 deploy status 갱신"
+      "currentTask": "AG-0046 deploy verification 기록 완료",
+      "updatedAt": "2026-06-07T13:36:00+09:00",
+      "next": "다음 작업 발생 시 상태판 갱신"
     },
     {
       "name": "기획 Agent",
@@ -66,17 +66,17 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "browser smoke 범위 검토",
-      "updatedAt": "2026-06-07T13:30:00+09:00",
-      "next": "배포 전 diff와 테스트 결과 재확인"
+      "currentTask": "browser smoke 배포 검토 완료",
+      "updatedAt": "2026-06-07T13:36:00+09:00",
+      "next": "다음 변경 전 TODO 우선순위 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "새 smoke runner에 새 npm browser dependency 없음 확인",
-      "updatedAt": "2026-06-07T13:30:00+09:00",
-      "next": "배포 시 raw status 비노출 정책 유지"
+      "currentTask": "raw status 404 유지 확인",
+      "updatedAt": "2026-06-07T13:36:00+09:00",
+      "next": "다음 배포에서도 공개 상태 파일 정책 유지"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T13:36:00+09:00",
+      "agent": "QA Agent",
+      "level": "complete",
+      "title": "AG-0046 live 배포 검증",
+      "body": "GitHub Pages workflow 27082788070이 성공했고 공개 페이지, admin.html, payment-result.html이 HTTP 200으로 확인됐습니다."
+    },
+    {
+      "time": "2026-06-07T13:36:00+09:00",
+      "agent": "보안 Agent",
+      "level": "complete",
+      "title": "원문 상태 파일 비공개 유지",
+      "body": "PUBLIC_AGENTIC_STATUS.json은 공개 상태판용으로 유지하고, 원문 AGENTIC_STATUS.json은 404로 확인했습니다."
+    },
     {
       "time": "2026-06-07T13:30:00+09:00",
       "agent": "개발 Agent",

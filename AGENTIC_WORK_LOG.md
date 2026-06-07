@@ -1494,7 +1494,7 @@
 
 ### AG-0046 - minimal browser smoke runner
 
-- Status: `done_local`
+- Status: `deployed_verified`
 - Branch: `main`
 - Time: 2026-06-07 13:30 KST
 - Director Agent: main Codex thread
@@ -1528,6 +1528,11 @@
     - checkout modal opened.
     - admin login rendered.
     - payment result fallback rendered.
+  - GitHub Pages workflow run `27082788070` passed.
+  - Live public page returned HTTP 200.
+  - Live `admin.html` returned HTTP 200.
+  - Live `payment-result.html` returned HTTP 200.
+  - Live raw `AGENTIC_STATUS.json` returned HTTP 404.
 - Notes:
   - 이 smoke test는 CI 기본 `npm test`에 포함하지 않았습니다. Headless Chrome이 필요한 환경 의존 작업이라 배포 pipeline을 불필요하게 무겁게 만들지 않기 위해 별도 명령으로 둡니다.
   - `/favicon.ico` 자동 404는 기능과 무관해서 진단에서 제외합니다.
