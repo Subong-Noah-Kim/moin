@@ -1,16 +1,16 @@
 # Agentic Deploy Handoff
 
-Last updated: 2026-06-07 12:27 KST
+Last updated: 2026-06-07 12:31 KST
 
 ## Summary
 
-This branch is in rollout. The Supabase capacity migrations and Edge Functions have been applied to the live project, and the remaining deployment work is the GitHub Pages frontend/admin rollout plus live page verification.
+This rollout is deployed and verified on GitHub Pages.
 
 Current branch: `codex/overnight-task-discovery`
 
 Reference local commit when this handoff was refreshed: `3d4351e Add morning deploy handoff`. Run `git log -1` again before deployment because additional local commits may exist.
 
-Remote push/deploy status: Supabase applied, Edge Functions deployed, GitHub Pages not pushed/deployed yet
+Remote push/deploy status: Supabase applied, Edge Functions deployed, GitHub Pages deployed from `main`
 
 Most recent test baseline: `npm test` passed with 41 tests at 2026-06-07 12:10 KST.
 
@@ -52,11 +52,22 @@ Completed at 2026-06-07 12:16 KST:
 - Updated the frontend to call `list_public_meetups()` instead of direct anon table select.
 - Verified `list_public_meetups()` with the publishable anon key: HTTP 200.
 
-Remaining:
+Completed after the hotfix redeploy at 2026-06-07 12:31 KST:
 
-- Push or merge the branch.
-- Run GitHub Pages workflow.
-- Verify the live public page, admin page, and payment result page.
+- Pushed `main` through commit `0263193`.
+- GitHub Pages workflow run `27081546768` completed successfully.
+- Playwright live public-page check passed:
+  - 8 meetup cards rendered.
+  - `접수 확인중` was not present.
+  - `접수중` was present.
+  - `main.js`, `supabase-client.js`, `public-availability.js`, `list_public_meetups`, and `list_public_meetup_availability` all returned HTTP 200.
+- Playwright admin-page check passed:
+  - login page rendered.
+  - `admin.js`, `admin-meetup-form.js`, `admin-availability.js`, `admin-status.js`, and `supabase-client.js` returned HTTP 200.
+- Playwright payment-result page check passed:
+  - `payment-result.js`, `payment-result-state.js`, and `supabase-client.js` returned HTTP 200.
+- `PUBLIC_AGENTIC_STATUS.json` returned HTTP 200.
+- Raw `AGENTIC_STATUS.json` returned HTTP 404.
 
 ## Deployment Bundles
 

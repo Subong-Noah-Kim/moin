@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T12:27:00+09:00",
-  "currentFocus": "public meetup read RPC hotfix 준비 완료, GitHub Pages 재배포 대기",
+  "updatedAt": "2026-06-07T12:31:00+09:00",
+  "currentFocus": "live Pages deployment verification 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,16 +11,16 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0042 done_live_backend_pending_pages"
+    "currentFocus": "AG-0043 deployed_verified"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0042 public meetup read RPC hotfix 준비 완료",
-      "updatedAt": "2026-06-07T12:27:00+09:00",
-      "next": "hotfix push/deploy 및 live 화면 재검증"
+      "currentTask": "AG-0043 live Pages deployment verification 완료",
+      "updatedAt": "2026-06-07T12:31:00+09:00",
+      "next": "필요 시 admin 로그인 후 잔여석 표시 수동 확인"
     },
     {
       "name": "개발 Agent",
@@ -42,17 +42,17 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "npm test 42개 통과, anon list_public_meetups HTTP 200 확인",
-      "updatedAt": "2026-06-07T12:27:00+09:00",
-      "next": "Pages 재배포 후 접수 확인중 제거 확인"
+      "currentTask": "live public/admin/payment Playwright verification 통과",
+      "updatedAt": "2026-06-07T12:31:00+09:00",
+      "next": "관리자 인증 흐름은 필요 시 별도 수동 확인"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0042 공개 목록 RPC hotfix 기록 완료",
-      "updatedAt": "2026-06-07T12:27:00+09:00",
-      "next": "재배포와 live 검증 결과 기록"
+      "currentTask": "AG-0043 최종 배포 검증 기록 완료",
+      "updatedAt": "2026-06-07T12:31:00+09:00",
+      "next": "사용자 후속 지시 대기"
     },
     {
       "name": "기획 Agent",
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T12:31:00+09:00",
+      "agent": "QA Agent",
+      "level": "complete",
+      "title": "live Pages verification 통과",
+      "body": "공개 페이지 8개 카드, 접수 확인중 없음, 접수중 있음, public/admin/payment 주요 모듈 200, 공개 상태 파일 200과 원문 상태 파일 404를 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T12:31:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0043 deployed_verified",
+      "body": "정원/잔여석 backend, Edge Functions, GitHub Pages frontend가 모두 배포 및 기본 live 검증을 통과했습니다."
+    },
     {
       "time": "2026-06-07T12:27:00+09:00",
       "agent": "개발 Agent",

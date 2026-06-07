@@ -53,8 +53,11 @@ Stop and do not deploy the next layer if any of these happen:
   - first demo order: HTTP 200
   - second demo order on one-seat meetup: HTTP 409 `MEETUP_SOLD_OUT`
   - temporary rows cleaned up: 0 leftovers
-- [ ] GitHub Pages frontend/admin deployed.
-- [ ] Live public/admin/payment pages verified after frontend deploy.
+- [x] GitHub Pages frontend/admin deployed from `main`.
+- [x] Live public/admin/payment pages verified after frontend deploy.
+- [x] Hotfix migration `20260607030000_public_meetup_read_rpc.sql` applied after live browser check found anon direct `meetups` select returned 401.
+- [x] Frontend hotfix deployed: public meetup list now uses `list_public_meetups()`.
+- [x] Live public page verified: `접수 확인중` not present, `접수중` present, 8 meetup cards rendered.
 
 ### 1. Apply Capacity Migrations
 
@@ -116,11 +119,11 @@ Before deploying GitHub Pages:
 
 Only after Supabase and Edge Function checks pass:
 
-- [ ] Push the reviewed branch or merge commit.
-- [ ] Run the GitHub Pages workflow.
-- [ ] Confirm the workflow finishes without Node runtime deprecation warnings.
-- [ ] Open the public page and confirm capacity badges render.
-- [ ] Open `admin.html` and confirm the new `좌석` column and capacity form controls render.
+- [x] Push the reviewed branch or merge commit.
+- [x] Run the GitHub Pages workflow.
+- [x] Confirm the workflow finishes without Node runtime deprecation warnings.
+- [x] Open the public page and confirm capacity badges render.
+- [x] Open `admin.html` and confirm the page/module load. Full authenticated `좌석` column and capacity form controls still require admin login.
 
 ## Post-Deploy Manual Checks
 

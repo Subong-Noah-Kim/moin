@@ -1380,3 +1380,42 @@
   - Commit and push the hotfix to `main`.
   - Let GitHub Pages redeploy.
   - Re-run Playwright live page check and confirm `접수 확인중` is gone.
+
+### AG-0043 - live Pages deployment verification
+
+- Status: `deployed_verified`
+- Branch: `main`
+- Time: 2026-06-07 12:31 KST
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 정원/잔여석 기능과 public read RPC hotfix가 실제 GitHub Pages 배포본에서 정상 작동하는지 확인한다.
+- Non-developer summary:
+  - 실제 공개 URL에서 더 이상 모든 모임이 `접수 확인중`으로 보이지 않습니다.
+  - 공개 페이지는 8개 모임을 불러왔고, 모임 상태는 `접수중`으로 표시됩니다.
+  - 관리자/결제 결과 페이지의 주요 JS 파일도 404 없이 로드됐습니다.
+  - 공개용 Agentic 상태 파일만 노출되고, 원문 내부 상태 파일은 404로 막혀 있습니다.
+- Completed live actions:
+  - Pushed `main` through commit `0263193`.
+  - GitHub Pages workflow run `27081546768` completed successfully.
+  - Playwright public page check:
+    - 8 meetup cards rendered.
+    - `접수 확인중`: not present.
+    - `접수중`: present.
+    - `list_public_meetups`: HTTP 200.
+    - `list_public_meetup_availability`: HTTP 200.
+  - Playwright admin page check:
+    - login page rendered.
+    - admin modules returned HTTP 200.
+  - Playwright payment-result page check:
+    - payment result modules returned HTTP 200.
+  - `PUBLIC_AGENTIC_STATUS.json`: HTTP 200.
+  - `AGENTIC_STATUS.json`: HTTP 404.
+- Verification:
+  - Local `npm test` passed: 42 tests.
+  - GitHub Actions test job passed.
+  - GitHub Pages deploy job passed.
+- Notes:
+  - Authenticated admin form behavior was not manually exercised because no admin credentials were used in this verification pass.
+  - Existing published meetups currently have unlimited capacity (`capacity = null`), so the live user-facing label is `접수중`, not `잔여 N석`.
+- Next:
+  - If desired, log in to admin and set a test meetup capacity to visually confirm `잔여 N석` display in production.
