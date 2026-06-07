@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T12:31:00+09:00",
-  "currentFocus": "live Pages deployment verification 완료",
+  "updatedAt": "2026-06-07T12:44:00+09:00",
+  "currentFocus": "live capacity manual flow check 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,16 +11,16 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0043 deployed_verified"
+    "currentFocus": "AG-0044 verified_live_cleaned_up"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0043 live Pages deployment verification 완료",
-      "updatedAt": "2026-06-07T12:31:00+09:00",
-      "next": "필요 시 admin 로그인 후 잔여석 표시 수동 확인"
+      "currentTask": "AG-0044 live capacity manual flow check 완료",
+      "updatedAt": "2026-06-07T12:44:00+09:00",
+      "next": "사용자 후속 지시 대기"
     },
     {
       "name": "개발 Agent",
@@ -42,16 +42,16 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "live public/admin/payment Playwright verification 통과",
-      "updatedAt": "2026-06-07T12:31:00+09:00",
-      "next": "관리자 인증 흐름은 필요 시 별도 수동 확인"
+      "currentTask": "임시 live 모임으로 잔여석/마감/수동종료/재오픈 검증 완료",
+      "updatedAt": "2026-06-07T12:44:00+09:00",
+      "next": "사용자 후속 지시 대기"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0043 최종 배포 검증 기록 완료",
-      "updatedAt": "2026-06-07T12:31:00+09:00",
+      "currentTask": "AG-0044 live capacity manual flow 기록 완료",
+      "updatedAt": "2026-06-07T12:44:00+09:00",
       "next": "사용자 후속 지시 대기"
     },
     {
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T12:44:00+09:00",
+      "agent": "QA Agent",
+      "level": "complete",
+      "title": "live capacity manual flow 통과",
+      "body": "임시 모임으로 잔여 2석, 잔여 1석, 마감, 초과 주문 409, 신청 종료, 재오픈 잔여 1석을 확인했고 테스트 데이터는 0건으로 정리했습니다."
+    },
+    {
+      "time": "2026-06-07T12:44:00+09:00",
+      "agent": "작업 정리 Agent",
+      "level": "complete",
+      "title": "AG-0044 기록 완료",
+      "body": "관리자 로그인 없이 Supabase 직접 setup/update 방식으로 live 사용자 화면과 Edge Function guard를 검증한 결과를 남겼습니다."
+    },
     {
       "time": "2026-06-07T12:31:00+09:00",
       "agent": "QA Agent",

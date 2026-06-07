@@ -1419,3 +1419,32 @@
   - Existing published meetups currently have unlimited capacity (`capacity = null`), so the live user-facing label is `접수중`, not `잔여 N석`.
 - Next:
   - If desired, log in to admin and set a test meetup capacity to visually confirm `잔여 N석` display in production.
+
+### AG-0044 - live capacity manual flow check
+
+- Status: `verified_live_cleaned_up`
+- Branch: `main`
+- Time: 2026-06-07 12:44 KST
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + QA Agent + 작업 정리 Agent
+- Purpose: 실제 운영 환경에서 정원/잔여석/마감/수동 종료/재오픈 흐름이 사용자 화면에 기대대로 보이는지 확인한다.
+- Non-developer summary:
+  - 임시 테스트 모임을 live에 잠깐 만들고, 공개 페이지에서 잔여석 표시가 실제로 바뀌는지 확인했습니다.
+  - 테스트 주문 2건으로 정원을 채웠을 때 `마감`으로 바뀌고, 추가 주문은 서버에서 막혔습니다.
+  - 운영자가 접수를 닫은 상태도 `신청 종료`로 보였습니다.
+  - 다시 열었을 때 남은 자리 표시가 복구되는 것도 확인했습니다.
+  - 테스트에 사용한 모임과 주문 데이터는 모두 삭제했고, 남은 데이터 0건을 확인했습니다.
+- Live test flow:
+  - Created temporary meetup `__manual_capacity_check__` with `capacity = 2`.
+  - Public page showed `잔여 2석`.
+  - Created demo order 1 through `create-public-submission`; public page showed `잔여 1석`.
+  - Created demo order 2; RPC returned `remaining_spots = 0`, `effective_registration_status = sold_out`, and public page showed `마감`.
+  - Attempted demo order 3; Edge Function returned HTTP 409 with `MEETUP_SOLD_OUT`.
+  - Changed `registration_status = closed`; public page showed `신청 종료`.
+  - Changed `capacity = 3`, `registration_status = open`; public page showed `잔여 1석`.
+  - Deleted temporary meetup/orders/applications/payments.
+  - Confirmed leftovers: 0 rows in `meetups`, `applications`, `orders`, and `payments`.
+  - Final public page check: 8 cards, test meetup gone, `접수 확인중` not present.
+- Notes:
+  - This check used direct Supabase operations for the temporary test setup instead of admin login credentials.
+  - The user-facing behavior and Edge Function guard path were still verified against the live deployed site/functions.

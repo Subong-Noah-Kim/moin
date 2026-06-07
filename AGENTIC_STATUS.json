@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T12:31:00+09:00",
+  "updatedAt": "2026-06-07T12:44:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 0,
     "blocked": 0,
-    "doneLocal": 41,
+    "doneLocal": 42,
     "deployNeeded": 21
   },
   "agents": [
@@ -12,10 +12,10 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0043 live Pages deployment verification 완료",
+      "currentTask": "AG-0044 live capacity manual flow check 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "필요 시 admin 로그인 후 잔여석 표시 수동 확인"
+      "next": "사용자 후속 지시 대기"
     },
     {
       "name": "기획 Agent",
@@ -57,10 +57,10 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "live public/admin/payment Playwright verification 통과",
+      "currentTask": "임시 live 모임으로 잔여석/마감/수동종료/재오픈 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "관리자 인증 흐름은 필요 시 별도 수동 확인"
+      "next": "사용자 후속 지시 대기"
     },
     {
       "name": "보안 Agent",
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0043 최종 배포 검증 기록 완료",
+      "currentTask": "AG-0044 live capacity manual flow 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "사용자 후속 지시 대기"
@@ -1015,6 +1015,30 @@
           "관리자와 결제 결과 페이지의 주요 모듈도 HTTP 200이었습니다.",
           "PUBLIC_AGENTIC_STATUS.json은 HTTP 200, 원문 AGENTIC_STATUS.json은 HTTP 404였습니다.",
           "관리자 인증 후 좌석 컬럼/정원 폼 조작은 이번 자동 검증에서 수행하지 않았습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0044",
+      "title": "live capacity manual flow check",
+      "priority": "P0",
+      "owner": "총괄 디렉터 + QA Agent + 작업 정리 Agent",
+      "status": "verified_live_cleaned_up",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "Wait for user follow-up",
+      "details": {
+        "summary": "실제 운영 환경에서 임시 모임으로 정원/잔여석/마감/수동 종료/재오픈 흐름을 확인했고, 테스트 데이터는 모두 삭제했습니다.",
+        "what": "live Supabase에 임시 테스트 모임을 만들고 공개 페이지와 Edge Function을 통해 좌석 상태가 어떻게 바뀌는지 검증했습니다.",
+        "why": "배포 후 기본 렌더링 검증만으로는 실제 좌석 수가 줄고 마감되는 운영 흐름까지 확인했다고 보기 어렵습니다. 임시 모임으로 실제 사용자 화면과 서버 차단을 함께 확인했습니다.",
+        "developmentDirection": "코드 변경 없이 live 운영 검증만 수행했습니다. 검증 후 meetups, applications, orders, payments에 테스트 데이터가 남지 않는지 확인했습니다.",
+        "notes": [
+          "임시 모임 __manual_capacity_check__를 capacity 2로 만들었습니다.",
+          "공개 페이지에서 잔여 2석, 잔여 1석, 마감, 신청 종료, 다시 잔여 1석 표시를 확인했습니다.",
+          "정원 초과 주문은 create-public-submission Edge Function에서 HTTP 409 MEETUP_SOLD_OUT으로 차단됐습니다.",
+          "테스트 데이터 삭제 후 leftovers는 0건이었습니다.",
+          "최종 공개 페이지는 8개 카드, 테스트 모임 없음, 접수 확인중 없음으로 확인했습니다.",
+          "관리자 로그인 정보는 사용하지 않았고, 테스트 setup/update는 Supabase 직접 작업으로 수행했습니다."
         ]
       }
     }
