@@ -95,7 +95,53 @@ function createMemoryStorage(initial = {}) {
     removeItem: (key) => {
       values.delete(key);
     },
+    dump: () => Object.fromEntries(values),
   };
+}
+
+function createPaymentResultDom() {
+  const elements = new Map();
+  const selectors = [
+    '[data-success-view]',
+    '[data-fail-view]',
+    '[data-success-title]',
+    '[data-success-description]',
+    '[data-confirm-status]',
+    '[data-fail-sync-status]',
+    '[data-order-id]',
+    '[data-amount]',
+    '[data-error-code]',
+    '[data-fail-order-id]',
+    '[data-fail-message]',
+  ];
+
+  selectors.forEach((selector) => {
+    elements.set(selector, {
+      hidden: selector === '[data-success-view]' || selector === '[data-fail-view]',
+      textContent: '',
+      dataset: {},
+    });
+  });
+
+  return {
+    title: 'moin 결제 테스트 결과',
+    querySelector: (selector) => elements.get(selector) || null,
+    get: (selector) => elements.get(selector),
+  };
+}
+
+function snapshotGlobals(names) {
+  return Object.fromEntries(names.map((name) => [name, globalThis[name]]));
+}
+
+function restoreGlobals(snapshot) {
+  Object.entries(snapshot).forEach(([name, value]) => {
+    if (value === undefined) {
+      delete globalThis[name];
+    } else {
+      globalThis[name] = value;
+    }
+  });
 }
 
 test('payment result state helpers format safe display values', () => {
@@ -779,6 +825,73 @@ test('payment result uses paymentKey for confirmation without exposing the raw i
   assert.ok(checkoutTokenIndex >= 0);
   assert.ok(failureCleanIndex > checkoutTokenIndex);
   assert.ok(recordFailureIndex > failureCleanIndex);
+});
+
+test('payment result success callback confirms order and stores only safe browser state', async () => {
+  const globals = snapshotGlobals(['document', 'window', 'sessionStorage', 'localStorage', 'fetch']);
+  const document = createPaymentResultDom();
+  const sessionStorage = createMemoryStorage();
+  const localStorage = createMemoryStorage();
+  const fetchCalls = [];
+  const location = {
+    search: '?result=success&paymentKey=payment_secret_123&orderId=order_123&amount=39000',
+    pathname: '/moin/payment-result.html',
+    hash: '#done',
+  };
+  let replacedUrl = '';
+
+  globalThis.document = document;
+  globalThis.window = {
+    location,
+    history: {
+      replaceState: (_state, _title, url) => {
+        replacedUrl = url;
+        location.search = '';
+      },
+    },
+  };
+  globalThis.sessionStorage = sessionStorage;
+  globalThis.localStorage = localStorage;
+  globalThis.fetch = async (url, options = {}) => {
+    fetchCalls.push({ url, options });
+    return {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ order: { meetup_id: 'meetup-paid' } }),
+    };
+  };
+
+  try {
+    await import(`../payment-result.js?success-flow-test=${Date.now()}`);
+  } finally {
+    restoreGlobals(globals);
+  }
+
+  const [confirmCall] = fetchCalls;
+  const confirmBody = JSON.parse(confirmCall.options.body);
+  const tossAuthSummary = JSON.parse(sessionStorage.getItem('momentclub:toss-last-auth'));
+  const paidMeetups = JSON.parse(localStorage.getItem('momentclub:paid'));
+
+  assert.equal(document.get('[data-success-view]').hidden, false);
+  assert.equal(document.get('[data-fail-view]').hidden, true);
+  assert.equal(document.get('[data-order-id]').textContent, 'order_123');
+  assert.equal(document.get('[data-amount]').textContent, '39,000원');
+  assert.equal(document.get('[data-success-title]').textContent, '테스트 결제 승인이 완료됐어요');
+  assert.equal(document.get('[data-confirm-status]').dataset.status, 'success');
+  assert.match(document.get('[data-confirm-status]').textContent, /결제완료/);
+  assert.equal(replacedUrl, '/moin/payment-result.html#done');
+
+  assert.match(confirmCall.url, /\/functions\/v1\/confirm-toss-payment$/);
+  assert.deepEqual(confirmBody, {
+    paymentKey: 'payment_secret_123',
+    orderId: 'order_123',
+    amount: 39000,
+  });
+  assert.equal(tossAuthSummary.orderId, 'order_123');
+  assert.equal(tossAuthSummary.amount, '39000');
+  assert.ok(tossAuthSummary.receivedAt);
+  assert.equal(Object.prototype.hasOwnProperty.call(tossAuthSummary, 'paymentKey'), false);
+  assert.deepEqual(paidMeetups, ['meetup-paid']);
 });
 
 test('public localStorage sets recover from corrupted saved state', async () => {

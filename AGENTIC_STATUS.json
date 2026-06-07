@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-06-07T11:36:00+09:00",
+  "updatedAt": "2026-06-07T11:45:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 0,
     "blocked": 0,
-    "doneLocal": 36,
+    "doneLocal": 37,
     "deployNeeded": 20
   },
   "agents": [
@@ -12,7 +12,7 @@
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0038 admin status helper 테스트 완료",
+      "currentTask": "AG-0039 payment result success callback test 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "정오 cutoff 전 추가 개발 중지 또는 사용자 지시 대기"
@@ -21,10 +21,10 @@
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "admin status helper 테스트 slice 승인",
+      "currentTask": "payment-result DOM-like test-only slice 승인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "다음 후보는 payment-result DOM-like success test"
+      "next": "정오 이후 다음 DOM-like flow 후보 선택"
     },
     {
       "name": "UX/UI Agent",
@@ -39,7 +39,7 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "admin status helper 범위 검토 완료",
+      "currentTask": "payment-result success callback test 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 test-only 후보 검토"
@@ -48,25 +48,25 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "admin-status.js helper 분리와 admin.js 연결 완료",
+      "currentTask": "payment-result.js 성공 콜백 fake DOM 테스트 추가",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 artifact copy 확인 후 사용자 지시 대기"
+      "next": "정오 cutoff 전 커밋 마감"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "admin status helper 테스트 40개 통과 확인",
+      "currentTask": "payment-result 성공 콜백 테스트 포함 41개 통과 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "payment-result DOM-like success test 후보 대기"
+      "next": "다음 DOM-like 테스트 후보 대기"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "manual paid/demo_paid order transition 차단 유지 확인",
+      "currentTask": "paymentKey 미저장과 safe browser state 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "배포 전 Supabase migration/Edge 순서 재확인"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0038 작업 기록 완료",
+      "currentTask": "AG-0039 작업 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "커밋 후 작업 트리 확인"
@@ -883,7 +883,7 @@
       "priority": "P1",
       "owner": "개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "826eb64",
       "deployNeeded": true,
       "next": "정오 이후 사용자가 원하면 payment-result DOM-like success callback test 진행",
       "details": {
@@ -895,6 +895,30 @@
           "npm test가 40개 모두 통과했습니다.",
           "새 browser module admin-status.js가 배포 artifact에 빠지면 admin.js import가 404가 되므로 workflow copy와 cache-busting source list를 함께 업데이트했습니다.",
           "QA/Review Agent는 다음 후보로 payment-result.js success callback을 fake DOM으로 검증하는 test-only slice를 추천했습니다.",
+          "원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0039",
+      "title": "payment result success callback DOM-like test",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "정오 이후 다음 DOM-like flow 후보 선택",
+      "details": {
+        "summary": "결제 성공 결과 화면의 실제 모듈 흐름을 가짜 DOM으로 불러와 테스트했습니다.",
+        "what": "tests/paymentSecurity.test.js에 fake document/window/fetch/sessionStorage/localStorage를 만들고, payment-result.js를 동적으로 import해서 성공 콜백 흐름을 검증했습니다.",
+        "why": "기존 테스트는 결제 결과 helper와 source text를 주로 확인했습니다. 이번 테스트는 실제 모듈이 성공 화면을 열고, confirm-toss-payment에 올바른 값을 보내고, 주소창과 브라우저 저장소에서 paymentKey를 남기지 않는지 확인합니다.",
+        "developmentDirection": "브라우저 전체 자동화까지 가지 않고, 필요한 selector와 storage만 흉내 내는 test-only 방식으로 첫 DOM-like slice를 추가했습니다.",
+        "notes": [
+          "앱 runtime 코드는 바꾸지 않았습니다.",
+          "실제 Supabase 호출은 global fetch mock으로 막았습니다.",
+          "성공 응답의 order.meetup_id가 momentclub:paid에 저장되는지 확인합니다.",
+          "sessionStorage의 momentclub:toss-last-auth에는 orderId, amount, receivedAt만 저장되고 paymentKey는 저장되지 않습니다.",
+          "npm test 41개가 모두 통과했습니다.",
           "원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다."
         ]
       }

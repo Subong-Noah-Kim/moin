@@ -1246,3 +1246,33 @@
 - Next:
   - 정오 이후 사용자가 계속 개발을 원하면 `payment-result.js` success callback DOM-like test를 test-only slice로 진행합니다.
   - 배포를 고르면 `AGENTIC_DEPLOY_HANDOFF.md`와 `supabase/capacity-rollout-checklist.md` 순서를 먼저 확인합니다.
+
+### AG-0039 - payment result success callback DOM-like test
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 결제 결과 성공 화면이 실제 모듈 흐름에서 안전하게 동작하는지 확인한다.
+- Subagents:
+  - QA/Review Agent: Pasteur recommendation from previous cycle
+- Changed files:
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+- Notes:
+  - fake document/window/fetch/sessionStorage/localStorage를 구성해 `payment-result.js`를 실제로 import했습니다.
+  - 성공 URL query를 넣고, 성공 화면 표시, 주문번호/금액 렌더링, confirm-toss-payment 요청 body, URL cleanup을 확인했습니다.
+  - sessionStorage의 `momentclub:toss-last-auth`에는 `orderId`, `amount`, `receivedAt`만 저장되고 `paymentKey`는 저장되지 않는지 확인했습니다.
+  - 성공 응답의 `order.meetup_id`가 `momentclub:paid`에 저장되는지도 확인했습니다.
+  - 앱 runtime 코드는 바꾸지 않은 test-only 작업입니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - `node --check tests/paymentSecurity.test.js` passed.
+  - `npm test` passed: 41 tests.
+- Next:
+  - 정오 이후 계속 개발한다면 payment-result 실패/cancel path DOM-like test 또는 public drawer/checkout flow test를 후보로 봅니다.
+  - 배포를 고르면 `AGENTIC_DEPLOY_HANDOFF.md`와 `supabase/capacity-rollout-checklist.md` 순서를 먼저 확인합니다.

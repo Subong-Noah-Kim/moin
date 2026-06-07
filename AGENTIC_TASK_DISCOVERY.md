@@ -994,3 +994,31 @@
   - QA/Review Agent는 payment-result DOM-like test를 추천했지만, 남은 시간이 짧아 다음 후보로 보류했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 40개가 모두 통과했다.
+
+## Round 27 - 2026-06-07 11:45 KST
+
+### 요약
+
+이번 사이클은 결제 결과 화면의 성공 콜백을 실제 모듈 수준에서 테스트했습니다. 쉽게 말하면 토스 테스트 결제 성공 URL이 들어왔을 때, 화면이 성공 상태로 바뀌고 서버 승인 요청이 올바르게 나가며, 결제 인증값은 주소창과 브라우저 저장소에 남지 않는지 확인했습니다.
+
+### TD-038 - payment result success callback DOM-like test
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, QA/Review, Security, Ops Log
+- What: fake document/window/fetch/sessionStorage/localStorage를 구성하고 `payment-result.js` 성공 흐름을 동적으로 import해 검증한다.
+- Why: 기존 테스트는 helper와 source contract 중심이었습니다. 결제 결과 화면은 사용자가 결제 승인 여부를 확인하는 민감한 화면이므로, 실제 모듈 side effect를 한 단계 더 직접 확인할 필요가 있습니다.
+- First development unit:
+  - `tests/paymentSecurity.test.js`에 fake DOM/storage helper를 추가한다.
+  - 성공 query string으로 `payment-result.js`를 동적으로 import한다.
+  - `confirm-toss-payment` 요청 body가 paymentKey, orderId, numeric amount를 담는지 확인한다.
+  - URL cleanup, success status rendering, safe auth summary, `momentclub:paid` 저장을 확인한다.
+- Development direction: 브라우저 전체 자동화 전 단계로, 필요한 selector와 storage만 흉내 내는 test-only 방식을 유지했습니다.
+- Risks:
+  - fake DOM은 layout이나 실제 브라우저 이벤트까지 보장하지 않습니다.
+  - 이 테스트는 success callback 한 경로만 다룹니다. 실패/cancel 흐름의 DOM-like 테스트는 후속 후보입니다.
+- Notes:
+  - 실제 Supabase 호출은 `globalThis.fetch` mock으로 막았습니다.
+  - 앱 runtime 코드는 바꾸지 않았습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 41개가 모두 통과했다.
