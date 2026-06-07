@@ -931,3 +931,49 @@
 - Next:
   - `payment-result-state.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
   - 다음 개발 조각은 관리자 모임 저장 form payload, 공개 drawer 신청/결제 guard, 또는 payment-result DOM flow 중 하나를 좁히는 작업입니다.
+
+### AG-0031 - admin meetup form payload behavior test helper
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 관리자 모임 저장 폼이 DB로 보내는 값을 실제 입력값으로 테스트할 수 있게 한다.
+- Subagents:
+  - Planning/Review Agent: Ampere
+  - QA Agent: Nietzsche
+  - Security/Review Agent: Mencius
+- Changed files:
+  - `admin-meetup-form.js`
+  - `admin.js`
+  - `admin-availability.js`
+  - `supabase-client.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 관리자 모임 저장 payload 생성 규칙을 `admin-meetup-form.js`로 분리했습니다.
+  - `admin.js`는 FormData 생성, 이미지 업로드, Supabase 저장, 화면 상태 업데이트를 계속 담당합니다.
+  - 가격 라벨, 자동 ID, 정원, 접수 상태, 마감 이유, 태그, 일정, 공개 여부를 직접 테스트했습니다.
+  - QA Agent 제안에 따라 plain object뿐 아니라 실제 `FormData` 입력도 테스트했습니다.
+  - Security/Review Agent가 지적한 대표 이미지 URL 검증을 반영해 `http:`/`https:`가 아닌 값은 저장 payload와 Supabase client sanitize 단계에서 비웁니다.
+  - `AGENTIC_STATUS.json` raw artifact 공개 범위는 이번 작업과 분리해 follow-up task로 기록했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 admin meetup payload helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 create/edit payload parity, price label, ID 생성, checkbox handling, browser import, Pages copy를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 derived availability field write, `closed_at` client write, cache-busting, image URL handling을 검토했습니다. image URL follow-up은 반영했고 public status artifact는 별도 보안 task로 기록했습니다.
+  - `node --check admin.js` passed.
+  - `node --check admin-availability.js` passed.
+  - `node --check admin-meetup-form.js` passed.
+  - `node --check supabase-client.js` passed.
+  - `git diff --check` passed.
+  - Local dev server served `admin-meetup-form.js` and `admin.html` with HTTP 200.
+  - `npm test` passed: 38 tests.
+- Next:
+  - `admin-meetup-form.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
+  - 다음 개발 후보는 `AGENTIC_STATUS.json` 공개 범위 결정, 공개 drawer 신청/결제 guard 테스트, 또는 payment-result DOM flow 테스트입니다.

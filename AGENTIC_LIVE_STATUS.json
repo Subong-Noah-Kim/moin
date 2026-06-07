@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T10:15:00+09:00",
-  "currentFocus": "payment result state helper 로컬 완료",
+  "updatedAt": "2026-06-07T10:27:00+09:00",
+  "currentFocus": "admin meetup form payload helper 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,23 +11,23 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0030 done_local"
+    "currentFocus": "AG-0031 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0030 payment-result helper 커밋 준비",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "currentTask": "AG-0031 admin meetup form helper 커밋 준비",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "최종 검증 후 로컬 커밋"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "payment-result-state.js helper 분리 및 payment-result.js 연결 완료",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "currentTask": "admin-meetup-form.js helper 분리 및 admin.js 연결 완료",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "다음 flow test 후보 대기"
     },
     {
@@ -35,47 +35,47 @@
       "role": "UX/UI",
       "status": "idle",
       "currentTask": "대기",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "필요 시 UI 테스트 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "payment result helper QA 검토 완료, 이슈 없음",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "currentTask": "admin meetup form helper QA 검토 완료, 이슈 없음",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "다음 flow test QA 후보 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0030 검토 결과 기록 완료",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "currentTask": "AG-0031 검토 결과 기록 완료",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "커밋 후 다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "payment-result state behavior test slice 승인",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "currentTask": "admin meetup form payload test slice 승인",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "DOM/flow 테스트 후보 분해"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "payment-result helper slice 검토 완료",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "currentTask": "admin meetup form helper slice 검토 완료",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "다음 후보 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "paymentKey 비노출/URL 정리/새 모듈 보안 검토 완료",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "currentTask": "image_url 검증 반영, AGENTIC_STATUS public artifact follow-up 제기",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "다음 flow test 보안 검토"
     },
     {
@@ -83,7 +83,7 @@
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,46 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T10:15:00+09:00",
+      "updatedAt": "2026-06-07T10:27:00+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T10:27:00+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "admin meetup form QA 이슈 없음",
+      "body": "create/edit payload, price label, ID 생성, 공개 체크박스, FormData 입력, Pages copy를 검토했습니다."
+    },
+    {
+      "time": "2026-06-07T10:27:00+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "image_url 검증 반영",
+      "body": "http/https가 아닌 대표 이미지 URL은 admin helper와 supabase-client sanitize 단계에서 비우도록 반영했습니다."
+    },
+    {
+      "time": "2026-06-07T10:27:00+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "AGENTIC_STATUS 공개 범위 follow-up",
+      "body": "AGENTIC_STATUS.json은 토큰은 없지만 Pages에 복사되면 직접 접근 가능하므로 redacted 배포 또는 제외 여부를 별도 Task로 기록했습니다."
+    },
+    {
+      "time": "2026-06-07T10:27:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "admin-meetup-form.js helper 분리",
+      "body": "관리자 모임 저장 payload 생성과 대표 이미지 URL 검증을 순수 helper로 분리하고 직접 테스트했습니다."
+    },
+    {
+      "time": "2026-06-07T10:27:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0031 검토 완료",
+      "body": "npm test 38개와 로컬 서버 HTTP 200 확인까지 통과했습니다. 최종 검증 후 로컬 커밋합니다."
+    },
     {
       "time": "2026-06-07T10:15:00+09:00",
       "agent": "QA Agent",

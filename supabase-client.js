@@ -115,6 +115,21 @@ function normalizeAdminMeetupCapacity(value) {
   return capacity;
 }
 
+function normalizeAdminMeetupImageUrl(value) {
+  const trimmed = String(value || '').trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? trimmed : '';
+  } catch {
+    return '';
+  }
+}
+
 function sanitizeAdminMeetupPayload(meetup, { includeId = false } = {}) {
   const payload = {};
   const allowedFields = includeId
@@ -129,6 +144,10 @@ function sanitizeAdminMeetupPayload(meetup, { includeId = false } = {}) {
 
   if (Object.prototype.hasOwnProperty.call(payload, 'capacity')) {
     payload.capacity = normalizeAdminMeetupCapacity(payload.capacity);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'image_url')) {
+    payload.image_url = normalizeAdminMeetupImageUrl(payload.image_url);
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, 'registration_status')

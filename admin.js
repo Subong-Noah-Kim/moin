@@ -16,8 +16,10 @@ import {
   uploadMeetupImage,
 } from './supabase-client.js?v=__ASSET_VERSION__';
 import {
-  getCapacityPayloadValue,
-  getRegistrationStatusPayloadValue,
+  createAdminMeetupPayload,
+  normalizeAdminMeetupPriceLabel,
+} from './admin-meetup-form.js?v=__ASSET_VERSION__';
+import {
   getSeatBreakdownText,
   getSeatStatusClass,
   getSeatStatusLabel,
@@ -141,20 +143,6 @@ function formatDate(value) {
 
 function formatMoney(value) {
   return `${moneyFormatter.format(Number(value || 0))}원`;
-}
-
-function normalizePriceLabel(priceLabel, amount) {
-  const trimmed = String(priceLabel || '').trim();
-
-  if (!trimmed) {
-    return formatMoney(amount);
-  }
-
-  if (/^\d+$/.test(trimmed)) {
-    return formatMoney(trimmed);
-  }
-
-  return trimmed;
 }
 
 function getTypeLabel(type) {
@@ -452,25 +440,6 @@ function handleTaskItemKeydown(event) {
   toggleTaskDetail(taskItem);
 }
 
-function splitList(value) {
-  return String(value || '')
-    .split(/\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function createMeetupId(title) {
-  const slug = String(title || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 42);
-
-  return `${slug || 'meetup'}-${Date.now().toString(36)}`;
-}
-
 function getAuthParams() {
   const params = new URLSearchParams(window.location.search);
   const hash = window.location.hash.replace(/^#/, '');
@@ -525,37 +494,7 @@ function clearAuthParamsFromUrl() {
 
 function getMeetupFormPayload(includeId) {
   const formData = new FormData(meetupForm);
-  const priceAmount = Number(formData.get('price_amount') || 0);
-  const title = String(formData.get('title') || '').trim();
-  const registrationStatus = getRegistrationStatusPayloadValue(formData.get('registration_status'));
-  const closeReason = String(formData.get('close_reason') || '').trim();
-  const payload = {
-    type: String(formData.get('type') || 'regular'),
-    category: String(formData.get('category') || '').trim(),
-    title,
-    description: String(formData.get('description') || '').trim(),
-    host_name: String(formData.get('host_name') || '').trim(),
-    host_role: String(formData.get('host_role') || '').trim(),
-    status_label: String(formData.get('status_label') || '').trim(),
-    date_label: String(formData.get('date_label') || '').trim(),
-    time_label: String(formData.get('time_label') || '').trim(),
-    location: String(formData.get('location') || '').trim(),
-    price_amount: priceAmount,
-    price_label: normalizePriceLabel(formData.get('price_label'), priceAmount),
-    capacity: getCapacityPayloadValue(formData.get('capacity')),
-    registration_status: registrationStatus,
-    close_reason: registrationStatus === 'closed' && closeReason ? closeReason : null,
-    tags: splitList(formData.get('tags')),
-    image_url: String(formData.get('image_url') || '').trim(),
-    schedule: splitList(formData.get('schedule')),
-    is_published: formData.has('is_published'),
-  };
-
-  if (includeId) {
-    payload.id = String(formData.get('id') || '').trim() || createMeetupId(title);
-  }
-
-  return payload;
+  return createAdminMeetupPayload(formData, { includeId });
 }
 
 function syncRegistrationStatusFields({ clearReason = false } = {}) {
@@ -829,7 +768,7 @@ function renderMeetups() {
             <td data-label="분류">${escapeHtml(meetup.category)} · ${escapeHtml(getTypeLabel(meetup.type))}</td>
             <td data-label="일정">${escapeHtml(meetup.date_label)}<br /><span class="muted">${escapeHtml(meetup.time_label)}</span></td>
             <td data-label="장소">${escapeHtml(meetup.location)}</td>
-            <td data-label="가격">${escapeHtml(normalizePriceLabel(meetup.price_label, meetup.price_amount))}</td>
+            <td data-label="가격">${escapeHtml(normalizeAdminMeetupPriceLabel(meetup.price_label, meetup.price_amount))}</td>
             <td data-label="좌석">${renderSeatSummary(meetup)}</td>
             <td data-label="상태">
               <span class="pill ${meetup.is_published ? 'is-published' : ''}">

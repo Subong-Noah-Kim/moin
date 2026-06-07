@@ -7,26 +7,6 @@ function normalizeOptionalInteger(value) {
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 
-export function getCapacityPayloadValue(value) {
-  const trimmed = String(value ?? '').trim();
-
-  if (!trimmed) {
-    return null;
-  }
-
-  const capacity = Number(trimmed);
-
-  if (!Number.isInteger(capacity) || capacity <= 0) {
-    throw new Error('정원은 비워두거나 1명 이상의 정수로 입력해주세요.');
-  }
-
-  return capacity;
-}
-
-export function getRegistrationStatusPayloadValue(value) {
-  return value === 'closed' ? 'closed' : 'open';
-}
-
 function normalizeAdminAvailability(row) {
   return {
     meetup_id: String(row.meetup_id || ''),

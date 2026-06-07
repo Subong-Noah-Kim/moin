@@ -6,9 +6,10 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
 2. Continue behavior-oriented frontend tests for broader DOM/flow slices after public/admin capacity helper coverage.
-3. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
-4. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
-5. Revisit optional live regions for important loading/error states after operational rollout.
+3. Decide whether `AGENTIC_STATUS.json` should be redacted or excluded before the next public GitHub Pages deploy.
+4. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
+5. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
+6. Revisit optional live regions for important loading/error states after operational rollout.
 
 ## P0 - Before Real Payment Use
 
@@ -74,6 +75,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Files: `supabase-client.js`, `admin.js`, `admin.html`, `README.md`
   - Done when: the initial admin load has accurate status text, paid orders can be reconciled against payment rows or an explicit payment-detail view, and outdated "before real payment" copy is removed.
   - Status: admin overview no longer emits stale pre-payment warnings, order loading fetches `payments` alongside `orders`, the order table shows a payment-record column, and tests verify the reconciliation path.
+
+- [ ] Decide public exposure policy for Agentic status artifacts
+  - Problem: `AGENTIC_STATUS.json` is copied into the GitHub Pages artifact, so the admin UI can load it after login, but the raw JSON can also be requested directly by URL. It currently avoids secrets, but still contains branch, task, rollout, and operational notes.
+  - Files: `.github/workflows/deploy-pages.yml`, `admin.js`, `AGENTIC_STATUS.json`, `AGENTIC_LIVE_STATUS.json`, `tests/paymentSecurity.test.js`
+  - Done when: the project intentionally chooses either a redacted public status JSON, no public status artifact, or an authenticated status source; tests should match that decision.
+  - Status: discovered by Security Agent during AG-0031 and recorded as a follow-up. Do not treat client-side admin tab hiding as access control for the raw static JSON.
 
 - [x] Add public submission abuse controls
   - Problem: anonymous visitors can insert applications and valid demo/pending orders directly through public Supabase policies, so a public launch can be spammed even though payment amount tampering is blocked.
@@ -151,13 +158,13 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Problem: current tests cover selected payment, rendering, accessibility, and admin assertions mostly through source-text regex checks; shipped flows still need broader behavior coverage.
   - Files: `tests/`, `package.json`
   - Done when: tests exercise exported helpers or DOM-like behavior for escaping, numeric payment amount selection, Toss SDK load handling, result-page state handling, cache version consistency, public/admin capacity state rendering, and admin status rendering.
-  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, and payment button text. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Payment-result state behavior now has a pure helper slice in `payment-result-state.js`, with direct tests for amount display, confirmation error messages, failure status labels, and safe Toss auth summary storage. Continue with broader DOM/browser tests only after choosing a concrete flow.
+  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, and payment button text. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Payment-result state behavior now has a pure helper slice in `payment-result-state.js`, with direct tests for amount display, confirmation error messages, failure status labels, and safe Toss auth summary storage. Admin meetup form payload behavior now has a pure helper slice in `admin-meetup-form.js`, with direct tests for create/edit payloads, price labels, generated IDs, capacity, close reasons, tags/schedule, FormData checkbox behavior, and safe image URL handling. Continue with broader DOM/browser tests only after choosing a concrete flow.
 
 - [ ] Split large frontend modules into testable slices
   - Problem: `main.js`, `admin.js`, `supabase-client.js`, and CSS files are large and difficult to test safely.
   - Files: `main.js`, `admin.js`, `supabase-client.js`, `styles.css`, `admin.css`
   - Done when: shared helpers and payment/rendering logic can be imported and tested without loading full pages.
-  - Status: started with `public-availability.js`, `admin-availability.js`, and `payment-result-state.js`; keep future slices small and avoid moving DOM-heavy code until a browser/jsdom test harness is chosen.
+  - Status: started with `public-availability.js`, `admin-availability.js`, `payment-result-state.js`, and `admin-meetup-form.js`; keep future slices small and avoid moving DOM-heavy code until a browser/jsdom test harness is chosen.
 
 - [x] Lazy-load repeated dynamic images
   - Problem: repeated meetup/event/recommendation images are eager-loaded.

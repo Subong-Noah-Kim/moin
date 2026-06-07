@@ -745,3 +745,36 @@
   - 로컬 개발 서버에서 `payment-result-state.js`와 `payment-result.html`이 HTTP 200으로 제공되는 것을 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 37개가 모두 통과했다.
+
+## Round 19 - 2026-06-07 10:27 KST
+
+### 요약
+
+이번 사이클은 관리자 모임 저장 폼이 실제로 어떤 값을 DB 저장 요청으로 만드는지 테스트할 수 있게 만든 작업입니다. 쉽게 말하면, 운영자가 모임 제목, 가격, 정원, 마감 이유, 태그, 일정, 공개 여부를 입력했을 때 저장 payload가 기대한 모양인지 작은 helper에 값을 넣어 직접 확인합니다. 추가로 대표 이미지 URL은 `http`/`https`만 저장되도록 좁혔습니다.
+
+### TD-030 - admin meetup form payload behavior test helper
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: 관리자 모임 저장 payload 생성을 순수 helper로 분리하고 create/edit 입력, 가격 라벨, 자동 ID, 정원, 마감 이유, 태그/일정, 공개 체크박스, 대표 이미지 URL을 직접 테스트한다.
+- Why: 관리자 저장 payload가 틀리면 공개 페이지의 가격, 좌석, 접수 상태가 틀릴 수 있습니다. 화면 전체를 띄우기 전에도 저장 규칙만 빠르게 검증할 수 있어야 합니다.
+- First development unit:
+  - `admin-meetup-form.js`를 추가해 `createAdminMeetupPayload`, `createAdminMeetupId`, `normalizeAdminMeetupPriceLabel`, `splitAdminMeetupList`, `getCapacityPayloadValue`, `getRegistrationStatusPayloadValue`, `getAdminMeetupImageUrlPayloadValue`를 export한다.
+  - `admin.js`는 새 helper를 import하고, 이미지 업로드와 Supabase 저장 흐름은 유지한다.
+  - `admin-availability.js`에서는 좌석 availability 표시 helper만 유지한다.
+  - `supabase-client.js`의 admin meetup sanitize 단계에서도 대표 이미지 URL을 `http:`/`https:`로 제한한다.
+  - GitHub Pages workflow가 새 helper 파일을 `dist`에 복사하게 한다.
+  - `tests/paymentSecurity.test.js`가 plain object와 `FormData` 입력을 직접 검증한다.
+- Development direction: 다음 작업은 public static `AGENTIC_STATUS.json` 공개 범위 결정 또는 더 넓은 DOM/flow 테스트 후보 중 하나입니다.
+- Risks:
+  - 새 browser module이므로 Pages artifact 복사 누락이 가장 큰 배포형 위험입니다. 이번 사이클에서 workflow copy와 cache-busting 테스트를 추가했습니다.
+  - 이번 helper는 payload 변환만 다룹니다. 실제 이미지 업로드, Supabase 저장 성공/실패, 폼 disabled 상태는 아직 DOM/browser flow 테스트 후보입니다.
+  - `AGENTIC_STATUS.json`은 민감 토큰은 없지만 Pages에 복사되면 직접 URL로 접근 가능합니다. 이번 사이클에서는 별도 보안 follow-up으로 기록했습니다.
+- Notes:
+  - Planning/Review Agent가 admin meetup payload helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 create/edit parity, price label, ID 생성, checkbox handling, browser import, Pages copy를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 image URL write validation follow-up을 제기했고, helper와 Supabase client sanitize 단계에 반영했습니다.
+  - 로컬 개발 서버에서 `admin-meetup-form.js`와 `admin.html`이 HTTP 200으로 제공되는 것을 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 38개가 모두 통과했다.

@@ -3,14 +3,21 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  getCapacityPayloadValue,
-  getRegistrationStatusPayloadValue,
   getSeatBreakdownText,
   getSeatStatusClass,
   getSeatStatusLabel,
   getSeatSummaryText,
   mergeAdminMeetupAvailability,
 } from '../admin-availability.js';
+import {
+  createAdminMeetupId,
+  createAdminMeetupPayload,
+  getAdminMeetupImageUrlPayloadValue,
+  getCapacityPayloadValue,
+  getRegistrationStatusPayloadValue,
+  normalizeAdminMeetupPriceLabel,
+  splitAdminMeetupList,
+} from '../admin-meetup-form.js';
 import {
   getPaymentButtonTextForMeetup,
   getPublicStatusClass,
@@ -32,6 +39,7 @@ const cacheBustedSourceFiles = [
   '../index.html',
   '../admin.html',
   '../admin-availability.js',
+  '../admin-meetup-form.js',
   '../payment-result.html',
   '../main.js',
   '../admin.js',
@@ -289,6 +297,136 @@ test('admin capacity payload helpers normalize operator input', () => {
   assert.equal(getRegistrationStatusPayloadValue('anything-else'), 'open');
   assert.throws(() => getCapacityPayloadValue('0'), /정원은 비워두거나 1명 이상의 정수/);
   assert.throws(() => getCapacityPayloadValue('2.5'), /정원은 비워두거나 1명 이상의 정수/);
+});
+
+test('admin meetup form helpers build safe create and update payloads', () => {
+  assert.equal(normalizeAdminMeetupPriceLabel('', 39000), '39,000원');
+  assert.equal(normalizeAdminMeetupPriceLabel('49000', 0), '49,000원');
+  assert.equal(normalizeAdminMeetupPriceLabel('월 2회 멤버십', 39000), '월 2회 멤버십');
+  assert.deepEqual(splitAdminMeetupList('독서, 회고\n네트워킹'), ['독서', '회고', '네트워킹']);
+  assert.equal(createAdminMeetupId('Sunday Club!', 46655), 'sunday-club-zzz');
+  assert.equal(createAdminMeetupId('한글 제목', () => 36), 'meetup-10');
+  assert.equal(getAdminMeetupImageUrlPayloadValue(' https://example.com/cover.jpg '), 'https://example.com/cover.jpg');
+  assert.equal(getAdminMeetupImageUrlPayloadValue('http://example.com/cover.jpg'), 'http://example.com/cover.jpg');
+  assert.equal(getAdminMeetupImageUrlPayloadValue('javascript:alert(1)'), '');
+  assert.equal(getAdminMeetupImageUrlPayloadValue('data:image/svg+xml;base64,PHN2Zy8+'), '');
+  assert.equal(getAdminMeetupImageUrlPayloadValue('not a url'), '');
+
+  assert.deepEqual(
+    createAdminMeetupPayload({
+      id: '',
+      type: 'social',
+      category: ' 커뮤니티 ',
+      title: ' Sunday Club ',
+      description: ' 같이 읽어요 ',
+      host_name: ' Noah ',
+      host_role: ' host ',
+      status_label: ' NEW ',
+      date_label: ' 6월 20일 ',
+      time_label: ' 오후 2시 ',
+      location: ' 서울 ',
+      price_amount: '39000',
+      price_label: '',
+      capacity: '12',
+      registration_status: 'closed',
+      close_reason: ' 정원 확인 ',
+      tags: '독서, 회고\n네트워킹',
+      image_url: ' https://example.com/cover.jpg ',
+      schedule: '오프닝\n대화',
+      is_published: 'on',
+    }, { includeId: true, timestamp: 46655 }),
+    {
+      id: 'sunday-club-zzz',
+      type: 'social',
+      category: '커뮤니티',
+      title: 'Sunday Club',
+      description: '같이 읽어요',
+      host_name: 'Noah',
+      host_role: 'host',
+      status_label: 'NEW',
+      date_label: '6월 20일',
+      time_label: '오후 2시',
+      location: '서울',
+      price_amount: 39000,
+      price_label: '39,000원',
+      capacity: 12,
+      registration_status: 'closed',
+      close_reason: '정원 확인',
+      tags: ['독서', '회고', '네트워킹'],
+      image_url: 'https://example.com/cover.jpg',
+      schedule: ['오프닝', '대화'],
+      is_published: true,
+    },
+  );
+
+  assert.deepEqual(
+    createAdminMeetupPayload({
+      id: 'existing-id',
+      title: 'Updated',
+      price_amount: '0',
+      price_label: '무료',
+      capacity: '',
+      registration_status: 'sold_out',
+      close_reason: '남으면 안 됨',
+      tags: '',
+      schedule: '',
+      image_url: '',
+    }),
+    {
+      type: 'regular',
+      category: '',
+      title: 'Updated',
+      description: '',
+      host_name: '',
+      host_role: '',
+      status_label: '',
+      date_label: '',
+      time_label: '',
+      location: '',
+      price_amount: 0,
+      price_label: '무료',
+      capacity: null,
+      registration_status: 'open',
+      close_reason: null,
+      tags: [],
+      image_url: '',
+      schedule: [],
+      is_published: false,
+    },
+  );
+
+  const browserLikeFormData = new FormData();
+  browserLikeFormData.set('title', 'Cinema Night');
+  browserLikeFormData.set('price_amount', '49000');
+  browserLikeFormData.set('capacity', '4');
+  browserLikeFormData.set('registration_status', 'open');
+  browserLikeFormData.set('is_published', 'on');
+
+  assert.deepEqual(
+    createAdminMeetupPayload(browserLikeFormData, { includeId: true, timestamp: 36 }),
+    {
+      id: 'cinema-night-10',
+      type: 'regular',
+      category: '',
+      title: 'Cinema Night',
+      description: '',
+      host_name: '',
+      host_role: '',
+      status_label: '',
+      date_label: '',
+      time_label: '',
+      location: '',
+      price_amount: 49000,
+      price_label: '49,000원',
+      capacity: 4,
+      registration_status: 'open',
+      close_reason: null,
+      tags: [],
+      image_url: '',
+      schedule: [],
+      is_published: true,
+    },
+  );
 });
 
 test('admin availability helpers render seat summaries from structured rows', () => {
@@ -556,6 +694,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
   assert.match(workflow, /cp AGENTIC_STATUS\.json dist\//);
   assert.match(workflow, /cp admin-availability\.js dist\//);
+  assert.match(workflow, /cp admin-meetup-form\.js dist\//);
   assert.match(workflow, /cp payment-result-state\.js dist\//);
   assert.match(workflow, /cp public-availability\.js dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
@@ -1120,11 +1259,12 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
 });
 
 test('admin capacity UI uses admin RPC and strips derived availability fields', async () => {
-  const [supabaseClient, adminHtml, adminScript, adminAvailabilityModule, adminStyles] = await Promise.all([
+  const [supabaseClient, adminHtml, adminScript, adminAvailabilityModule, adminFormModule, adminStyles] = await Promise.all([
     readProjectFile('../supabase-client.js'),
     readProjectFile('../admin.html'),
     readProjectFile('../admin.js'),
     readProjectFile('../admin-availability.js'),
+    readProjectFile('../admin-meetup-form.js'),
     readProjectFile('../admin.css'),
   ]);
   const operationalLoad = supabaseClient.slice(
@@ -1145,6 +1285,9 @@ test('admin capacity UI uses admin RPC and strips derived availability fields', 
   assert.match(sanitizeBlock, /'registration_status'/);
   assert.match(sanitizeBlock, /'close_reason'/);
   assert.match(sanitizeBlock, /normalizeAdminMeetupCapacity/);
+  assert.match(sanitizeBlock, /normalizeAdminMeetupImageUrl/);
+  assert.match(sanitizeBlock, /payload\.image_url = normalizeAdminMeetupImageUrl\(payload\.image_url\)/);
+  assert.match(supabaseClient, /url\.protocol === 'http:' \|\| url\.protocol === 'https:' \? trimmed : ''/);
   assert.match(sanitizeBlock, /registration_status'[\s\S]*\['open', 'closed'\]\.includes/);
   assert.doesNotMatch(sanitizeBlock, /remaining_spots|effective_registration_status|paid_order_count|pending_order_count|active_order_count|can_register|closed_at/);
   assert.match(supabaseClient, /sanitizeAdminMeetupPayload\(meetup, \{ includeId: true \}\)/);
@@ -1157,6 +1300,7 @@ test('admin capacity UI uses admin RPC and strips derived availability fields', 
   assert.doesNotMatch(adminHtml, /name="remaining_spots"|name="effective_registration_status"|name="active_order_count"|name="can_register"|name="closed_at"/);
 
   assert.match(adminScript, /from '\.\/admin-availability\.js\?v=__ASSET_VERSION__'/);
+  assert.match(adminScript, /from '\.\/admin-meetup-form\.js\?v=__ASSET_VERSION__'/);
   assert.match(adminScript, /mergeAdminMeetupAvailability,/);
   assert.match(adminScript, /getSeatStatusLabel,/);
   assert.match(adminScript, /getSeatSummaryText,/);
@@ -1165,11 +1309,13 @@ test('admin capacity UI uses admin RPC and strips derived availability fields', 
   assert.match(adminAvailabilityModule, /availability_known: false/);
   assert.match(adminAvailabilityModule, /export function getSeatStatusLabel\(meetup\)/);
   assert.match(adminAvailabilityModule, /export function getSeatSummaryText\(meetup\)/);
+  assert.match(adminFormModule, /export function createAdminMeetupPayload\(source/);
+  assert.match(adminFormModule, /getCapacityPayloadValue\(getSourceValue\(source, 'capacity'\)\)/);
+  assert.match(adminFormModule, /getRegistrationStatusPayloadValue\(getSourceValue\(source, 'registration_status'\)\)/);
   assert.match(adminScript, /function renderSeatSummary\(meetup\)/);
   assert.match(adminScript, /<td data-label="좌석">\$\{renderSeatSummary\(meetup\)\}<\/td>/);
-  assert.match(adminScript, /getCapacityPayloadValue\(formData\.get\('capacity'\)\)/);
-  assert.match(adminScript, /getRegistrationStatusPayloadValue\(formData\.get\('registration_status'\)\)/);
-  assert.match(adminScript, /registrationStatus === 'closed' && closeReason \? closeReason : null/);
+  assert.match(adminScript, /return createAdminMeetupPayload\(formData, \{ includeId \}\)/);
+  assert.match(adminFormModule, /registrationStatus === 'closed' && closeReason \? closeReason : null/);
 
   assert.match(adminStyles, /\.capacity-controls/);
   assert.match(adminStyles, /\.seat-summary/);

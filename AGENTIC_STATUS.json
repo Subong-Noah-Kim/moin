@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-06-07T10:15:00+09:00",
+  "updatedAt": "2026-06-07T10:27:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 28,
-    "deployNeeded": 13
+    "doneLocal": 29,
+    "deployNeeded": 14
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0030 payment-result helper 커밋 준비",
+      "currentTask": "AG-0031 admin meetup form helper 커밋 준비",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "최종 검증 후 로컬 커밋"
@@ -21,7 +21,7 @@
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "payment-result state behavior test slice 승인",
+      "currentTask": "admin meetup form payload test slice 승인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "DOM/flow 테스트 후보 분해"
@@ -39,7 +39,7 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "payment-result helper slice 검토 완료",
+      "currentTask": "admin meetup form helper slice 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 후보 검토"
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "payment-result-state.js helper 분리 및 payment-result.js 연결 완료",
+      "currentTask": "admin-meetup-form.js helper 분리 및 admin.js 연결 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 후보 대기"
@@ -57,7 +57,7 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "payment result helper QA 검토 완료, 이슈 없음",
+      "currentTask": "admin meetup form helper QA 검토 완료, 이슈 없음",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test QA 후보 검토"
@@ -66,7 +66,7 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "paymentKey 비노출/URL 정리/새 모듈 보안 검토 완료",
+      "currentTask": "image_url 검증 반영, AGENTIC_STATUS public artifact follow-up 제기",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 보안 검토"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0030 검토 결과 기록 완료",
+      "currentTask": "AG-0031 검토 결과 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "커밋 후 다음 Task 기록 대기"
@@ -690,7 +690,7 @@
       "priority": "P1",
       "owner": "개발 Agent + QA Agent + 보안 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "c1fa022",
       "deployNeeded": true,
       "next": "다음 DOM/flow 테스트 후보 선택",
       "details": {
@@ -705,6 +705,52 @@
           "로컬 개발 서버에서 payment-result-state.js와 payment-result.html이 HTTP 200으로 제공되는 것을 확인했습니다.",
           "원격 Supabase 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
           "npm test 37개가 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0031",
+      "title": "admin meetup form payload behavior test helper",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "다음 DOM/flow 테스트 후보 선택",
+      "details": {
+        "summary": "관리자 모임 저장 폼이 DB로 보내는 값을 작은 helper로 분리하고 실제 입력값으로 테스트했습니다.",
+        "what": "title/id 생성, 가격 라벨 정리, 정원, 접수 상태, 마감 이유, 태그, 일정, 대표 이미지 URL, 공개 여부를 admin-meetup-form.js에서 payload로 만들도록 정리했습니다.",
+        "why": "운영자가 모임을 저장할 때 잘못된 값이 DB에 들어가면 공개 페이지의 가격, 좌석, 신청 가능 상태가 틀어질 수 있습니다. 폼 전체를 브라우저에서 띄우기 전에 핵심 저장 규칙을 빠르게 검증하는 테스트가 필요합니다.",
+        "developmentDirection": "admin.js는 FormData를 만들고 저장/API 호출을 담당하며, 새 helper는 DOM 없이 import해서 테스트 가능한 payload 변환만 담당합니다.",
+        "notes": [
+          "GitHub Pages workflow가 admin-meetup-form.js를 dist에 복사하도록 함께 수정했습니다.",
+          "FormData와 plain object 입력을 모두 테스트해 실제 브라우저 폼과 테스트 입력의 동작을 같이 확인했습니다.",
+          "보안 검토에서 나온 image_url 검증 follow-up을 반영해 http/https가 아닌 대표 이미지 URL은 저장 payload에서 비웁니다.",
+          "supabase-client.js의 admin meetup write sanitize 단계도 image_url을 다시 http/https로 제한합니다.",
+          "로컬 개발 서버에서 admin-meetup-form.js와 admin.html이 HTTP 200으로 제공되는 것을 확인했습니다.",
+          "원격 Supabase 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "npm test 38개가 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0032",
+      "title": "redact public agentic status artifact",
+      "priority": "P1",
+      "owner": "보안 Agent + 검토 Agent + 작업 정리 Agent",
+      "status": "proposed",
+      "commit": "",
+      "deployNeeded": false,
+      "next": "배포 묶음에 포함할지 사용자 결정 필요",
+      "details": {
+        "summary": "AGENTIC_STATUS.json은 민감 토큰은 없지만 GitHub Pages에 복사되면 URL을 아는 누구나 작업 현황 원문을 볼 수 있습니다.",
+        "what": "관리자 화면은 로그인 후에만 Agent 작업판을 보여주지만, 정적 JSON 파일 자체는 Pages artifact에 포함되면 직접 URL로 접근할 수 있습니다.",
+        "why": "작업 현황에는 branch, rollout 순서, 보안 검토 메모 같은 운영 정보가 들어갑니다. 비밀키는 아니어도 공개 범위를 의도적으로 정해야 합니다.",
+        "developmentDirection": "선택지는 1) 공개용 redacted JSON만 배포, 2) Pages artifact에서 제거하고 로컬 모니터만 유지, 3) 인증된 Edge Function/DB를 통해 읽기입니다. 오버엔지니어링을 피하려면 redacted JSON 또는 배포 제외가 우선 후보입니다.",
+        "notes": [
+          "이번 사이클에서는 결정을 내리지 않고 보안 follow-up으로 기록만 했습니다.",
+          "현재 테스트는 status artifact에 token/payment key/secret 원문이 없는지 확인합니다.",
+          "다음 배포 전에 사용자가 Agent 현황판을 public Pages에 어느 수준까지 노출할지 선택하는 것이 좋습니다."
         ]
       }
     }

@@ -58,6 +58,7 @@ jobs:
           cp admin-availability.js dist/
           cp admin.html dist/
           cp admin.js dist/
+          cp admin-meetup-form.js dist/
           cp index.html dist/
           cp main.js dist/
           cp payment-result.html dist/
