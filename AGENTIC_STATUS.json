@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-06-07T10:35:00+09:00",
+  "updatedAt": "2026-06-07T10:50:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 30,
-    "deployNeeded": 15
+    "doneLocal": 31,
+    "deployNeeded": 16
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0032 public Agentic status redaction 커밋 준비",
+      "currentTask": "AG-0033 public form payload helper 커밋 준비",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "최종 검증 후 로컬 커밋"
@@ -21,7 +21,7 @@
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public Agentic status redaction 승인",
+      "currentTask": "public form payload helper slice 승인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "DOM/flow 테스트 후보 분해"
@@ -39,7 +39,7 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public status artifact redaction 검토 완료",
+      "currentTask": "public form payload helper 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 후보 검토"
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "PUBLIC_AGENTIC_STATUS.json 생성 workflow와 admin fallback 연결 완료",
+      "currentTask": "public-form.js helper 분리와 main.js 연결 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 후보 대기"
@@ -57,7 +57,7 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public redacted status 테스트 완료, 이슈 없음",
+      "currentTask": "public form payload 테스트 완료, 이슈 없음",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test QA 후보 검토"
@@ -66,7 +66,7 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "raw AGENTIC_STATUS Pages 배포 제외 및 redacted artifact 검토 완료",
+      "currentTask": "public form payload 정규화와 paymentMethod allowlist 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 보안 검토"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0032 검토 결과 기록 완료",
+      "currentTask": "AG-0033 검토 결과 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "커밋 후 다음 Task 기록 대기"
@@ -739,7 +739,7 @@
       "priority": "P1",
       "owner": "보안 Agent + 검토 Agent + 작업 정리 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "f1879c8",
       "deployNeeded": true,
       "next": "다음 GitHub Pages deploy 때 raw AGENTIC_STATUS.json 404와 PUBLIC_AGENTIC_STATUS.json 200 확인",
       "details": {
@@ -753,6 +753,31 @@
           "테스트가 PUBLIC_AGENTIC_STATUS 생성 결과에 branch, owner, commit, currentTask, blocker, developmentDirection, notes가 없는지 확인합니다.",
           "원격 GitHub Pages deploy와 push는 하지 않았습니다.",
           "npm test 38개가 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0033",
+      "title": "public form payload behavior test helper",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "다음 DOM/flow 테스트 후보 선택 또는 서버 paymentMethod allowlist follow-up 검토",
+      "details": {
+        "summary": "공개 신청/결제 폼이 보내는 값을 작은 helper로 분리하고 실제 입력값으로 테스트했습니다.",
+        "what": "신청자 이름, 관심 이유, 결제자 이름, 결제 수단, 접근성 label용 field id 생성을 public-form.js에서 담당하게 했습니다.",
+        "why": "신청/결제 폼은 사용자가 서비스와 직접 만나는 핵심 입력 경로입니다. 폼 전체를 브라우저에서 띄우지 않아도 어떤 값이 저장/결제 요청으로 넘어가는지 빠르게 검증할 수 있어야 합니다.",
+        "developmentDirection": "main.js는 FormData를 만들고 신청/결제 흐름을 계속 담당하며, 새 helper는 DOM 없이 import해서 테스트 가능한 payload 변환과 field id 생성만 담당합니다.",
+        "notes": [
+          "GitHub Pages workflow가 public-form.js를 dist에 복사하도록 함께 수정했습니다.",
+          "FormData와 plain object 입력을 모두 테스트해 실제 브라우저 폼과 테스트 입력의 동작을 같이 확인했습니다.",
+          "이름/관심 이유/결제자 이름은 앞뒤 공백을 정리하고, 결제 수단은 간편결제/카드/계좌이체만 허용합니다.",
+          "보안 Agent가 지적한 서버 측 paymentMethod allowlist는 결제 승인 보안 이슈는 아니지만 데이터 정합성 follow-up 후보로 남겼습니다.",
+          "로컬 개발 서버에서 public-form.js와 index.html이 HTTP 200으로 제공되는 것을 확인했습니다.",
+          "원격 Supabase 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "npm test 39개가 모두 통과했습니다."
         ]
       }
     }

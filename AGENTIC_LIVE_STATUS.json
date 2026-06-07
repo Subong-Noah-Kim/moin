@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T10:35:00+09:00",
-  "currentFocus": "public Agentic status redaction 로컬 완료",
+  "updatedAt": "2026-06-07T10:50:00+09:00",
+  "currentFocus": "public form payload helper 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,23 +11,23 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0032 done_local"
+    "currentFocus": "AG-0033 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0032 public Agentic status redaction 커밋 준비",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "currentTask": "AG-0033 public form payload helper 커밋 준비",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "최종 검증 후 로컬 커밋"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "PUBLIC_AGENTIC_STATUS.json 생성 workflow와 admin fallback 연결 완료",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "currentTask": "public-form.js helper 분리와 main.js 연결 완료",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "다음 flow test 후보 대기"
     },
     {
@@ -42,40 +42,40 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public redacted status 테스트 완료, 이슈 없음",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "currentTask": "public form payload 테스트 완료, 이슈 없음",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "다음 flow test QA 후보 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0032 검토 결과 기록 완료",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "currentTask": "AG-0033 검토 결과 기록 완료",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "커밋 후 다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public Agentic status redaction 승인",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "currentTask": "public form payload helper slice 승인",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "DOM/flow 테스트 후보 분해"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public status artifact redaction 검토 완료",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "currentTask": "public form payload helper 검토 완료",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "다음 후보 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "raw AGENTIC_STATUS Pages 배포 제외 및 redacted artifact 검토 완료",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "currentTask": "public form payload 정규화와 paymentMethod allowlist 검토 완료",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "다음 flow test 보안 검토"
     },
     {
@@ -83,7 +83,7 @@
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,39 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T10:35:00+09:00",
+      "updatedAt": "2026-06-07T10:50:00+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T10:50:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "public-form.js helper 분리",
+      "body": "공개 신청/결제 폼의 field id, 신청 payload, 결제 payload 생성을 작은 helper로 분리했습니다."
+    },
+    {
+      "time": "2026-06-07T10:50:00+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "public form payload 테스트 완료",
+      "body": "FormData와 plain object 입력, 결제수단 allowlist, workflow copy, 로컬 HTTP 200, npm test 39개 통과를 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T10:50:00+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "paymentMethod allowlist 검토",
+      "body": "클라이언트 조작값은 간편결제로 되돌리며, 서버 allowlist는 데이터 정합성 follow-up 후보로 남겼습니다."
+    },
+    {
+      "time": "2026-06-07T10:50:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0033 로컬 완료",
+      "body": "새 browser module public-form.js가 빠지지 않도록 workflow copy와 테스트를 함께 추가했습니다."
+    },
     {
       "time": "2026-06-07T10:35:00+09:00",
       "agent": "보안 Agent",

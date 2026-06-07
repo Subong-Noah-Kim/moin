@@ -16,6 +16,11 @@ import {
   isRegistrationAvailable,
   mergeMeetupAvailability,
 } from './public-availability.js?v=__ASSET_VERSION__';
+import {
+  createPublicApplicationPayload,
+  createPublicCheckoutPayload,
+  createPublicFieldId as createFieldId,
+} from './public-form.js?v=__ASSET_VERSION__';
 import { TOSS_CLIENT_KEY } from './toss-config.js?v=__ASSET_VERSION__';
 
 function redirectInviteToAdmin() {
@@ -753,15 +758,6 @@ function createTagMarkup(tags) {
   return tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('');
 }
 
-function createFieldId(...parts) {
-  return parts
-    .map((part) => String(part || '')
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'field')
-    .join('-');
-}
-
 function getPaymentButtonText(itemId) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   return getPaymentButtonTextForMeetup(item, { isPaid: paid.has(itemId) });
@@ -1182,8 +1178,7 @@ async function completeCheckout(itemId, form) {
   }
 
   const formData = new FormData(form);
-  const payerName = String(formData.get('payer') || '');
-  const paymentMethod = String(formData.get('method') || '간편결제');
+  const { payerName, paymentMethod } = createPublicCheckoutPayload(formData);
   const tossConfigured = isTossConfigured();
   let shouldUnlockForm = true;
 
@@ -1274,8 +1269,7 @@ async function submitApplication(form) {
   }
 
   const formData = new FormData(form);
-  const name = String(formData.get('name') || '');
-  const interest = String(formData.get('interest') || '');
+  const { name, interest } = createPublicApplicationPayload(formData);
 
   setFormPending(form, true);
 

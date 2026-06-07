@@ -806,3 +806,49 @@
   - 임시 `PUBLIC_AGENTIC_STATUS.json` 생성 결과를 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 38개가 모두 통과했다.
+
+## Round 21 - 2026-06-07 10:50 KST
+
+### 요약
+
+이번 사이클은 공개 신청/결제 폼의 입력값을 작은 helper로 분리해 테스트한 작업입니다. 쉽게 말하면, 사용자가 이름이나 관심 이유를 입력하고 결제 수단을 고를 때, 그 값이 저장/결제 요청으로 넘어가기 전에 공백이 정리되고 허용된 결제 수단만 남는지 직접 확인합니다. 화면 전체를 띄우는 큰 테스트로 바로 가지 않고, 사용자 입력이 payload로 바뀌는 규칙부터 안전하게 고정했습니다.
+
+### TD-032 - public form payload behavior test helper
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: 공개 신청/결제 폼의 field id, application payload, checkout payload 생성을 순수 helper로 분리하고 직접 테스트한다.
+- Why: 신청/결제 폼은 실제 사용자 입력이 서비스 데이터와 결제 요청으로 연결되는 핵심 경로입니다. 공백, 빈 값, 조작된 결제 수단 같은 작은 입력 차이가 누적되면 운영 데이터가 지저분해지거나 화면/저장 상태가 어긋날 수 있습니다.
+- First development unit:
+  - `public-form.js`를 추가해 `createPublicFieldId`, `createPublicApplicationPayload`, `createPublicCheckoutPayload`를 export한다.
+  - `main.js`는 새 helper를 import하고 신청/결제 흐름 자체는 유지한다.
+  - `tests/paymentSecurity.test.js`가 FormData와 plain object 입력, field id, 결제 수단 allowlist, application/checkout call-site를 확인한다.
+  - GitHub Pages workflow가 새 helper 파일을 `dist`에 복사하게 한다.
+- Development direction: 다음에는 실제 DOM/flow 테스트로 한 단계 넓히되, 공개 drawer 신청/결제 guard 또는 payment-result DOM flow 중 하나만 고르는 편이 안전합니다.
+- Risks:
+  - 새 browser module이므로 Pages artifact 복사 누락이 가장 큰 배포형 위험입니다. 이번 사이클에서 workflow copy와 cache-busting 테스트를 추가했습니다.
+  - 클라이언트 allowlist는 UX/data hygiene 방어입니다. 직접 Edge Function을 호출하는 입력까지 canonical하게 맞추려면 서버에서도 같은 allowlist를 적용해야 합니다.
+- Notes:
+  - Planning/Review Agent가 public form helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 FormData/plain object 입력, browser import, Pages copy, untracked file 포함 필요를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 paymentMethod allowlist와 비밀값 비노출을 검토했고 blocking 이슈 없음으로 확인했습니다.
+  - 로컬 개발 서버에서 `public-form.js`와 `index.html`이 HTTP 200으로 제공되는 것을 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 39개가 모두 통과했다.
+
+### TD-033 - mirror payment method allowlist in public submission function
+
+- Priority: `P2`
+- Status: `candidate`
+- Source agents: Security/Review, Director
+- What: `create-public-submission` Edge Function에서도 결제 수단 값을 `간편결제`, `카드`, `계좌이체` 중 하나로 정규화한다.
+- Why: 이번 작업으로 브라우저 UI에서는 조작된 결제 수단이 `간편결제`로 되돌아가지만, 누군가 Edge Function을 직접 호출하면 임의 문자열이 주문 metadata에 남을 수 있습니다. 결제 승인 보안 문제는 아니지만 운영 데이터 정합성을 위해 서버도 같은 규칙을 갖는 편이 깔끔합니다.
+- First development unit:
+  - Edge Function에 작은 `getPaymentMethod()` helper를 추가한다.
+  - 입력이 허용 목록 밖이거나 빈 값이면 `간편결제`로 저장한다.
+  - 테스트는 Edge Function source에 allowlist와 fallback이 있는지 확인한다.
+- Development direction: 다음 사이클에서 보안/데이터 정합성 개선으로 진행하거나, 더 높은 우선순위의 DOM/flow 테스트 뒤로 미룰 수 있습니다.
+- Risks:
+  - 현재 결제 수단은 금액/승인 권한에 쓰이지 않으므로 긴급 보안 패치는 아닙니다.
+  - Edge Function 변경은 실제 반영에 별도 Supabase deploy가 필요하므로, 배포 전까지는 로컬 코드만 바뀐 상태가 됩니다.

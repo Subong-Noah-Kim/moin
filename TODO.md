@@ -6,9 +6,10 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
 2. Continue behavior-oriented frontend tests for broader DOM/flow slices after public/admin capacity helper coverage.
-3. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
-4. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
-5. Revisit optional live regions for important loading/error states after operational rollout.
+3. Consider mirroring the public checkout payment-method allowlist in the Edge Function for cleaner order metadata.
+4. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
+5. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
+6. Revisit optional live regions for important loading/error states after operational rollout.
 
 ## P0 - Before Real Payment Use
 
@@ -60,6 +61,12 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Files: `main.js`
   - Done when: the checkout submit button stays disabled through the Toss request lifecycle, or a single pending order is reused safely.
   - Status: checkout uses a global in-progress lock and keeps the form disabled while Toss checkout is active.
+
+- [ ] Mirror checkout payment-method allowlist server-side
+  - Problem: the browser now normalizes checkout `paymentMethod`, but a direct `create-public-submission` Edge Function call can still send arbitrary strings into order metadata.
+  - Files: `supabase/functions/create-public-submission/index.ts`, `tests/paymentSecurity.test.js`
+  - Done when: the Edge Function stores only `간편결제`, `카드`, or `계좌이체`, and falls back to `간편결제` for missing/unknown values.
+  - Priority note: this is data hygiene and consistency hardening, not a payment authorization blocker, because amount/provider approval still does not trust this field.
 
 - [x] Restrict manual admin order status transitions
   - Problem: admins can set `paid`/`demo_paid` without a payment row or audit trail.
@@ -157,13 +164,13 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Problem: current tests cover selected payment, rendering, accessibility, and admin assertions mostly through source-text regex checks; shipped flows still need broader behavior coverage.
   - Files: `tests/`, `package.json`
   - Done when: tests exercise exported helpers or DOM-like behavior for escaping, numeric payment amount selection, Toss SDK load handling, result-page state handling, cache version consistency, public/admin capacity state rendering, and admin status rendering.
-  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, and payment button text. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Payment-result state behavior now has a pure helper slice in `payment-result-state.js`, with direct tests for amount display, confirmation error messages, failure status labels, and safe Toss auth summary storage. Admin meetup form payload behavior now has a pure helper slice in `admin-meetup-form.js`, with direct tests for create/edit payloads, price labels, generated IDs, capacity, close reasons, tags/schedule, FormData checkbox behavior, and safe image URL handling. Continue with broader DOM/browser tests only after choosing a concrete flow.
+  - Status: public capacity availability behavior now has a first pure helper slice in `public-availability.js`, with direct tests for missing availability fail-closed, sold-out, closed, remaining-seat labels/classes, and payment button text. Admin capacity behavior now has a matching pure helper slice in `admin-availability.js`, with direct tests for capacity input normalization, open/near-full/sold-out/closed/unknown seat summaries, and read-only availability merge behavior. Payment-result state behavior now has a pure helper slice in `payment-result-state.js`, with direct tests for amount display, confirmation error messages, failure status labels, and safe Toss auth summary storage. Admin meetup form payload behavior now has a pure helper slice in `admin-meetup-form.js`, with direct tests for create/edit payloads, price labels, generated IDs, capacity, close reasons, tags/schedule, FormData checkbox behavior, and safe image URL handling. Public application/checkout form payload behavior now has a pure helper slice in `public-form.js`, with direct tests for field IDs, FormData/plain object input, trimmed application/checkout fields, and checkout payment-method allowlisting. Continue with broader DOM/browser tests only after choosing a concrete flow.
 
 - [ ] Split large frontend modules into testable slices
   - Problem: `main.js`, `admin.js`, `supabase-client.js`, and CSS files are large and difficult to test safely.
   - Files: `main.js`, `admin.js`, `supabase-client.js`, `styles.css`, `admin.css`
   - Done when: shared helpers and payment/rendering logic can be imported and tested without loading full pages.
-  - Status: started with `public-availability.js`, `admin-availability.js`, `payment-result-state.js`, and `admin-meetup-form.js`; keep future slices small and avoid moving DOM-heavy code until a browser/jsdom test harness is chosen.
+  - Status: started with `public-availability.js`, `admin-availability.js`, `payment-result-state.js`, `admin-meetup-form.js`, and `public-form.js`; keep future slices small and avoid moving DOM-heavy code until a browser/jsdom test harness is chosen.
 
 - [x] Lazy-load repeated dynamic images
   - Problem: repeated meetup/event/recommendation images are eager-loaded.

@@ -27,6 +27,11 @@ import {
   mergeMeetupAvailability,
 } from '../public-availability.js';
 import {
+  createPublicApplicationPayload,
+  createPublicCheckoutPayload,
+  createPublicFieldId,
+} from '../public-form.js';
+import {
   createTossAuthSummary,
   formatPaymentResultAmount,
   getConfirmErrorMessage,
@@ -47,6 +52,7 @@ const cacheBustedSourceFiles = [
   '../payment-result.js',
   '../payment-result-state.js',
   '../public-availability.js',
+  '../public-form.js',
   '../supabase-client.js',
 ];
 
@@ -288,6 +294,64 @@ test('public availability helpers map sold-out, closed, and remaining-seat behav
   assert.equal(getRegistrationStatusLabel(open), '잔여 5석');
   assert.equal(getPublicStatusClass(open), 'is-seat');
   assert.equal(getPaymentButtonTextForMeetup(open), '결제하기');
+});
+
+test('public form helpers build stable IDs and normalized payloads', () => {
+  const applicationFormData = new FormData();
+  applicationFormData.append('name', '  Subong  ');
+  applicationFormData.append('interest', '  네트워킹  ');
+  const checkoutFormData = new FormData();
+  checkoutFormData.append('payer', '  ');
+  checkoutFormData.append('method', '  임의값  ');
+
+  assert.equal(createPublicFieldId('application', 'salon-night', 'name'), 'application-salon-night-name');
+  assert.equal(createPublicFieldId('checkout', 'Bad <ID>', 'payer help'), 'checkout-bad-id-payer-help');
+  assert.equal(createPublicFieldId('신청', '이름'), 'field-field');
+
+  assert.deepEqual(
+    createPublicApplicationPayload({
+      name: '  Noah  ',
+      interest: '  영화와 대화  ',
+    }),
+    {
+      name: 'Noah',
+      interest: '영화와 대화',
+    },
+  );
+
+  assert.deepEqual(
+    createPublicApplicationPayload(applicationFormData),
+    {
+      name: 'Subong',
+      interest: '네트워킹',
+    },
+  );
+
+  assert.deepEqual(
+    createPublicCheckoutPayload({
+      payer: '  Noah  ',
+      method: ' 카드 ',
+    }),
+    {
+      payerName: 'Noah',
+      paymentMethod: '카드',
+    },
+  );
+  assert.equal(createPublicCheckoutPayload({ payer: '', method: '간편결제' }).paymentMethod, '간편결제');
+  assert.equal(createPublicCheckoutPayload({ payer: '', method: '계좌이체' }).paymentMethod, '계좌이체');
+
+  assert.deepEqual(
+    createPublicCheckoutPayload(checkoutFormData),
+    {
+      payerName: '',
+      paymentMethod: '간편결제',
+    },
+  );
+
+  assert.deepEqual(createPublicCheckoutPayload({ payer: '', method: '' }), {
+    payerName: '',
+    paymentMethod: '간편결제',
+  });
 });
 
 test('admin capacity payload helpers normalize operator input', () => {
@@ -699,6 +763,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.match(workflow, /cp admin-meetup-form\.js dist\//);
   assert.match(workflow, /cp payment-result-state\.js dist\//);
   assert.match(workflow, /cp public-availability\.js dist\//);
+  assert.match(workflow, /cp public-form\.js dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });
 
@@ -1253,10 +1318,11 @@ test('capacity rollout checklist documents safe live deployment order', async ()
 });
 
 test('public meetup UI reads availability RPC and fails closed in configured mode', async () => {
-  const [supabaseClient, mainScript, availabilityModule, styles] = await Promise.all([
+  const [supabaseClient, mainScript, availabilityModule, formModule, styles] = await Promise.all([
     readProjectFile('../supabase-client.js'),
     readProjectFile('../main.js'),
     readProjectFile('../public-availability.js'),
+    readProjectFile('../public-form.js'),
     readProjectFile('../styles.css'),
   ]);
   const checkoutGuardIndex = mainScript.indexOf('if (!isRegistrationAvailable(item)) {\n    setCheckoutStatus');
@@ -1271,6 +1337,7 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(supabaseClient, /export async function fetchPublicMeetupAvailability\(\) \{\s+return callReadRpc\('list_public_meetup_availability'\);\s+\}/);
   assert.match(mainScript, /fetchPublicMeetupAvailability,/);
   assert.match(mainScript, /from '\.\/public-availability\.js\?v=__ASSET_VERSION__'/);
+  assert.match(mainScript, /from '\.\/public-form\.js\?v=__ASSET_VERSION__'/);
   assert.match(mainScript, /mergeMeetupAvailability,/);
   assert.match(mainScript, /getPaymentButtonTextForMeetup/);
   assert.match(availabilityModule, /function normalizeAvailability\(row\)/);
@@ -1283,6 +1350,10 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(mainScript, /Promise\.allSettled\(\[\s+fetchPublishedMeetups\(\),\s+fetchPublicMeetupAvailability\(\),\s+\]\)/);
   assert.match(mainScript, /mergeMeetupAvailability\(rows\.map\(normalizeMeetup\), availabilityRows, \{ requireAvailability: true \}\)/);
   assert.match(mainScript, /meetups = mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
+  assert.match(formModule, /export function createPublicApplicationPayload\(source\)/);
+  assert.match(formModule, /export function createPublicCheckoutPayload\(source\)/);
+  assert.match(mainScript, /const \{ payerName, paymentMethod \} = createPublicCheckoutPayload\(formData\)/);
+  assert.match(mainScript, /const \{ name, interest \} = createPublicApplicationPayload\(formData\)/);
   assert.match(availabilityModule, /잔여석 정보를 확인하지 못해 신청과 결제를 잠시 막았습니다/);
   assert.match(availabilityModule, /정원이 모두 차서 새 신청과 테스트 결제를 받을 수 없습니다/);
   assert.match(availabilityModule, /운영자가 접수를 닫아 새 신청과 테스트 결제를 받을 수 없습니다/);
@@ -1378,12 +1449,14 @@ test('drawer and checkout modal use inert focus traps with opener restoration', 
 });
 
 test('public application and checkout forms have explicit labels', async () => {
-  const [mainScript, styles] = await Promise.all([
+  const [mainScript, formModule, styles] = await Promise.all([
     readProjectFile('../main.js'),
+    readProjectFile('../public-form.js'),
     readProjectFile('../styles.css'),
   ]);
 
-  assert.match(mainScript, /function createFieldId\(\.\.\.parts\)/);
+  assert.match(mainScript, /createPublicFieldId as createFieldId/);
+  assert.match(formModule, /export function createPublicFieldId\(\.\.\.parts\)/);
   assert.match(mainScript, /const applicationNameId = createFieldId\('application', item\.id, 'name'\)/);
   assert.match(mainScript, /const applicationNameHelpId = createFieldId\(applicationNameId, 'help'\)/);
   assert.match(mainScript, /const applicationInterestId = createFieldId\('application', item\.id, 'interest'\)/);

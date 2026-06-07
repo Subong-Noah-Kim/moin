@@ -1015,3 +1015,46 @@
 - Next:
   - 다음 GitHub Pages 배포 후 `AGENTIC_STATUS.json`은 404, `PUBLIC_AGENTIC_STATUS.json`은 200인지 확인합니다.
   - 다음 개발 후보는 공개 drawer 신청/결제 guard 테스트 또는 payment-result DOM flow 테스트입니다.
+
+### AG-0033 - public form payload behavior test helper
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 공개 신청/결제 폼이 실제로 어떤 값을 저장/결제 요청으로 보내는지 테스트할 수 있게 한다.
+- Subagents:
+  - Planning/Review Agent: Maxwell
+  - QA Agent: Socrates
+  - Security/Review Agent: Confucius
+- Changed files:
+  - `public-form.js`
+  - `main.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - 신청자 이름, 관심 이유, 결제자 이름, 결제 수단, 접근성 label용 field id 생성을 `public-form.js`로 분리했습니다.
+  - `main.js`는 FormData 생성, 신청/결제 진행, Supabase/Toss 호출 책임을 그대로 유지합니다.
+  - 이름/관심 이유/결제자 이름은 앞뒤 공백을 정리합니다.
+  - 결제 수단은 화면에 있는 `간편결제`, `카드`, `계좌이체`만 허용하고, 조작되거나 빈 값이면 `간편결제`로 되돌립니다.
+  - Security Agent가 지적한 서버 측 `paymentMethod` allowlist는 결제 승인 보안 이슈는 아니지만 데이터 정합성 follow-up 후보로 기록했습니다.
+  - 새 browser module인 `public-form.js`가 GitHub Pages artifact에 포함되도록 workflow copy step을 추가했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 public form payload helper slice를 다음 최소 단위로 승인했습니다.
+  - QA Agent가 FormData/plain object 입력, application/checkout call-site, Pages copy, `public-form.js` untracked 포함 필요성을 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 payment payload 정규화, 결제 수단 allowlist, 새 module의 비밀값 비노출을 검토했고 blocking 이슈 없음으로 확인했습니다.
+  - `node --check main.js` passed.
+  - `node --check public-form.js` passed.
+  - `node --check tests/paymentSecurity.test.js` passed.
+  - `git diff --check` passed.
+  - Local dev server served `public-form.js` and `index.html` with HTTP 200.
+  - `npm test` passed: 39 tests.
+- Next:
+  - `public-form.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
+  - 다음 개발 후보는 공개 drawer 신청/결제 guard DOM flow, payment-result DOM flow, 또는 서버 paymentMethod allowlist follow-up입니다.
