@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-06-07T12:55:00+09:00",
+  "updatedAt": "2026-06-07T13:13:00+09:00",
   "branch": "main",
   "summary": {
     "active": 0,
     "blocked": 0,
     "doneLocal": 43,
-    "deployNeeded": 22
+    "deployNeeded": 21
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0045 public flow helper/test 정리 완료",
+      "currentTask": "AG-0045 public flow helper/test 배포 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 여부 결정 또는 다음 frontend flow test 선택"
+      "next": "다음 frontend flow test 선택"
     },
     {
       "name": "기획 Agent",
@@ -39,10 +39,10 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public flow helper 범위 검토",
+      "currentTask": "public flow helper 배포 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 전 diff와 테스트 결과 재확인"
+      "next": "다음 변경 전 TODO 우선순위 확인"
     },
     {
       "name": "개발 Agent",
@@ -57,28 +57,28 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "npm test 43개 통과",
+      "currentTask": "AG-0045 live HTTP 검증 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 시 Pages workflow와 live module 200 확인"
+      "next": "다음 작업 시 브라우저 수준 smoke test 후보 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "신청/결제 guard 통합 helper 확인",
+      "currentTask": "public-flow.js 200 및 raw status 404 확인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "배포 시 public-flow.js 404 여부와 raw status 비노출 재확인"
+      "next": "다음 배포에서도 공개 상태 파일 정책 유지"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0045 public flow test 기록 완료",
+      "currentTask": "AG-0045 deploy verification 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
-      "next": "커밋/배포 결정에 맞춰 commit hash 또는 deploy status 갱신"
+      "next": "다음 작업 발생 시 상태판 갱신"
     },
     {
       "name": "보조 Agent",
@@ -1047,10 +1047,10 @@
       "title": "public detail/application/checkout flow helper tests",
       "priority": "P2",
       "owner": "개발 Agent + QA Agent + 작업 정리 Agent",
-      "status": "done_local",
+      "status": "deployed_verified",
       "commit": "ee98d93",
-      "deployNeeded": true,
-      "next": "Push/deploy if the user wants the helper refactor and updated TODO/status to go live",
+      "deployNeeded": false,
+      "next": "Use this helper as the pattern for the next frontend flow test slice",
       "details": {
         "summary": "유저 화면에서 신청 가능 여부, 결제 버튼, 결제 요약 문구가 서로 어긋나지 않도록 공통 helper와 테스트를 추가했습니다.",
         "what": "새 `public-flow.js`가 모임 상태를 받아 신청 가능 여부, 결제창 열기 가능 여부, 결제 버튼 문구, 결제 요약 문구, 차단 사유를 한 번에 계산합니다.",
@@ -1060,6 +1060,9 @@
           "사용자에게 보이는 디자인 변화는 의도하지 않은 리팩터링입니다.",
           "GitHub Pages 배포 시 `public-flow.js`가 dist에 포함되어야 하므로 workflow 복사 목록과 테스트를 함께 갱신했습니다.",
           "`npm test` 43개가 통과했습니다.",
+          "GitHub Pages workflow run 27082334071이 성공했습니다.",
+          "live 공개 페이지, main.js, public-flow.js, admin.html, payment-result.html, PUBLIC_AGENTIC_STATUS.json은 HTTP 200이었습니다.",
+          "live 원문 AGENTIC_STATUS.json은 HTTP 404였습니다.",
           "정원/잔여석 live 동작 자체는 이미 AG-0044에서 검증됐고, 이번 작업은 그 이후의 회귀 방지용입니다."
         ]
       }

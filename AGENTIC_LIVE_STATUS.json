@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T12:55:00+09:00",
-  "currentFocus": "public flow helper/test 정리 완료",
+  "updatedAt": "2026-06-07T13:13:00+09:00",
+  "currentFocus": "public flow helper/test 배포 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,16 +11,16 @@
     "activeAgents": 0,
     "waitingAgents": 10,
     "blockedAgents": 0,
-    "currentFocus": "AG-0045 done_local"
+    "currentFocus": "AG-0045 deployed_verified"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "done",
-      "currentTask": "AG-0045 public flow helper/test 정리 완료",
-      "updatedAt": "2026-06-07T12:55:00+09:00",
-      "next": "배포 여부 결정 또는 다음 frontend flow test 선택"
+      "currentTask": "AG-0045 public flow helper/test 배포 완료",
+      "updatedAt": "2026-06-07T13:13:00+09:00",
+      "next": "다음 frontend flow test 선택"
     },
     {
       "name": "개발 Agent",
@@ -42,17 +42,17 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "npm test 43개 통과",
-      "updatedAt": "2026-06-07T12:55:00+09:00",
-      "next": "배포 시 Pages workflow와 live module 200 확인"
+      "currentTask": "AG-0045 live HTTP 검증 완료",
+      "updatedAt": "2026-06-07T13:13:00+09:00",
+      "next": "다음 작업 시 브라우저 수준 smoke test 후보 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0045 public flow test 기록 완료",
-      "updatedAt": "2026-06-07T12:55:00+09:00",
-      "next": "커밋/배포 결정에 맞춰 commit hash 또는 deploy status 갱신"
+      "currentTask": "AG-0045 deploy verification 기록 완료",
+      "updatedAt": "2026-06-07T13:13:00+09:00",
+      "next": "다음 작업 발생 시 상태판 갱신"
     },
     {
       "name": "기획 Agent",
@@ -66,17 +66,17 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public flow helper 범위 검토",
-      "updatedAt": "2026-06-07T12:55:00+09:00",
-      "next": "배포 전 diff와 테스트 결과 재확인"
+      "currentTask": "public flow helper 배포 검토 완료",
+      "updatedAt": "2026-06-07T13:13:00+09:00",
+      "next": "다음 변경 전 TODO 우선순위 확인"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "신청/결제 guard 통합 helper 확인",
-      "updatedAt": "2026-06-07T12:55:00+09:00",
-      "next": "배포 시 public-flow.js 404 여부와 raw status 비노출 재확인"
+      "currentTask": "public-flow.js 200 및 raw status 404 확인",
+      "updatedAt": "2026-06-07T13:13:00+09:00",
+      "next": "다음 배포에서도 공개 상태 파일 정책 유지"
     },
     {
       "name": "보조 Agent",
@@ -96,6 +96,20 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T13:13:00+09:00",
+      "agent": "QA Agent",
+      "level": "complete",
+      "title": "AG-0045 live 배포 검증",
+      "body": "GitHub Pages workflow 27082334071이 성공했고 공개 페이지, main.js, public-flow.js, admin.html, payment-result.html, PUBLIC_AGENTIC_STATUS.json이 HTTP 200으로 확인됐습니다."
+    },
+    {
+      "time": "2026-06-07T13:13:00+09:00",
+      "agent": "보안 Agent",
+      "level": "complete",
+      "title": "상태 파일 노출 정책 유지",
+      "body": "PUBLIC_AGENTIC_STATUS.json은 200, 원문 AGENTIC_STATUS.json은 404로 확인했습니다."
+    },
     {
       "time": "2026-06-07T12:55:00+09:00",
       "agent": "개발 Agent",

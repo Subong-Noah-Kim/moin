@@ -1451,7 +1451,7 @@
 
 ### AG-0045 - public detail/application/checkout flow helper tests
 
-- Status: `done_local`
+- Status: `deployed_verified`
 - Branch: `main`
 - Time: 2026-06-07 12:55 KST
 - Director Agent: main Codex thread
@@ -1481,8 +1481,13 @@
   - `node --check main.js` passed.
   - `node --check public-flow.js` passed.
   - `npm test` passed: 43 tests.
+  - GitHub Pages workflow run `27082334071` passed.
+  - Live public page returned HTTP 200.
+  - Live `main.js` returned HTTP 200 and imports `public-flow.js?v=681e50298e9d`.
+  - Live `public-flow.js` returned HTTP 200 and imports `public-availability.js?v=681e50298e9d`.
+  - Live `admin.html`, `payment-result.html`, and `PUBLIC_AGENTIC_STATUS.json` returned HTTP 200.
+  - Live raw `AGENTIC_STATUS.json` returned HTTP 404.
 - Notes:
-  - 배포 전 로컬 변경입니다.
-  - 배포하면 live 사이트에서 새 모듈 `public-flow.js`가 추가로 로드됩니다.
+  - live 사이트에서 새 모듈 `public-flow.js`가 정상 로드됩니다.
   - Pages workflow copy 목록을 함께 고쳤기 때문에 배포 시 새 모듈 404가 나지 않아야 합니다.
   - 정원/잔여석 live 동작 자체는 AG-0044에서 이미 검증됐고, 이번 작업은 회귀 방지용입니다.
