@@ -977,3 +977,41 @@
 - Next:
   - `admin-meetup-form.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
   - 다음 개발 후보는 `AGENTIC_STATUS.json` 공개 범위 결정, 공개 drawer 신청/결제 guard 테스트, 또는 payment-result DOM flow 테스트입니다.
+
+### AG-0032 - redact public Agentic status artifact
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 보안 Agent + 검토 Agent + 개발 Agent + QA Agent + 작업 정리 Agent
+- Purpose: GitHub Pages에 Agent 작업 원문 상태 파일이 그대로 공개되지 않게 한다.
+- Subagents:
+  - Security/Review Agent: Hegel
+- Changed files:
+  - `scripts/create-public-agentic-status.mjs`
+  - `.github/workflows/deploy-pages.yml`
+  - `admin.js`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+- Notes:
+  - 정적 GitHub Pages 파일은 관리자 화면 뒤에 있어도 URL로 직접 접근할 수 있습니다.
+  - workflow가 원문 `AGENTIC_STATUS.json`을 그대로 복사하지 않고 `PUBLIC_AGENTIC_STATUS.json`을 생성하도록 바꿨습니다.
+  - 공개용 JSON은 허용 목록 방식으로 `updatedAt`, `summary`, Agent 이름/status/date, Task id/title/priority/status/deployNeeded/공개용 summary만 남깁니다.
+  - 공개용 JSON에서는 branch, owner, commit, currentTask, blocker, next, why, developmentDirection, notes 같은 내부 운영 정보를 제외합니다.
+  - `admin.js`는 배포본에서는 `PUBLIC_AGENTIC_STATUS.json`을 읽고, 로컬 개발 환경에서는 기존 원문 `AGENTIC_STATUS.json`으로 fallback합니다.
+  - 로컬 `agent-monitor`는 계속 원문 상태를 읽어 자세한 작업 내용을 보여줍니다.
+  - 원격 GitHub Pages deploy와 push는 하지 않았습니다.
+- Verification:
+  - Security/Review Agent가 redacted artifact와 local raw monitor 분리 방식을 권장했습니다.
+  - `node --check admin.js` passed.
+  - `node --check scripts/create-public-agentic-status.mjs` passed.
+  - `node scripts/create-public-agentic-status.mjs AGENTIC_STATUS.json /private/tmp/PUBLIC_AGENTIC_STATUS.json` passed.
+  - `git diff --check` passed.
+  - `npm test` passed: 38 tests.
+- Next:
+  - 다음 GitHub Pages 배포 후 `AGENTIC_STATUS.json`은 404, `PUBLIC_AGENTIC_STATUS.json`은 200인지 확인합니다.
+  - 다음 개발 후보는 공개 drawer 신청/결제 guard 테스트 또는 payment-result DOM flow 테스트입니다.

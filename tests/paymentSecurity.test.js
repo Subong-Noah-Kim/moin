@@ -33,6 +33,7 @@ import {
   getFailureStatusLabel,
 } from '../payment-result-state.js';
 import { clearAdminSession, getAmountFromMeetup, getStoredAdminSession } from '../supabase-client.js';
+import { createPublicAgenticStatus } from '../scripts/create-public-agentic-status.mjs';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
 const cacheBustedSourceFiles = [
@@ -692,7 +693,8 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.ok(versions.length > 0);
   assert.deepEqual([...uniqueVersions], [assetVersionPlaceholder]);
   assert.match(workflow, /ASSET_VERSION="\$\{GITHUB_SHA::12\}"/);
-  assert.match(workflow, /cp AGENTIC_STATUS\.json dist\//);
+  assert.doesNotMatch(workflow, /cp AGENTIC_STATUS\.json dist\//);
+  assert.match(workflow, /node scripts\/create-public-agentic-status\.mjs AGENTIC_STATUS\.json dist\/PUBLIC_AGENTIC_STATUS\.json/);
   assert.match(workflow, /cp admin-availability\.js dist\//);
   assert.match(workflow, /cp admin-meetup-form\.js dist\//);
   assert.match(workflow, /cp payment-result-state\.js dist\//);
@@ -836,14 +838,15 @@ test('admin stored sessions clean up legacy, corrupted, and expired state', () =
   }
 });
 
-test('admin dashboard renders agentic status from a static JSON board', async () => {
+test('admin dashboard renders redacted public agentic status from a static JSON board', async () => {
   const [adminHtml, adminStyles, adminScript, agenticStatus] = await Promise.all([
     readProjectFile('../admin.html'),
     readProjectFile('../admin.css'),
     readProjectFile('../admin.js'),
     readProjectFile('../AGENTIC_STATUS.json'),
   ]);
-  const status = JSON.parse(agenticStatus);
+  const sourceStatus = JSON.parse(agenticStatus);
+  const status = createPublicAgenticStatus(sourceStatus);
 
   assert.match(adminHtml, /data-agentic-board/);
   assert.match(adminHtml, /data-tab-button="agentic"/);
@@ -858,7 +861,9 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.match(adminStyles, /\.task-detail/);
   assert.match(adminStyles, /\.task-item\.has-detail/);
   assert.match(adminStyles, /\.task-item\.has-detail:focus-visible/);
+  assert.match(adminScript, /PUBLIC_AGENTIC_STATUS\.json\?v=__ASSET_VERSION__/);
   assert.match(adminScript, /AGENTIC_STATUS\.json\?v=__ASSET_VERSION__/);
+  assert.match(adminScript, /publicResponse\.ok/);
   assert.match(adminScript, /function renderAgenticStatus/);
   assert.match(adminScript, /function loadAgenticStatus/);
   assert.match(adminScript, /function renderTaskDetails/);
@@ -875,7 +880,8 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
   assert.match(adminScript, /if \(target === 'agentic'\)/);
   assert.doesNotMatch(adminScript, /showDashboard\(\);\s+void loadAgenticStatus\(\);/);
   assert.match(adminScript, /agenticRefreshButton\.addEventListener\('click', loadAgenticStatus\)/);
-  assert.match(status.branch, /^(main|codex\/[a-z0-9-]+)$/);
+  assert.equal(status.visibility, 'public-redacted');
+  assert.equal(Object.prototype.hasOwnProperty.call(status, 'branch'), false);
   assert.equal(status.summary.deployNeeded, status.tasks.filter((task) => task.deployNeeded).length);
   assert.ok(Array.isArray(status.agents));
   assert.ok(Array.isArray(status.tasks));
@@ -885,12 +891,24 @@ test('admin dashboard renders agentic status from a static JSON board', async ()
     status.tasks.some(
       (task) =>
         task.id === 'AG-0007' &&
-        task.details?.summary &&
-        task.details?.what &&
-        task.details?.why &&
-        task.details?.developmentDirection &&
-        Array.isArray(task.details?.notes),
+        task.details?.summary,
     ),
+  );
+  assert.deepEqual(
+    status.agents.flatMap((agent) => Object.keys(agent)).filter((key) => (
+      ['role', 'currentTask', 'blocker', 'next'].includes(key)
+    )),
+    [],
+  );
+  assert.deepEqual(
+    status.tasks.flatMap((task) => Object.keys(task)).filter((key) => ['owner', 'commit'].includes(key)),
+    [],
+  );
+  assert.deepEqual(
+    status.tasks.flatMap((task) => Object.keys(task.details || {})).filter((key) => (
+      ['what', 'why', 'developmentDirection', 'notes'].includes(key)
+    )),
+    [],
   );
 });
 
@@ -933,6 +951,8 @@ test('local agent monitor polls live status without publishing it to Pages', asy
   assert.match(monitorScript, /window\.setTimeout\(loadLiveStatus, state\.pollIntervalMs\)/);
   assert.doesNotMatch(workflow, /cp agent-monitor\./);
   assert.doesNotMatch(workflow, /cp AGENTIC_LIVE_STATUS\.json/);
+  assert.doesNotMatch(workflow, /cp AGENTIC_STATUS\.json dist\//);
+  assert.match(workflow, /PUBLIC_AGENTIC_STATUS\.json/);
   assert.equal(status.monitor.mode, 'local');
   assert.ok(status.monitor.pollIntervalMs >= 5000);
   assert.ok(Array.isArray(status.agents));
@@ -961,6 +981,23 @@ test('agent status artifacts do not contain sensitive tokens or payment identifi
       findings.push(`${pathname} ${finding}`);
     });
   }
+
+  const publicStatus = createPublicAgenticStatus(JSON.parse(await readProjectFile('../AGENTIC_STATUS.json')));
+  collectSensitiveAgentStatusFindings(publicStatus).forEach((finding) => {
+    findings.push(`PUBLIC_AGENTIC_STATUS.json ${finding}`);
+  });
+
+  assert.equal(Object.prototype.hasOwnProperty.call(publicStatus, 'branch'), false);
+  assert.ok(publicStatus.tasks.every((task) => !('owner' in task) && !('commit' in task)));
+  assert.ok(publicStatus.agents.every((agent) => (
+    !('role' in agent) && !('currentTask' in agent) && !('blocker' in agent) && !('next' in agent)
+  )));
+  assert.ok(publicStatus.tasks.every((task) => (
+    !('what' in (task.details || {})) &&
+    !('why' in (task.details || {})) &&
+    !('developmentDirection' in (task.details || {})) &&
+    !('notes' in (task.details || {}))
+  )));
 
   assert.deepEqual(findings, []);
 });

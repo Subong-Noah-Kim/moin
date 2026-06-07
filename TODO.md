@@ -6,10 +6,9 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 1. Continue the P0 capacity, remaining-spots, and automatic sold-out rollout.
 2. Continue behavior-oriented frontend tests for broader DOM/flow slices after public/admin capacity helper coverage.
-3. Decide whether `AGENTIC_STATUS.json` should be redacted or excluded before the next public GitHub Pages deploy.
-4. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
-5. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
-6. Revisit optional live regions for important loading/error states after operational rollout.
+3. Run one fresh GitHub Pages deployment check after push/deploy is allowed.
+4. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
+5. Revisit optional live regions for important loading/error states after operational rollout.
 
 ## P0 - Before Real Payment Use
 
@@ -76,11 +75,11 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
   - Done when: the initial admin load has accurate status text, paid orders can be reconciled against payment rows or an explicit payment-detail view, and outdated "before real payment" copy is removed.
   - Status: admin overview no longer emits stale pre-payment warnings, order loading fetches `payments` alongside `orders`, the order table shows a payment-record column, and tests verify the reconciliation path.
 
-- [ ] Decide public exposure policy for Agentic status artifacts
+- [x] Decide public exposure policy for Agentic status artifacts
   - Problem: `AGENTIC_STATUS.json` is copied into the GitHub Pages artifact, so the admin UI can load it after login, but the raw JSON can also be requested directly by URL. It currently avoids secrets, but still contains branch, task, rollout, and operational notes.
   - Files: `.github/workflows/deploy-pages.yml`, `admin.js`, `AGENTIC_STATUS.json`, `AGENTIC_LIVE_STATUS.json`, `tests/paymentSecurity.test.js`
   - Done when: the project intentionally chooses either a redacted public status JSON, no public status artifact, or an authenticated status source; tests should match that decision.
-  - Status: discovered by Security Agent during AG-0031 and recorded as a follow-up. Do not treat client-side admin tab hiding as access control for the raw static JSON.
+  - Status: local implementation is complete on `codex/overnight-task-discovery`; GitHub Pages workflow now generates `PUBLIC_AGENTIC_STATUS.json` from an allow-list redactor instead of copying raw `AGENTIC_STATUS.json`, admin.js uses the public file in deployed mode and falls back to raw status locally, and tests verify branch/owner/commit/currentTask/blocker/detailed notes are excluded. Deploy is still needed before this affects the live admin page.
 
 - [x] Add public submission abuse controls
   - Problem: anonymous visitors can insert applications and valid demo/pending orders directly through public Supabase policies, so a public launch can be spammed even though payment amount tampering is blocked.

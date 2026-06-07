@@ -53,7 +53,7 @@ jobs:
       - name: Prepare static files
         run: |
           mkdir -p dist
-          cp AGENTIC_STATUS.json dist/
+          node scripts/create-public-agentic-status.mjs AGENTIC_STATUS.json dist/PUBLIC_AGENTIC_STATUS.json
           cp admin.css dist/
           cp admin-availability.js dist/
           cp admin.html dist/

@@ -778,3 +778,31 @@
   - 로컬 개발 서버에서 `admin-meetup-form.js`와 `admin.html`이 HTTP 200으로 제공되는 것을 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 38개가 모두 통과했다.
+
+## Round 20 - 2026-06-07 10:35 KST
+
+### 요약
+
+이번 사이클은 Agent 작업판 상태 파일의 공개 범위를 줄인 작업입니다. 쉽게 말하면, 관리자 화면 안에 있는 탭이라고 해도 GitHub Pages에 올라간 JSON 파일은 주소를 알면 직접 열 수 있습니다. 그래서 배포본에는 원문 `AGENTIC_STATUS.json`을 올리지 않고, 공개해도 되는 필드만 남긴 `PUBLIC_AGENTIC_STATUS.json`을 빌드 때 생성하도록 바꿨습니다.
+
+### TD-031 - redact public Agentic status artifact
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Security/Review, QA, Ops Log
+- What: Pages artifact에서 raw `AGENTIC_STATUS.json` 복사를 제거하고, 공개용 축약 status JSON을 생성한다.
+- Why: 작업판 원문에는 비밀키는 없더라도 branch, commit, owner, rollout 순서, 상세 개발 메모 같은 운영 정보가 들어갑니다. 정적 파일은 로그인 UI 뒤에 있어도 URL로 직접 접근할 수 있으므로 공개 범위를 명확히 줄여야 합니다.
+- First development unit:
+  - `scripts/create-public-agentic-status.mjs`를 추가한다.
+  - workflow에서 `cp AGENTIC_STATUS.json dist/`를 제거하고 `dist/PUBLIC_AGENTIC_STATUS.json`을 생성한다.
+  - `admin.js`는 `PUBLIC_AGENTIC_STATUS.json`을 먼저 읽고, 로컬 개발 환경에서만 원문 `AGENTIC_STATUS.json`으로 fallback한다.
+  - 테스트는 공개용 status에 branch, owner, commit, currentTask, blocker, detailed notes가 없는지 확인한다.
+- Development direction: 다음 배포 때 raw `AGENTIC_STATUS.json`이 404이고, `PUBLIC_AGENTIC_STATUS.json`이 200인지 확인합니다. 내부 상세 모니터링은 로컬 `agent-monitor`를 계속 사용합니다.
+- Risks:
+  - 공개용 JSON도 여전히 public static file입니다. 앞으로 여기에 추가되는 필드는 “누구나 볼 수 있다”는 기준으로만 넣어야 합니다.
+  - 배포 후 관리자 Agent 탭은 로컬 모니터보다 축약된 정보를 보여줍니다. 상세 작업 내역은 로컬 monitor에서 확인하는 역할 분리가 생깁니다.
+- Notes:
+  - Security/Review Agent가 redacted artifact + local raw monitor 방식을 권장했습니다.
+  - 임시 `PUBLIC_AGENTIC_STATUS.json` 생성 결과를 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 38개가 모두 통과했다.

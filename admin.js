@@ -919,9 +919,14 @@ function getActiveTab() {
 }
 
 async function fetchAgenticStatus() {
-  const response = await fetch(`./AGENTIC_STATUS.json?v=__ASSET_VERSION__`, {
+  const publicResponse = await fetch(`./PUBLIC_AGENTIC_STATUS.json?v=__ASSET_VERSION__`, {
     cache: 'no-store',
   });
+  const response = publicResponse.ok
+    ? publicResponse
+    : await fetch(`./AGENTIC_STATUS.json?v=__ASSET_VERSION__`, {
+      cache: 'no-store',
+    });
 
   if (!response.ok) {
     throw new Error(`Agentic status fetch failed: ${response.status}`);

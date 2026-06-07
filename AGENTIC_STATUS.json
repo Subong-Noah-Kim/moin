@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-06-07T10:27:00+09:00",
+  "updatedAt": "2026-06-07T10:35:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 29,
-    "deployNeeded": 14
+    "doneLocal": 30,
+    "deployNeeded": 15
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0031 admin meetup form helper 커밋 준비",
+      "currentTask": "AG-0032 public Agentic status redaction 커밋 준비",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "최종 검증 후 로컬 커밋"
@@ -21,7 +21,7 @@
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "admin meetup form payload test slice 승인",
+      "currentTask": "public Agentic status redaction 승인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "DOM/flow 테스트 후보 분해"
@@ -39,7 +39,7 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "admin meetup form helper slice 검토 완료",
+      "currentTask": "public status artifact redaction 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 후보 검토"
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "admin-meetup-form.js helper 분리 및 admin.js 연결 완료",
+      "currentTask": "PUBLIC_AGENTIC_STATUS.json 생성 workflow와 admin fallback 연결 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 후보 대기"
@@ -57,7 +57,7 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "admin meetup form helper QA 검토 완료, 이슈 없음",
+      "currentTask": "public redacted status 테스트 완료, 이슈 없음",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test QA 후보 검토"
@@ -66,7 +66,7 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "image_url 검증 반영, AGENTIC_STATUS public artifact follow-up 제기",
+      "currentTask": "raw AGENTIC_STATUS Pages 배포 제외 및 redacted artifact 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 보안 검토"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0031 검토 결과 기록 완료",
+      "currentTask": "AG-0032 검토 결과 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "커밋 후 다음 Task 기록 대기"
@@ -714,7 +714,7 @@
       "priority": "P1",
       "owner": "개발 Agent + QA Agent + 보안 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "d3c1502",
       "deployNeeded": true,
       "next": "다음 DOM/flow 테스트 후보 선택",
       "details": {
@@ -738,19 +738,21 @@
       "title": "redact public agentic status artifact",
       "priority": "P1",
       "owner": "보안 Agent + 검토 Agent + 작업 정리 Agent",
-      "status": "proposed",
+      "status": "done_local",
       "commit": "",
-      "deployNeeded": false,
-      "next": "배포 묶음에 포함할지 사용자 결정 필요",
+      "deployNeeded": true,
+      "next": "다음 GitHub Pages deploy 때 raw AGENTIC_STATUS.json 404와 PUBLIC_AGENTIC_STATUS.json 200 확인",
       "details": {
-        "summary": "AGENTIC_STATUS.json은 민감 토큰은 없지만 GitHub Pages에 복사되면 URL을 아는 누구나 작업 현황 원문을 볼 수 있습니다.",
-        "what": "관리자 화면은 로그인 후에만 Agent 작업판을 보여주지만, 정적 JSON 파일 자체는 Pages artifact에 포함되면 직접 URL로 접근할 수 있습니다.",
-        "why": "작업 현황에는 branch, rollout 순서, 보안 검토 메모 같은 운영 정보가 들어갑니다. 비밀키는 아니어도 공개 범위를 의도적으로 정해야 합니다.",
-        "developmentDirection": "선택지는 1) 공개용 redacted JSON만 배포, 2) Pages artifact에서 제거하고 로컬 모니터만 유지, 3) 인증된 Edge Function/DB를 통해 읽기입니다. 오버엔지니어링을 피하려면 redacted JSON 또는 배포 제외가 우선 후보입니다.",
+        "summary": "GitHub Pages 배포본에는 원문 AGENTIC_STATUS.json 대신 공개용 축약 상태 파일만 생성되도록 바꿨습니다.",
+        "what": "workflow가 AGENTIC_STATUS.json을 그대로 복사하지 않고, scripts/create-public-agentic-status.mjs로 PUBLIC_AGENTIC_STATUS.json을 생성합니다. admin.js는 배포본에서는 공개용 파일을 읽고, 로컬 개발에서는 원문 파일로 fallback합니다.",
+        "why": "정적 Pages 파일은 로그인 화면 뒤에 숨겨도 URL로 직접 접근할 수 있습니다. 작업판에는 비밀키는 없더라도 branch, commit, owner, 작업 메모 같은 운영 정보가 들어가므로 공개 범위를 줄여야 합니다.",
+        "developmentDirection": "허용 목록 방식으로 updatedAt, summary, agent 이름/status/date, task id/title/priority/status/deployNeeded/공개용 summary만 남기고 branch, owner, commit, blocker, currentTask, 상세 개발 메모는 제외합니다.",
         "notes": [
-          "이번 사이클에서는 결정을 내리지 않고 보안 follow-up으로 기록만 했습니다.",
-          "현재 테스트는 status artifact에 token/payment key/secret 원문이 없는지 확인합니다.",
-          "다음 배포 전에 사용자가 Agent 현황판을 public Pages에 어느 수준까지 노출할지 선택하는 것이 좋습니다."
+          "로컬 agent-monitor는 계속 원문 AGENTIC_STATUS.json을 읽어 자세한 작업 내용을 보여줍니다.",
+          "GitHub Pages workflow는 AGENTIC_LIVE_STATUS.json과 agent-monitor 파일을 계속 배포하지 않습니다.",
+          "테스트가 PUBLIC_AGENTIC_STATUS 생성 결과에 branch, owner, commit, currentTask, blocker, developmentDirection, notes가 없는지 확인합니다.",
+          "원격 GitHub Pages deploy와 push는 하지 않았습니다.",
+          "npm test 38개가 모두 통과했습니다."
         ]
       }
     }
