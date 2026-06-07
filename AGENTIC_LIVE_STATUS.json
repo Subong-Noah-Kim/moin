@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-07T13:42:00+09:00",
+  "updatedAt": "2026-06-07T13:45:00+09:00",
   "currentFocus": "browser smoke runner 배포 완료",
   "monitor": {
     "mode": "local",
@@ -96,6 +96,13 @@
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T13:45:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "공개 현황판 배포 완료 문구 보정",
+      "body": "deployed_verified 상태의 작업도 공개 현황판에서 '배포 완료'로 표시되도록 상태 변환을 보정했습니다."
+    },
     {
       "time": "2026-06-07T13:36:00+09:00",
       "agent": "QA Agent",

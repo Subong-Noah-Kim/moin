@@ -7,7 +7,7 @@ function normalizeCount(value, fallback = 0) {
 }
 
 function getPublicNext(task) {
-  if (task?.status === 'deployed') return '배포 완료';
+  if (['deployed', 'deployed_verified'].includes(task?.status)) return '배포 완료';
   if (task?.deployNeeded) return '배포 전 확인 필요';
   if (task?.status === 'done_local') return '로컬 검증 완료';
   if (task?.status === 'proposed') return '검토 필요';

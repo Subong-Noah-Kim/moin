@@ -1223,6 +1223,10 @@ test('admin dashboard renders redacted public agentic status from a static JSON 
   assert.ok(Array.isArray(status.tasks));
   assert.ok(status.agents.some((agent) => agent.name === 'UX/UI Agent'));
   assert.ok(status.tasks.some((task) => task.id === 'AG-0004' && task.status === 'deployed'));
+  assert.equal(
+    createPublicAgenticStatus({ tasks: [{ id: 'AG-X', status: 'deployed_verified' }] }).tasks[0].next,
+    '배포 완료',
+  );
   assert.ok(
     status.tasks.some(
       (task) =>

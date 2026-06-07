@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-07T13:42:00+09:00",
+  "updatedAt": "2026-06-07T13:45:00+09:00",
   "branch": "main",
   "summary": {
     "active": 0,
@@ -1087,6 +1087,7 @@
           "GitHub Pages workflow run 27082788070이 성공했습니다.",
           "live 공개 페이지, admin.html, payment-result.html은 HTTP 200이었습니다.",
           "live 원문 AGENTIC_STATUS.json은 HTTP 404였습니다.",
+          "공개 상태판에서 deployed_verified 작업도 '배포 완료'로 표시하도록 보정했습니다.",
           "headless Chrome 실행이 필요하므로 로컬 환경에 Chrome 또는 CHROME_BIN 설정이 필요합니다.",
           "실제 결제 제출과 관리자 로그인 후 저장은 수행하지 않습니다."
         ]
