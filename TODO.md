@@ -11,6 +11,8 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 5. Apply live Supabase capacity migrations and run the smoke-test checklist when the user approves deployment work.
 6. Revisit optional live regions for important loading/error states after operational rollout.
 
+Noon cutoff note: the last automatic development cycle before 12:00 KST ended with local commit `72fba2f` and `npm test` passing 41 tests. Do not start another automatic task round after 12:00 without a fresh user instruction.
+
 ## P0 - Before Real Payment Use
 
 - [ ] Add capacity, remaining spots, and automatic sold-out controls

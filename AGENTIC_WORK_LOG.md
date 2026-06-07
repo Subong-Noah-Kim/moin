@@ -1276,3 +1276,30 @@
 - Next:
   - 정오 이후 계속 개발한다면 payment-result 실패/cancel path DOM-like test 또는 public drawer/checkout flow test를 후보로 봅니다.
   - 배포를 고르면 `AGENTIC_DEPLOY_HANDOFF.md`와 `supabase/capacity-rollout-checklist.md` 순서를 먼저 확인합니다.
+
+### AG-0040 - pre-noon cutoff summary
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 총괄 디렉터 + 작업 정리 Agent
+- Purpose: 12:00 KST 자동 개발 cutoff 직전에 상태를 깨끗하게 정리한다.
+- Changed files:
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+- Notes:
+  - 새 앱 코드 작업은 열지 않았습니다.
+  - AG-0039의 커밋 해시를 `72fba2f`로 상태판에 보정했습니다.
+  - 최신 로컬 커밋은 `72fba2f Add payment result success flow test`입니다.
+  - 마지막 테스트 기준은 `npm test` 41개 통과입니다.
+  - push, GitHub Pages deploy, Supabase migration 적용, Edge Function deploy는 하지 않았습니다.
+  - 12:00 KST 이후에는 새 자동 task round를 만들지 않고 사용자 지시를 기다립니다.
+- Verification:
+  - 시작 시 작업 트리가 깨끗한 것을 확인했습니다.
+  - 정오 이후 다음 개발 후보는 payment-result 실패/cancel DOM-like test 또는 public drawer/checkout flow test입니다.
+  - 배포 선택 시 `AGENTIC_DEPLOY_HANDOFF.md`와 `supabase/capacity-rollout-checklist.md`를 먼저 확인해야 합니다.
+- Next:
+  - 사용자가 돌아오면 배포 bundle 선택, Supabase-first capacity rollout, 또는 다음 테스트 확장 중 하나로 재개합니다.
