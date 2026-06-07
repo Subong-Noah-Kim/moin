@@ -909,3 +909,32 @@
   - Security/Review Agent가 주문/신청 생성 전 fail-closed guard가 먼저 실행되는 것을 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 39개가 모두 통과했다.
+
+## Round 24 - 2026-06-07 11:32 KST
+
+### 요약
+
+이번 사이클은 공개 페이지와 결제 결과 화면의 브라우저 저장값 복구 로직을 공통 helper로 정리했습니다. 쉽게 말하면, 사용자의 브라우저에 저장된 `saved`, `notified`, `paid` 같은 작은 UI 상태가 깨져도 페이지가 멈추지 않고, 이상한 값은 안전하게 버리도록 테스트 가능한 함수로 분리했습니다.
+
+### TD-035 - public storage helper
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: `main.js`와 `payment-result.js`에 중복된 localStorage Set 읽기/저장 로직을 `public-storage.js`로 분리한다.
+- Why: localStorage는 사용자가 직접 바꾸거나 브라우저/확장 프로그램 문제로 깨질 수 있습니다. 저장값 하나가 깨져도 공개 페이지와 결제 결과 화면이 계속 열려야 하며, 이 복구 규칙은 직접 테스트할 수 있어야 합니다.
+- First development unit:
+  - `public-storage.js`에 `readPublicStringSet`, `persistPublicStringSet`, `publicStateMaxItems`, `publicStateMaxValueLength`를 추가한다.
+  - `main.js`와 `payment-result.js`는 새 helper를 `?v=__ASSET_VERSION__`로 import한다.
+  - GitHub Pages workflow가 새 helper 파일을 `dist`에 복사하게 한다.
+  - 테스트는 corrupt JSON, non-array cleanup, trim/drop empty, length cap, max 100 items, persist behavior, browser module import, workflow copy를 확인한다.
+- Development direction: DOM runtime test를 바로 도입하지 않고, 저장소 복구처럼 독립 테스트가 가능한 로직부터 helper로 빼는 방향을 유지합니다.
+- Risks:
+  - `public-storage.js`가 새 browser module이므로 commit/deploy artifact에 빠지면 Pages에서 404가 납니다. workflow copy와 테스트로 고정했습니다.
+  - `momentclub:paid`는 브라우저 UI 표시용 상태이며 결제 증거가 아닙니다. 실제 주문/결제 권위는 Supabase RPC와 Edge Function에 남아야 합니다.
+- Notes:
+  - Planning/Review Agent가 중복 storage parser를 testable helper로 분리하는 작업을 승인했습니다.
+  - QA Agent가 shippable local 상태와 `public-storage.js` staging 필요성을 확인했습니다.
+  - Security/Review Agent가 storage helper가 결제/security authority가 아님을 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 39개가 모두 통과했다.

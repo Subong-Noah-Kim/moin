@@ -1,18 +1,18 @@
 {
-  "updatedAt": "2026-06-07T11:18:00+09:00",
+  "updatedAt": "2026-06-07T11:32:00+09:00",
   "branch": "codex/overnight-task-discovery",
   "summary": {
     "active": 1,
     "blocked": 0,
-    "doneLocal": 33,
-    "deployNeeded": 18
+    "doneLocal": 34,
+    "deployNeeded": 19
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0035 public registration guard helper 커밋 준비",
+      "currentTask": "AG-0036 public storage helper 커밋 준비",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "최종 검증 후 로컬 커밋"
@@ -21,7 +21,7 @@
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public registration block reason helper 승인",
+      "currentTask": "public storage helper 추출 승인",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "DOM/flow 테스트 후보 분해"
@@ -39,7 +39,7 @@
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public registration guard helper 검토 완료",
+      "currentTask": "public storage helper 검토 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 후보 검토"
@@ -48,7 +48,7 @@
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public registration block reason helper 연결 완료",
+      "currentTask": "public-storage.js helper 분리와 main/payment-result 연결 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 후보 대기"
@@ -57,7 +57,7 @@
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public registration guard helper 테스트 완료, 이슈 없음",
+      "currentTask": "public storage helper 테스트 완료, 이슈 없음",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test QA 후보 검토"
@@ -66,7 +66,7 @@
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "public registration guard fail-closed 보안 검토 완료",
+      "currentTask": "public storage helper 보안 검토 진행",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "다음 flow test 보안 검토"
@@ -75,7 +75,7 @@
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0035 검토 결과 기록 완료",
+      "currentTask": "AG-0036 검토 결과 기록 완료",
       "lastUpdate": "2026-06-07",
       "blocker": "",
       "next": "커밋 후 다음 Task 기록 대기"
@@ -812,7 +812,7 @@
       "priority": "P1",
       "owner": "개발 Agent + QA Agent + 보안 Agent",
       "status": "done_local",
-      "commit": "",
+      "commit": "3349219",
       "deployNeeded": true,
       "next": "다음 DOM/flow 테스트 후보 선택 또는 noon cutoff 전 작업 정리",
       "details": {
@@ -824,6 +824,30 @@
           "결제창 열기, Toss pending order 생성, demo order 생성, 신청 생성 전에 block reason guard가 먼저 실행되도록 테스트했습니다.",
           "가능한 모임에는 긍정 안내 문구가 guard 이유로 쓰이지 않도록 빈 문자열을 반환합니다.",
           "이번 작업은 DOM runtime test가 아니라 기존 repo 스타일에 맞춘 helper test와 source wiring test입니다.",
+          "원격 Supabase 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
+          "npm test 39개가 모두 통과했습니다."
+        ]
+      }
+    },
+    {
+      "id": "AG-0036",
+      "title": "public storage helper",
+      "priority": "P1",
+      "owner": "개발 Agent + QA Agent + 보안 Agent",
+      "status": "done_local",
+      "commit": "",
+      "deployNeeded": true,
+      "next": "noon cutoff 전 작업 요약 또는 다음 배포 전 체크리스트 정리",
+      "details": {
+        "summary": "공개 페이지와 결제 결과 화면의 브라우저 저장값 복구 로직을 공통 helper로 분리했습니다.",
+        "what": "saved, notified, paid 같은 로컬 UI 상태를 읽고 저장하는 로직을 public-storage.js로 옮겼습니다. 깨진 JSON, 배열이 아닌 값, 너무 긴 값, 너무 많은 항목을 안전하게 정리합니다.",
+        "why": "브라우저 localStorage는 사용자가 직접 바꾸거나 브라우저/확장 프로그램 문제로 깨질 수 있습니다. 저장값 하나가 깨졌다고 공개 페이지나 결제 결과 화면이 멈추면 안 됩니다.",
+        "developmentDirection": "main.js와 payment-result.js는 저장소 세부 구현을 직접 들고 있지 않고, 새 helper를 import해서 읽기/저장만 호출합니다. helper는 storage를 주입받을 수 있어 브라우저 없이 직접 테스트합니다.",
+        "notes": [
+          "momentclub:paid는 사용자 브라우저의 UI 표시용 상태일 뿐 결제 승인 권한이나 주문 상태의 근거가 아닙니다.",
+          "결제/정원/주문 상태의 권위는 계속 Supabase RPC와 Edge Function에 있습니다.",
+          "GitHub Pages workflow가 public-storage.js를 dist에 복사하도록 함께 수정했습니다.",
+          "이번 작업은 DOM runtime test가 아니라 helper direct test와 import/source contract test입니다.",
           "원격 Supabase 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.",
           "npm test 39개가 모두 통과했습니다."
         ]

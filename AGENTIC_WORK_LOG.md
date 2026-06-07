@@ -1134,3 +1134,45 @@
   - `npm test` passed: 39 tests.
 - Next:
   - 로컬 커밋 후 다음 후보는 payment-result DOM flow, 또는 noon cutoff가 가까우면 작업 요약/배포 전 체크리스트 정리입니다.
+
+### AG-0036 - public storage helper
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 공개 페이지와 결제 결과 화면의 브라우저 저장값 복구 로직을 한 곳에서 테스트할 수 있게 한다.
+- Subagents:
+  - Planning/Review Agent: Mendel
+  - QA Agent: James
+  - Security/Review Agent: Lorentz
+- Changed files:
+  - `public-storage.js`
+  - `main.js`
+  - `payment-result.js`
+  - `.github/workflows/deploy-pages.yml`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+- Notes:
+  - `main.js`와 `payment-result.js`에 중복되어 있던 localStorage Set 읽기/저장 로직을 `public-storage.js`로 분리했습니다.
+  - 깨진 JSON, 배열이 아닌 값, 빈 값, 너무 긴 값, 너무 많은 항목을 안전하게 정리합니다.
+  - 저장소가 막히거나 실패해도 공개 페이지와 결제 결과 화면이 계속 렌더링되도록 best-effort로 동작합니다.
+  - `momentclub:paid`는 사용자 브라우저의 UI 표시용 상태일 뿐 결제 증거나 주문 상태의 근거가 아닙니다.
+  - 새 browser module인 `public-storage.js`가 GitHub Pages artifact에 포함되도록 workflow copy step을 추가했습니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 storage helper 분리를 작고 낮은 위험의 다음 사이클로 승인했습니다.
+  - QA Agent가 양쪽 browser module import, helper direct tests, workflow copy를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 `momentclub:paid`의 UI-only 경계, corrupt storage cleanup, deployment implication을 검토했고 blocking 이슈 없음으로 확인했습니다.
+  - `node --check main.js` passed.
+  - `node --check payment-result.js` passed.
+  - `node --check public-storage.js` passed.
+  - `node --check tests/paymentSecurity.test.js` passed.
+  - `git diff --check` passed.
+  - `npm test` passed: 39 tests.
+- Next:
+  - `public-storage.js`가 빠지지 않도록 포함해 로컬 커밋합니다.
+  - 12시 cutoff가 가까우므로 다음 heartbeat에서는 새 개발보다 작업 요약/배포 전 확인 목록 정리가 더 안전합니다.

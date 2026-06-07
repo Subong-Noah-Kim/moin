@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-07T11:18:00+09:00",
-  "currentFocus": "public registration guard helper 로컬 완료",
+  "updatedAt": "2026-06-07T11:32:00+09:00",
+  "currentFocus": "public storage helper 로컬 완료",
   "monitor": {
     "mode": "local",
     "pollIntervalMs": 5000,
@@ -11,23 +11,23 @@
     "activeAgents": 1,
     "waitingAgents": 9,
     "blockedAgents": 0,
-    "currentFocus": "AG-0035 done_local"
+    "currentFocus": "AG-0036 done_local"
   },
   "agents": [
     {
       "name": "총괄 디렉터",
       "role": "Director",
       "status": "running",
-      "currentTask": "AG-0035 public registration guard helper 커밋 준비",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "currentTask": "AG-0036 public storage helper 커밋 준비",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "최종 검증 후 로컬 커밋"
     },
     {
       "name": "개발 Agent",
       "role": "Development",
       "status": "done",
-      "currentTask": "public registration block reason helper 연결 완료",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "currentTask": "public-storage.js helper 분리와 main/payment-result 연결 완료",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "다음 flow test 후보 대기"
     },
     {
@@ -35,47 +35,47 @@
       "role": "UX/UI",
       "status": "idle",
       "currentTask": "대기",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "필요 시 UI 테스트 검토"
     },
     {
       "name": "QA Agent",
       "role": "QA",
       "status": "done",
-      "currentTask": "public registration guard helper 테스트 완료, 이슈 없음",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "currentTask": "public storage helper 테스트 완료, 이슈 없음",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "다음 flow test QA 후보 검토"
     },
     {
       "name": "작업 정리 Agent",
       "role": "Ops Log",
       "status": "done",
-      "currentTask": "AG-0035 검토 결과 기록 완료",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "currentTask": "AG-0036 검토 결과 기록 완료",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "커밋 후 다음 Task 기록 대기"
     },
     {
       "name": "기획 Agent",
       "role": "Planning",
       "status": "done",
-      "currentTask": "public registration block reason helper 승인",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "currentTask": "public storage helper 추출 승인",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "DOM/flow 테스트 후보 분해"
     },
     {
       "name": "검토 Agent",
       "role": "Review",
       "status": "done",
-      "currentTask": "public registration guard helper 검토 완료",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "currentTask": "public storage helper 검토 완료",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "다음 후보 검토"
     },
     {
       "name": "보안 Agent",
       "role": "Security",
       "status": "done",
-      "currentTask": "public registration guard fail-closed 보안 검토 완료",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "currentTask": "public storage helper 보안 검토 완료",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "다음 flow test 보안 검토"
     },
     {
@@ -83,7 +83,7 @@
       "role": "Support",
       "status": "idle",
       "currentTask": "미할당",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "필요 시 조사/문서/테스트 보조"
     },
     {
@@ -91,11 +91,39 @@
       "role": "Questions",
       "status": "idle",
       "currentTask": "질문 없음",
-      "updatedAt": "2026-06-07T11:18:00+09:00",
+      "updatedAt": "2026-06-07T11:32:00+09:00",
       "next": "사용자 결정 필요 질문 정리"
     }
   ],
   "events": [
+    {
+      "time": "2026-06-07T11:32:00+09:00",
+      "agent": "개발 Agent",
+      "level": "complete",
+      "title": "public-storage.js helper 분리",
+      "body": "공개 페이지와 결제 결과 화면의 localStorage Set 복구/저장 로직을 공통 helper로 옮겼습니다."
+    },
+    {
+      "time": "2026-06-07T11:32:00+09:00",
+      "agent": "QA Agent",
+      "level": "review",
+      "title": "storage helper QA 통과",
+      "body": "깨진 JSON, 배열이 아닌 값, 공백/긴 값/최대 개수 제한, workflow copy, npm test 39개 통과를 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T11:32:00+09:00",
+      "agent": "보안 Agent",
+      "level": "review",
+      "title": "storage helper 보안 검토 완료",
+      "body": "momentclub:paid는 UI 표시용 상태일 뿐 결제 증거로 쓰이지 않으며, 실제 주문/결제 권한 경계는 Supabase에 남아 있음을 확인했습니다."
+    },
+    {
+      "time": "2026-06-07T11:32:00+09:00",
+      "agent": "총괄 디렉터",
+      "level": "complete",
+      "title": "AG-0036 로컬 완료",
+      "body": "public-storage.js는 새 파일이므로 커밋에 반드시 포함해야 합니다. push/deploy는 하지 않습니다."
+    },
     {
       "time": "2026-06-07T11:18:00+09:00",
       "agent": "개발 Agent",

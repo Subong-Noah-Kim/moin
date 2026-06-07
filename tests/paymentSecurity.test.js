@@ -33,6 +33,12 @@ import {
   createPublicFieldId,
 } from '../public-form.js';
 import {
+  persistPublicStringSet,
+  publicStateMaxItems,
+  publicStateMaxValueLength,
+  readPublicStringSet,
+} from '../public-storage.js';
+import {
   createTossAuthSummary,
   formatPaymentResultAmount,
   getConfirmErrorMessage,
@@ -54,6 +60,7 @@ const cacheBustedSourceFiles = [
   '../payment-result-state.js',
   '../public-availability.js',
   '../public-form.js',
+  '../public-storage.js',
   '../supabase-client.js',
 ];
 
@@ -724,30 +731,54 @@ test('payment result uses paymentKey for confirmation without exposing the raw i
 });
 
 test('public localStorage sets recover from corrupted saved state', async () => {
-  const [mainScript, paymentResultScript] = await Promise.all([
+  const [mainScript, paymentResultScript, publicStorageModule] = await Promise.all([
     readProjectFile('../main.js'),
     readProjectFile('../payment-result.js'),
+    readProjectFile('../public-storage.js'),
   ]);
+  const longValue = 'x'.repeat(publicStateMaxValueLength + 1);
+  const boundedValues = Array.from({ length: publicStateMaxItems + 5 }, (_, index) => `meetup-${index}`);
+  const storage = createMemoryStorage({
+    'momentclub:bad-json': '{bad json',
+    'momentclub:not-array': JSON.stringify({ value: 'meetup' }),
+    'momentclub:values': JSON.stringify([' saved ', '', longValue, 'paid', ...boundedValues]),
+  });
 
-  assert.match(mainScript, /function readStringSet\(key\)/);
-  assert.match(mainScript, /const saved = readStringSet\('momentclub:saved'\)/);
-  assert.match(mainScript, /const notified = readStringSet\('momentclub:notified'\)/);
-  assert.match(mainScript, /const paid = readStringSet\('momentclub:paid'\)/);
-  assert.match(mainScript, /const publicStateMaxItems = 100/);
-  assert.match(mainScript, /const publicStateMaxValueLength = 120/);
-  assert.match(mainScript, /\.filter\(\(value\) => value && value\.length <= publicStateMaxValueLength\)/);
-  assert.match(mainScript, /\.slice\(0, publicStateMaxItems\)/);
-  assert.match(mainScript, /localStorage\.removeItem\(key\)/);
-  assert.match(mainScript, /function persist\(key, set\) \{\s+try \{/);
+  assert.deepEqual([...readPublicStringSet('momentclub:missing', storage)], []);
+  assert.deepEqual([...readPublicStringSet('momentclub:bad-json', storage)], []);
+  assert.equal(storage.getItem('momentclub:bad-json'), null);
+  assert.deepEqual([...readPublicStringSet('momentclub:not-array', storage)], []);
+  assert.equal(storage.getItem('momentclub:not-array'), null);
+
+  const recovered = [...readPublicStringSet('momentclub:values', storage)];
+  assert.equal(recovered[0], 'saved');
+  assert.equal(recovered[1], 'paid');
+  assert.equal(recovered.length, publicStateMaxItems);
+  assert.equal(recovered.includes(longValue), false);
+
+  persistPublicStringSet('momentclub:persisted', new Set(['meetup-a', 'meetup-b']), storage);
+  assert.deepEqual(JSON.parse(storage.getItem('momentclub:persisted')), ['meetup-a', 'meetup-b']);
+
+  assert.equal(publicStateMaxItems, 100);
+  assert.equal(publicStateMaxValueLength, 120);
+  assert.match(publicStorageModule, /export function readPublicStringSet\(key, storage = getDefaultStorage\(\)\)/);
+  assert.match(publicStorageModule, /storage\?\.removeItem\(key\)/);
+  assert.match(publicStorageModule, /export function persistPublicStringSet\(key, set, storage = getDefaultStorage\(\)\)/);
+
+  assert.match(mainScript, /from '\.\/public-storage\.js\?v=__ASSET_VERSION__'/);
+  assert.match(mainScript, /const saved = readPublicStringSet\('momentclub:saved'\)/);
+  assert.match(mainScript, /const notified = readPublicStringSet\('momentclub:notified'\)/);
+  assert.match(mainScript, /const paid = readPublicStringSet\('momentclub:paid'\)/);
+  assert.match(mainScript, /persistPublicStringSet as persist/);
+  assert.doesNotMatch(mainScript, /function readStringSet\(key\)/);
+  assert.doesNotMatch(mainScript, /function persist\(key, set\)/);
   assert.doesNotMatch(mainScript, /const (?:saved|notified|paid) = new Set\(JSON\.parse/);
 
-  assert.match(paymentResultScript, /function readStringSet\(key\)/);
-  assert.match(paymentResultScript, /function persistStringSet\(key, set\)/);
-  assert.match(paymentResultScript, /const paid = readStringSet\('momentclub:paid'\)/);
-  assert.match(paymentResultScript, /const publicStateMaxItems = 100/);
-  assert.match(paymentResultScript, /const publicStateMaxValueLength = 120/);
-  assert.match(paymentResultScript, /persistStringSet\('momentclub:paid', paid\)/);
-  assert.match(paymentResultScript, /localStorage\.removeItem\(key\)/);
+  assert.match(paymentResultScript, /from '\.\/public-storage\.js\?v=__ASSET_VERSION__'/);
+  assert.match(paymentResultScript, /const paid = readPublicStringSet\('momentclub:paid'\)/);
+  assert.match(paymentResultScript, /persistPublicStringSet\('momentclub:paid', paid\)/);
+  assert.doesNotMatch(paymentResultScript, /function readStringSet\(key\)/);
+  assert.doesNotMatch(paymentResultScript, /function persistStringSet\(key, set\)/);
   assert.doesNotMatch(paymentResultScript, /new Set\(JSON\.parse\(localStorage\.getItem\('momentclub:paid'\)/);
 });
 
@@ -769,6 +800,7 @@ test('static asset cache-busting uses one deploy version placeholder', async () 
   assert.match(workflow, /cp payment-result-state\.js dist\//);
   assert.match(workflow, /cp public-availability\.js dist\//);
   assert.match(workflow, /cp public-form\.js dist\//);
+  assert.match(workflow, /cp public-storage\.js dist\//);
   assert.match(workflow, /s\/__ASSET_VERSION__\/\$\{ASSET_VERSION\}\/g/);
 });
 

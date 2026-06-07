@@ -8,6 +8,10 @@ import {
   getConfirmErrorMessage,
   getFailureStatusLabel,
 } from './payment-result-state.js?v=__ASSET_VERSION__';
+import {
+  persistPublicStringSet,
+  readPublicStringSet,
+} from './public-storage.js?v=__ASSET_VERSION__';
 
 const params = new URLSearchParams(window.location.search);
 const result = params.get('result');
@@ -17,8 +21,6 @@ const successTitle = document.querySelector('[data-success-title]');
 const successDescription = document.querySelector('[data-success-description]');
 const confirmStatus = document.querySelector('[data-confirm-status]');
 const failSyncStatus = document.querySelector('[data-fail-sync-status]');
-const publicStateMaxItems = 100;
-const publicStateMaxValueLength = 120;
 
 function setText(selector, value) {
   const element = document.querySelector(selector);
@@ -58,52 +60,12 @@ function setFailSyncStatus(message, type = 'pending') {
   failSyncStatus.dataset.status = type;
 }
 
-function readStringSet(key) {
-  try {
-    const rawValue = localStorage.getItem(key);
-
-    if (!rawValue) {
-      return new Set();
-    }
-
-    const values = JSON.parse(rawValue);
-
-    if (!Array.isArray(values)) {
-      localStorage.removeItem(key);
-      return new Set();
-    }
-
-    return new Set(
-      values
-        .map((value) => String(value).trim())
-        .filter((value) => value && value.length <= publicStateMaxValueLength)
-        .slice(0, publicStateMaxItems),
-    );
-  } catch {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // Ignore storage cleanup failures so the result page can keep rendering.
-    }
-
-    return new Set();
-  }
-}
-
-function persistStringSet(key, set) {
-  try {
-    localStorage.setItem(key, JSON.stringify([...set]));
-  } catch {
-    // Paid-state persistence is best-effort and should not block confirmation.
-  }
-}
-
 function markMeetupPaid(meetupId) {
   if (!meetupId) return;
 
-  const paid = readStringSet('momentclub:paid');
+  const paid = readPublicStringSet('momentclub:paid');
   paid.add(meetupId);
-  persistStringSet('momentclub:paid', paid);
+  persistPublicStringSet('momentclub:paid', paid);
 }
 
 async function handleSuccessResult() {

@@ -22,6 +22,10 @@ import {
   createPublicCheckoutPayload,
   createPublicFieldId as createFieldId,
 } from './public-form.js?v=__ASSET_VERSION__';
+import {
+  persistPublicStringSet as persist,
+  readPublicStringSet,
+} from './public-storage.js?v=__ASSET_VERSION__';
 import { TOSS_CLIENT_KEY } from './toss-config.js?v=__ASSET_VERSION__';
 
 function redirectInviteToAdmin() {
@@ -259,44 +263,9 @@ const toast = document.querySelector('[data-toast]');
 const header = document.querySelector('[data-header]');
 const mobileNavLinks = document.querySelectorAll('[data-mobile-nav]');
 const mobileNavSectionIds = ['meetups', 'waitlist', 'events'];
-const publicStateMaxItems = 100;
-const publicStateMaxValueLength = 120;
-
-function readStringSet(key) {
-  try {
-    const rawValue = localStorage.getItem(key);
-
-    if (!rawValue) {
-      return new Set();
-    }
-
-    const values = JSON.parse(rawValue);
-
-    if (!Array.isArray(values)) {
-      localStorage.removeItem(key);
-      return new Set();
-    }
-
-    return new Set(
-      values
-        .map((value) => String(value).trim())
-        .filter((value) => value && value.length <= publicStateMaxValueLength)
-        .slice(0, publicStateMaxItems),
-    );
-  } catch {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // Ignore storage cleanup failures so the public page can keep rendering.
-    }
-
-    return new Set();
-  }
-}
-
-const saved = readStringSet('momentclub:saved');
-const notified = readStringSet('momentclub:notified');
-const paid = readStringSet('momentclub:paid');
+const saved = readPublicStringSet('momentclub:saved');
+const notified = readPublicStringSet('momentclub:notified');
+const paid = readPublicStringSet('momentclub:paid');
 const tossCustomerKeyStorage = 'momentclub:toss-customer-key';
 const tossSdkUrl = 'https://js.tosspayments.com/v2/standard';
 let activeFilter = 'all';
@@ -316,14 +285,6 @@ const focusableSelector = [
   'textarea:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
-
-function persist(key, set) {
-  try {
-    localStorage.setItem(key, JSON.stringify([...set]));
-  } catch {
-    // Saved/notified/paid state is helpful, but it should never block the page.
-  }
-}
 
 function setInert(element, isInert) {
   if (!element) return;
