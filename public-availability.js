@@ -60,6 +60,10 @@ export function isRegistrationAvailable(item) {
   return true;
 }
 
+export function getRegistrationBlockReason(item) {
+  return isRegistrationAvailable(item) ? '' : getRegistrationStatusDescription(item);
+}
+
 export function getRegistrationStatusLabel(item) {
   if (item?.availabilityKnown === false) {
     return '접수 확인중';

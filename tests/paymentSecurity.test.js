@@ -21,6 +21,7 @@ import {
 import {
   getPaymentButtonTextForMeetup,
   getPublicStatusClass,
+  getRegistrationBlockReason,
   getRegistrationStatusDescription,
   getRegistrationStatusLabel,
   isRegistrationAvailable,
@@ -230,6 +231,7 @@ test('public availability helpers fail closed when required availability is miss
   assert.equal(meetup.availabilityKnown, false);
   assert.equal(meetup.canRegister, false);
   assert.equal(isRegistrationAvailable(meetup), false);
+  assert.equal(getRegistrationBlockReason(meetup), getRegistrationStatusDescription(meetup));
   assert.equal(getRegistrationStatusLabel(meetup), '접수 확인중');
   assert.equal(getPublicStatusClass(meetup), 'is-checking');
   assert.equal(getPaymentButtonTextForMeetup(meetup), '확인중');
@@ -277,16 +279,19 @@ test('public availability helpers map sold-out, closed, and remaining-seat behav
   );
 
   assert.equal(isRegistrationAvailable(soldOut), false);
+  assert.equal(getRegistrationBlockReason(soldOut), getRegistrationStatusDescription(soldOut));
   assert.equal(getRegistrationStatusLabel(soldOut), '마감');
   assert.equal(getPaymentButtonTextForMeetup(soldOut), '마감');
   assert.match(getRegistrationStatusDescription(soldOut), /정원이 모두 차서/);
 
   assert.equal(isRegistrationAvailable(closed), false);
+  assert.equal(getRegistrationBlockReason(closed), getRegistrationStatusDescription(closed));
   assert.equal(getRegistrationStatusLabel(closed), '신청 종료');
   assert.equal(getPaymentButtonTextForMeetup(closed), '신청 종료');
   assert.match(getRegistrationStatusDescription(closed), /운영자가 접수를 닫아/);
 
   assert.equal(isRegistrationAvailable(nearlyFull), true);
+  assert.equal(getRegistrationBlockReason(nearlyFull), '');
   assert.equal(getRegistrationStatusLabel(nearlyFull), '잔여 2석');
   assert.equal(getPublicStatusClass(nearlyFull), 'is-urgent');
   assert.equal(getPaymentButtonTextForMeetup(nearlyFull, { isPaid: true }), '테스트 결제 완료');
@@ -1330,11 +1335,19 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
     readProjectFile('../public-form.js'),
     readProjectFile('../styles.css'),
   ]);
-  const checkoutGuardIndex = mainScript.indexOf('if (!isRegistrationAvailable(item)) {\n    setCheckoutStatus');
-  const checkoutCreateIndex = mainScript.indexOf('await createTossPendingOrder');
-  const demoCreateIndex = mainScript.indexOf('await createDemoOrder');
-  const applicationGuardIndex = mainScript.indexOf('if (!isRegistrationAvailable(item)) {\n    showToast(getRegistrationStatusDescription(item));');
-  const applicationCreateIndex = mainScript.indexOf('await createApplication');
+  const openCheckoutStart = mainScript.indexOf('function openCheckout');
+  const completeCheckoutStart = mainScript.indexOf('async function completeCheckout');
+  const submitApplicationStart = mainScript.indexOf('async function submitApplication');
+  const setFilterStart = mainScript.indexOf('function setFilter');
+  const openCheckoutBody = mainScript.slice(openCheckoutStart, completeCheckoutStart);
+  const checkoutBody = mainScript.slice(completeCheckoutStart, submitApplicationStart);
+  const applicationBody = mainScript.slice(submitApplicationStart, setFilterStart);
+  const openCheckoutGuardIndex = openCheckoutBody.indexOf('const blockReason = getRegistrationBlockReason(item);');
+  const checkoutGuardIndex = checkoutBody.indexOf('const blockReason = getRegistrationBlockReason(item);');
+  const checkoutCreateIndex = checkoutBody.indexOf('await createTossPendingOrder');
+  const demoCreateIndex = checkoutBody.indexOf('await createDemoOrder');
+  const applicationGuardIndex = applicationBody.indexOf('const blockReason = getRegistrationBlockReason(item);');
+  const applicationCreateIndex = applicationBody.indexOf('await createApplication');
   const statusClassStructuredIndex = availabilityModule.indexOf("if (item?.availabilityKnown === true) return 'is-open';");
   const statusClassRawIndex = availabilityModule.indexOf("const value = String(item?.status || '');");
 
@@ -1344,12 +1357,14 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(mainScript, /from '\.\/public-availability\.js\?v=__ASSET_VERSION__'/);
   assert.match(mainScript, /from '\.\/public-form\.js\?v=__ASSET_VERSION__'/);
   assert.match(mainScript, /mergeMeetupAvailability,/);
+  assert.match(mainScript, /getRegistrationBlockReason,/);
   assert.match(mainScript, /getPaymentButtonTextForMeetup/);
   assert.match(availabilityModule, /function normalizeAvailability\(row\)/);
   assert.match(availabilityModule, /meetup_id/);
   assert.match(availabilityModule, /effective_registration_status/);
   assert.match(availabilityModule, /can_register === true/);
   assert.match(availabilityModule, /export function mergeMeetupAvailability\(items, availabilityRows, \{ requireAvailability = false \} = \{\}\)/);
+  assert.match(availabilityModule, /export function getRegistrationBlockReason\(item\)/);
   assert.match(availabilityModule, /new Map\([\s\S]*\.map\(normalizeAvailability\)[\s\S]*\[availability\.id, availability\]/);
   assert.match(mainScript, /let meetups = isSupabaseConfigured\(\)\s+\? mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
   assert.match(mainScript, /Promise\.allSettled\(\[\s+fetchPublishedMeetups\(\),\s+fetchPublicMeetupAvailability\(\),\s+\]\)/);
@@ -1359,9 +1374,13 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(formModule, /export function createPublicCheckoutPayload\(source\)/);
   assert.match(mainScript, /const \{ payerName, paymentMethod \} = createPublicCheckoutPayload\(formData\)/);
   assert.match(mainScript, /const \{ name, interest \} = createPublicApplicationPayload\(formData\)/);
+  assert.match(mainScript, /const blockReason = getRegistrationBlockReason\(item\)/);
+  assert.doesNotMatch(mainScript, /if \(!isRegistrationAvailable\(item\)\) \{\n    setCheckoutStatus/);
+  assert.doesNotMatch(mainScript, /if \(!isRegistrationAvailable\(item\)\) \{\n    showToast\(getRegistrationStatusDescription\(item\)\);/);
   assert.match(availabilityModule, /잔여석 정보를 확인하지 못해 신청과 결제를 잠시 막았습니다/);
   assert.match(availabilityModule, /정원이 모두 차서 새 신청과 테스트 결제를 받을 수 없습니다/);
   assert.match(availabilityModule, /운영자가 접수를 닫아 새 신청과 테스트 결제를 받을 수 없습니다/);
+  assert.ok(openCheckoutGuardIndex >= 0);
   assert.ok(checkoutGuardIndex >= 0 && checkoutGuardIndex < checkoutCreateIndex);
   assert.ok(checkoutGuardIndex < demoCreateIndex);
   assert.ok(applicationGuardIndex >= 0 && applicationGuardIndex < applicationCreateIndex);

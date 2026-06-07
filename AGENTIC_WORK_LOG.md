@@ -1095,3 +1095,42 @@
   - `npm test` passed: 39 tests.
 - Next:
   - 로컬 커밋 후 다음 후보는 공개 drawer 신청/결제 guard DOM flow 또는 payment-result DOM flow입니다.
+
+### AG-0035 - public registration guard block reason helper
+
+- Status: `done_local`
+- Branch: `codex/overnight-task-discovery`
+- Director Agent: main Codex thread
+- Owner Agent: 개발 Agent + QA Agent + 보안 Agent + 작업 정리 Agent
+- Purpose: 공개 신청과 결제가 같은 마감/잔여석 기준으로 차단되도록 한다.
+- Subagents:
+  - Planning/Review Agent: Gauss
+  - QA Agent: Poincare
+  - Security/Review Agent: Galileo
+- Changed files:
+  - `public-availability.js`
+  - `main.js`
+  - `tests/paymentSecurity.test.js`
+  - `TODO.md`
+  - `AGENTIC_STATUS.json`
+  - `AGENTIC_LIVE_STATUS.json`
+  - `AGENTIC_WORK_LOG.md`
+  - `AGENTIC_TASK_DISCOVERY.md`
+- Notes:
+  - `getRegistrationBlockReason()`을 추가해 신청/결제를 막아야 할 때만 사용자용 차단 이유를 반환하게 했습니다.
+  - 가능한 모임은 빈 문자열을 반환합니다. 그래서 “현재 신청과 테스트 결제를 진행할 수 있습니다” 같은 긍정 안내 문구가 차단 사유로 잘못 쓰이지 않습니다.
+  - `openCheckout`, `completeCheckout`, `submitApplication`이 모두 같은 helper를 사용합니다.
+  - 기존 DB/RPC/Edge Function의 정원/마감 차단은 계속 authoritative layer로 남습니다. 이번 작업은 브라우저 UI의 일관성을 고정하는 보강입니다.
+  - 이번 작업은 DOM runtime click test가 아니라 helper test와 source wiring/order test입니다.
+  - 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았습니다.
+- Verification:
+  - Planning/Review Agent가 같은 guard 기준을 세 경로에 적용하는 작은 사이클로 승인했습니다.
+  - QA Agent가 helper 동작과 source-contract coverage를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 결제창 열기, Toss/demo 주문 생성, 신청 생성 전에 fail-closed guard가 먼저 실행되는 것을 확인했습니다.
+  - `node --check main.js` passed.
+  - `node --check public-availability.js` passed.
+  - `node --check tests/paymentSecurity.test.js` passed.
+  - `git diff --check` passed.
+  - `npm test` passed: 39 tests.
+- Next:
+  - 로컬 커밋 후 다음 후보는 payment-result DOM flow, 또는 noon cutoff가 가까우면 작업 요약/배포 전 체크리스트 정리입니다.

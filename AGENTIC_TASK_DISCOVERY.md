@@ -880,3 +880,32 @@
   - Security/Review Agent가 결제 권한/금액 판단과 분리되어 있음을 확인했습니다.
   - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
   - `npm test` 39개가 모두 통과했다.
+
+## Round 23 - 2026-06-07 11:18 KST
+
+### 요약
+
+이번 사이클은 공개 신청과 결제가 같은 마감 기준을 쓰도록 정리한 작업입니다. 쉽게 말하면, 모임이 마감됐거나 신청 종료됐거나 잔여석 확인에 실패했을 때 신청 버튼과 결제 버튼이 서로 다른 판단을 하지 않도록, “막아야 하는 이유”를 한 helper가 계산하게 했습니다.
+
+### TD-034 - public registration guard block reason helper
+
+- Priority: `P1`
+- Status: `done_local`
+- Source agents: Director, Planning/Review, QA, Security, Ops Log
+- What: public availability helper에 `getRegistrationBlockReason()`을 추가하고, 공개 결제창 열기/결제 제출/신청 제출 guard가 모두 이 helper를 쓰게 한다.
+- Why: 신청과 결제는 같은 정원/마감 기준으로 막혀야 합니다. 한 경로만 막히거나 서로 다른 안내 문구를 보여주면 사용자가 혼란을 겪거나, 최악의 경우 신청/결제 생성 시도가 불필요하게 발생할 수 있습니다.
+- First development unit:
+  - `public-availability.js`에 가능한 모임이면 `''`, 막힌 모임이면 기존 사용자용 차단 설명을 반환하는 helper를 추가한다.
+  - `main.js`의 `openCheckout`, `completeCheckout`, `submitApplication`에서 같은 helper를 사용한다.
+  - `tests/paymentSecurity.test.js`가 missing availability, sold-out, closed, open/remaining-seat 상태의 block reason을 직접 테스트한다.
+  - source contract 테스트가 block reason guard가 Toss pending order, demo order, application 생성보다 먼저 실행되는지 확인한다.
+- Development direction: 실제 DOM click test는 아직 아니지만, 더 넓은 브라우저 테스트를 붙이기 전 안전한 중간 단계로 guard 기준을 고정했습니다.
+- Risks:
+  - 이 guard는 브라우저 UI 보강입니다. 최종 과모집 차단은 계속 DB/RPC/Edge Function capacity guard가 담당해야 합니다.
+  - `isRegistrationAvailable()`은 availability가 required되지 않은 fallback mode에서는 기본 open을 유지하므로, fail-closed 동작은 기존 Supabase configured mode의 `requireAvailability: true` 흐름에 의존합니다.
+- Notes:
+  - Planning/Review Agent가 `openCheckout`, `completeCheckout`, `submitApplication` 세 경로를 모두 포함하는 것을 승인했습니다.
+  - QA Agent가 helper 동작과 source-contract coverage를 검토했고 이슈 없음으로 확인했습니다.
+  - Security/Review Agent가 주문/신청 생성 전 fail-closed guard가 먼저 실행되는 것을 확인했습니다.
+  - 이번 사이클에서 원격 Supabase migration 적용, Edge Function deploy, GitHub Pages deploy, push는 하지 않았다.
+  - `npm test` 39개가 모두 통과했다.

@@ -11,6 +11,7 @@ import {
 import {
   getPaymentButtonTextForMeetup,
   getPublicStatusClass as getStatusClass,
+  getRegistrationBlockReason,
   getRegistrationStatusDescription,
   getRegistrationStatusLabel,
   isRegistrationAvailable,
@@ -1072,8 +1073,9 @@ function openCheckout(itemId, opener = document.activeElement) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
 
-  if (!isRegistrationAvailable(item)) {
-    showToast(getRegistrationStatusDescription(item));
+  const blockReason = getRegistrationBlockReason(item);
+  if (blockReason) {
+    showToast(blockReason);
     return;
   }
 
@@ -1166,9 +1168,10 @@ async function completeCheckout(itemId, form) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
 
-  if (!isRegistrationAvailable(item)) {
-    setCheckoutStatus(form, getRegistrationStatusDescription(item), 'error');
-    showToast(getRegistrationStatusDescription(item));
+  const blockReason = getRegistrationBlockReason(item);
+  if (blockReason) {
+    setCheckoutStatus(form, blockReason, 'error');
+    showToast(blockReason);
     return;
   }
 
@@ -1263,8 +1266,9 @@ async function submitApplication(form) {
   const item = meetups.find((meetup) => meetup.id === form.dataset.applicationForm);
   if (!item) return;
 
-  if (!isRegistrationAvailable(item)) {
-    showToast(getRegistrationStatusDescription(item));
+  const blockReason = getRegistrationBlockReason(item);
+  if (blockReason) {
+    showToast(blockReason);
     return;
   }
 
