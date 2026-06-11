@@ -882,6 +882,34 @@ export async function uploadMeetupImage(accessToken, file, meetupId) {
   return `${supabaseUrl}/storage/v1/object/public/${meetupImageBucket}/${filePath}`;
 }
 
+export async function deleteMeetupImage(accessToken, imageUrl) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured.');
+  }
+
+  const publicPrefix = `${supabaseUrl}/storage/v1/object/public/${meetupImageBucket}/`;
+
+  if (!imageUrl || !String(imageUrl).startsWith(publicPrefix)) {
+    return false;
+  }
+
+  const filePath = String(imageUrl).slice(publicPrefix.length);
+  const response = await fetchWithTimeout(`${supabaseUrl}/storage/v1/object/${meetupImageBucket}/${filePath}`, {
+    method: 'DELETE',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  }, 30000);
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase storage delete failed: ${response.status} ${message}`);
+  }
+
+  return true;
+}
+
 export async function setAdminMeetupVisibility(accessToken, meetupId, isPublished) {
   return updateAdminMeetup(accessToken, meetupId, { is_published: isPublished });
 }

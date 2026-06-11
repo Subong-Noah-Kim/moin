@@ -2,6 +2,7 @@ import {
   clearAdminSession,
   completeAdminInvite,
   createAdminMeetup,
+  deleteMeetupImage,
   fetchAdminOperationalData,
   fetchAdminOverview,
   fetchAdminOrders,
@@ -1257,11 +1258,14 @@ meetupForm.addEventListener('submit', async (event) => {
   setMeetupFormPending(true);
   meetupFormStatus.textContent = isEditing ? '모임 수정 중' : '새 모임 저장 중';
 
+  let uploadedImageUrl = '';
+
   try {
     if (imageFile) {
       const meetupId = isEditing ? editingMeetupId : payload.id;
       meetupFormStatus.textContent = '이미지 업로드 중';
       payload.image_url = await uploadMeetupImage(activeSession.accessToken, imageFile, meetupId);
+      uploadedImageUrl = payload.image_url;
       meetupForm.elements.image_url.value = payload.image_url;
       meetupImageFileName.textContent = '업로드 완료';
       clearMeetupImagePreviewObjectUrl();
@@ -1278,6 +1282,19 @@ meetupForm.addEventListener('submit', async (event) => {
     syncStatus.textContent = `모임 저장 완료 ${dateFormatter.format(new Date())}`;
   } catch (error) {
     console.error(error);
+
+    if (uploadedImageUrl) {
+      try {
+        await deleteMeetupImage(activeSession.accessToken, uploadedImageUrl);
+        if (meetupForm.elements.image_url.value === uploadedImageUrl) {
+          meetupForm.elements.image_url.value = '';
+        }
+        meetupImageFileName.textContent = '저장 실패로 업로드한 이미지를 정리했어요';
+      } catch (cleanupError) {
+        console.error(cleanupError);
+      }
+    }
+
     meetupFormStatus.textContent = getAdminWriteErrorMessage(error);
   } finally {
     setMeetupFormPending(false);

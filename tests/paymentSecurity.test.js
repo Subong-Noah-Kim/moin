@@ -59,9 +59,11 @@ import {
 import {
   clearAdminSession,
   confirmTossPayment,
+  deleteMeetupImage,
   getAmountFromMeetup,
   getStoredAdminSession,
 } from '../supabase-client.js';
+import { SUPABASE_URL } from '../supabase-config.js';
 import { createPublicAgenticStatus } from '../scripts/create-public-agentic-status.mjs';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
@@ -1955,6 +1957,57 @@ test('payment result success callback warns when confirmation lacks meetup infor
   assert.equal(document.get('[data-success-title]').textContent, '테스트 결제 승인이 완료됐어요');
   assert.equal(document.get('[data-confirm-status]').dataset.status, 'fail');
   assert.match(document.get('[data-confirm-status]').textContent, /모임 정보를 받지 못해/);
+});
+
+test('checkout modal cannot reopen while a payment request is in flight', async () => {
+  const mainScript = await readProjectFile('../main.js');
+
+  assert.match(
+    mainScript,
+    /function openCheckout\(itemId, opener = document\.activeElement\) \{\s+if \(checkoutInProgress\) \{\s+showToast\([^)]*\);\s+return;\s+\}/,
+    'openCheckout must refuse to rebuild the modal while checkoutInProgress is true',
+  );
+});
+
+test('deleteMeetupImage removes only meetup bucket objects uploaded by this app', async () => {
+  const globals = snapshotGlobals(['fetch']);
+  const calls = [];
+
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url, options });
+    return { ok: true, status: 200, text: async () => '{}' };
+  };
+
+  try {
+    const removed = await deleteMeetupImage(
+      'admin-access-token',
+      `${SUPABASE_URL}/storage/v1/object/public/meetup-images/sunday-club/cover.jpg`,
+    );
+
+    assert.equal(removed, true);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].options.method, 'DELETE');
+    assert.match(calls[0].url, /\/storage\/v1\/object\/meetup-images\/sunday-club\/cover\.jpg$/);
+    assert.equal(calls[0].options.headers.Authorization, 'Bearer admin-access-token');
+
+    const skippedForeign = await deleteMeetupImage('admin-access-token', 'https://example.com/cover.jpg');
+
+    assert.equal(skippedForeign, false);
+    assert.equal(calls.length, 1, 'urls outside the meetup image bucket must not trigger requests');
+  } finally {
+    restoreGlobals(globals);
+  }
+});
+
+test('admin meetup form cleans up the uploaded image when saving the meetup fails', async () => {
+  const adminScript = await readProjectFile('../admin.js');
+
+  assert.match(adminScript, /deleteMeetupImage,/, 'admin.js must import deleteMeetupImage');
+  assert.match(
+    adminScript,
+    /catch \(error\) \{[\s\S]{0,400}deleteMeetupImage\(activeSession\.accessToken, uploadedImageUrl\)/,
+    'the meetup form submit catch block must clean up the uploaded image',
+  );
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {

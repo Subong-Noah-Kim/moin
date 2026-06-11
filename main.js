@@ -1031,6 +1031,11 @@ function closeDrawer({ restoreFocus = true } = {}) {
 }
 
 function openCheckout(itemId, opener = document.activeElement) {
+  if (checkoutInProgress) {
+    showToast('이미 결제를 진행하고 있어요. 잠시만 기다려주세요.');
+    return;
+  }
+
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
 
