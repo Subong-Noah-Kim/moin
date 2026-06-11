@@ -24,6 +24,20 @@ test('manifest declares an installable standalone app with relative scope', asyn
   assert.ok(purposes.includes('maskable'));
 });
 
+test('index.html links the manifest, apple touch icon, and theme color', async () => {
+  const html = await readProjectFile('index.html');
+  assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest" \/>/);
+  assert.match(html, /<link rel="apple-touch-icon" href="\.\/icons\/apple-touch-icon-180\.png" \/>/);
+  assert.match(html, /<meta name="theme-color" content="#1f6a53" \/>/);
+});
+
+test('local dev server declares manifest and icon content types', async () => {
+  const server = await readProjectFile('server.js');
+  assert.match(server, /'\.webmanifest': 'application\/manifest\+json; charset=utf-8'/);
+  assert.match(server, /'\.svg': 'image\/svg\+xml'/);
+  assert.match(server, /'\.png': 'image\/png'/);
+});
+
 test('manifest and apple touch icons exist as PNG files', async () => {
   const manifest = JSON.parse(await readProjectFile('manifest.webmanifest'));
   const iconPaths = manifest.icons.map((icon) => icon.src.replace(/^\.\//, ''));
