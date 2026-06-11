@@ -30,6 +30,45 @@ test('push config exposes a base64url VAPID application server key', async () =>
   assert.match(generator, /base64url/);
 });
 
+test('push support detection requires service worker, notification, and push manager', async () => {
+  const { isPushSupported } = await import('../push-client.js');
+  assert.equal(isPushSupported({ navigator: { serviceWorker: {} }, Notification: class {}, PushManager: class {} }), true);
+  assert.equal(isPushSupported({ navigator: {}, Notification: class {}, PushManager: class {} }), false);
+  assert.equal(isPushSupported({ navigator: { serviceWorker: {} }, Notification: class {} }), false);
+});
+
+test('push opt-in state covers hidden, install hint, blocked, done, and button modes', async () => {
+  const { getPushOptInState } = await import('../push-client.js');
+  assert.equal(getPushOptInState({ supported: true, hasToken: false, permission: 'default', subscribed: false }).mode, 'hidden');
+  assert.equal(getPushOptInState({ supported: false, hasToken: true, permission: 'default', subscribed: false }).mode, 'install-hint');
+  assert.equal(getPushOptInState({ supported: true, hasToken: true, permission: 'denied', subscribed: false }).mode, 'blocked');
+  assert.equal(getPushOptInState({ supported: true, hasToken: true, permission: 'granted', subscribed: true }).mode, 'done');
+  const button = getPushOptInState({ supported: true, hasToken: true, permission: 'default', subscribed: false });
+  assert.equal(button.mode, 'button');
+  assert.equal(button.label, '승인되면 알림 받기');
+});
+
+test('application server key decodes from base64url to bytes', async () => {
+  const { applicationServerKeyToUint8Array } = await import('../push-client.js');
+  const bytes = applicationServerKeyToUint8Array('BAg-_w');
+  assert.deepEqual(Array.from(bytes), [4, 8, 62, 255]);
+});
+
+test('push registration payload extracts subscription keys and rejects partial input', async () => {
+  const { createPushRegistrationPayload } = await import('../push-client.js');
+  const subscription = {
+    toJSON: () => ({ endpoint: 'https://push.example/abc', keys: { p256dh: 'pk', auth: 'ak' } }),
+  };
+  assert.deepEqual(
+    createPushRegistrationPayload({ meetupId: 'm-1', applicationToken: 't'.repeat(64), subscription }),
+    { meetupId: 'm-1', applicationToken: 't'.repeat(64), endpoint: 'https://push.example/abc', p256dh: 'pk', auth: 'ak' },
+  );
+  assert.equal(
+    createPushRegistrationPayload({ meetupId: 'm-1', applicationToken: 't'.repeat(64), subscription: { toJSON: () => ({ endpoint: '', keys: {} }) } }),
+    null,
+  );
+});
+
 test('push migration claims approval sends atomically', async () => {
   const sql = await readProjectFile(MIGRATION);
   assert.match(sql, /add column if not exists approval_notified_at timestamptz/);
