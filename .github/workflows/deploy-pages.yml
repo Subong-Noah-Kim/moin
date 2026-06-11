@@ -62,6 +62,8 @@ jobs:
           cp admin-status.js dist/
           cp index.html dist/
           cp main.js dist/
+          cp modal-manager.js dist/
+          cp toss-checkout.js dist/
           cp payment-result.html dist/
           cp payment-result.js dist/
           cp payment-result-state.js dist/

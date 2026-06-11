@@ -23,7 +23,23 @@ import {
   persistPublicStringSet as persist,
   readPublicStringSet,
 } from './public-storage.js?v=__ASSET_VERSION__';
-import { TOSS_CLIENT_KEY } from './toss-config.js?v=__ASSET_VERSION__';
+import {
+  closeModal,
+  isModalOpen,
+  openModal,
+  setInert,
+  trapFocus,
+} from './modal-manager.js?v=__ASSET_VERSION__';
+import {
+  createSafeRandomId,
+  ensureTossSdkScript,
+  getPaymentErrorCode,
+  getPaymentFailUrl,
+  getPaymentResultUrl,
+  getTossMethod,
+  getTossPayment,
+  isTossConfigured,
+} from './toss-checkout.js?v=__ASSET_VERSION__';
 
 function redirectInviteToAdmin() {
   const params = new URLSearchParams(window.location.search);
@@ -263,111 +279,12 @@ const mobileNavSectionIds = ['meetups', 'waitlist', 'events'];
 const saved = readPublicStringSet('momentclub:saved');
 const notified = readPublicStringSet('momentclub:notified');
 const paid = readPublicStringSet('momentclub:paid');
-const tossCustomerKeyStorage = 'momentclub:toss-customer-key';
-const tossSdkUrl = 'https://js.tosspayments.com/v2/standard';
 let activeFilter = 'all';
 let toastTimer;
-let tossSdkScriptPromise;
-let tossPaymentPromise;
 let checkoutInProgress = false;
 let drawerRestoreFocusElement = null;
 let checkoutRestoreFocusElement = null;
 let mobileNavRaf = 0;
-
-const focusableSelector = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
-
-function setInert(element, isInert) {
-  if (!element) return;
-  element.inert = isInert;
-
-  if (isInert) {
-    element.setAttribute('inert', '');
-  } else {
-    element.removeAttribute('inert');
-  }
-}
-
-function isModalOpen(modal) {
-  return modal && modal.getAttribute('aria-hidden') === 'false';
-}
-
-function getFocusableElements(container) {
-  return [...container.querySelectorAll(focusableSelector)].filter((element) => {
-    if (element.disabled || element.getAttribute('aria-hidden') === 'true') return false;
-    return Boolean(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
-  });
-}
-
-function focusElement(element) {
-  if (!element || !document.contains(element)) return false;
-  element.focus({ preventScroll: true });
-  return document.activeElement === element;
-}
-
-function focusFirstInModal(modal, preferredSelector) {
-  const preferred = preferredSelector ? modal.querySelector(preferredSelector) : null;
-  if (focusElement(preferred)) return;
-
-  const firstFocusable = getFocusableElements(modal)[0];
-  if (focusElement(firstFocusable)) return;
-
-  focusElement(modal.querySelector('[role="dialog"]'));
-}
-
-function openModal(modal, bodyClass, restoreFocusElement, preferredSelector) {
-  modal.hidden = false;
-  setInert(modal, false);
-  modal.setAttribute('aria-hidden', 'false');
-  document.body.classList.add(bodyClass);
-  requestAnimationFrame(() => focusFirstInModal(modal, preferredSelector));
-
-  return restoreFocusElement && document.contains(restoreFocusElement)
-    ? restoreFocusElement
-    : document.activeElement;
-}
-
-function closeModal(modal, bodyClass, restoreFocusElement, shouldRestoreFocus = true) {
-  modal.setAttribute('aria-hidden', 'true');
-  setInert(modal, true);
-  modal.hidden = true;
-  document.body.classList.remove(bodyClass);
-
-  if (shouldRestoreFocus && restoreFocusElement) {
-    focusElement(restoreFocusElement);
-  }
-}
-
-function trapFocus(event, modal) {
-  const focusableElements = getFocusableElements(modal);
-
-  if (!focusableElements.length) {
-    event.preventDefault();
-    focusFirstInModal(modal);
-    return;
-  }
-
-  const firstElement = focusableElements[0];
-  const lastElement = focusableElements[focusableElements.length - 1];
-  const activeElement = document.activeElement;
-
-  if (event.shiftKey && activeElement === firstElement) {
-    event.preventDefault();
-    lastElement.focus({ preventScroll: true });
-    return;
-  }
-
-  if (!event.shiftKey && activeElement === lastElement) {
-    event.preventDefault();
-    firstElement.focus({ preventScroll: true });
-  }
-}
 
 function getTopOpenModal() {
   if (isModalOpen(checkoutModal)) return checkoutModal;
@@ -459,132 +376,6 @@ function setCheckoutStatus(form, message, tone = '') {
 
   status.textContent = message;
   status.dataset.tone = tone;
-}
-
-function getTossClientKey() {
-  return String(TOSS_CLIENT_KEY || '').trim();
-}
-
-function isTossConfigured() {
-  return getTossClientKey().startsWith('test_');
-}
-
-function createSafeRandomId(prefix) {
-  const randomPart = globalThis.crypto?.randomUUID
-    ? globalThis.crypto.randomUUID().replaceAll('-', '')
-    : Math.random().toString(36).slice(2) + Date.now().toString(36);
-  return `${prefix}_${Date.now().toString(36)}_${randomPart}`.slice(0, 64);
-}
-
-function getTossCustomerKey() {
-  const stored = localStorage.getItem(tossCustomerKeyStorage);
-  if (stored) return stored;
-
-  const customerKey = createSafeRandomId('mc_customer').slice(0, 50);
-  localStorage.setItem(tossCustomerKeyStorage, customerKey);
-  return customerKey;
-}
-
-function getPaymentResultUrl(result) {
-  const url = new URL('./payment-result.html', window.location.href);
-  url.searchParams.set('result', result);
-  return url.toString();
-}
-
-function getPaymentFailUrl(checkoutToken) {
-  const url = new URL(getPaymentResultUrl('fail'));
-  url.searchParams.set('checkoutToken', checkoutToken);
-  return url.toString();
-}
-
-function getTossMethod(paymentMethod) {
-  if (paymentMethod === '계좌이체') {
-    return {
-      method: 'TRANSFER',
-    };
-  }
-
-  return {
-    method: 'CARD',
-    card: {
-      flowMode: 'DEFAULT',
-    },
-  };
-}
-
-function getPaymentErrorCode(error) {
-  return String(error?.code || error?.name || 'PAYMENT_WINDOW_ERROR');
-}
-
-function ensureTossSdkScript() {
-  if (window.TossPayments) {
-    return Promise.resolve();
-  }
-
-  if (tossSdkScriptPromise) {
-    return tossSdkScriptPromise;
-  }
-
-  let script = document.querySelector(`script[src="${tossSdkUrl}"]`);
-
-  if (!script) {
-    script = document.createElement('script');
-    script.src = tossSdkUrl;
-    script.async = true;
-    document.head.append(script);
-  }
-
-  tossSdkScriptPromise = new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      cleanup();
-      reject(new Error('토스페이먼츠 SDK를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'));
-    }, 12000);
-
-    function cleanup() {
-      clearTimeout(timeoutId);
-      script.removeEventListener('load', handleLoad);
-      script.removeEventListener('error', handleError);
-    }
-
-    function handleLoad() {
-      cleanup();
-      resolve();
-    }
-
-    function handleError() {
-      cleanup();
-      reject(new Error('토스페이먼츠 SDK 로드에 실패했습니다.'));
-    }
-
-    script.addEventListener('load', handleLoad, { once: true });
-    script.addEventListener('error', handleError, { once: true });
-  })
-    .then(() => {
-      if (!window.TossPayments) {
-        throw new Error('토스페이먼츠 SDK가 준비되지 않았습니다.');
-      }
-    })
-    .catch((error) => {
-      tossSdkScriptPromise = null;
-      throw error;
-    });
-
-  return tossSdkScriptPromise;
-}
-
-async function getTossPayment() {
-  if (!isTossConfigured()) {
-    throw new Error('토스 테스트 클라이언트 키가 설정되지 않았습니다.');
-  }
-
-  await ensureTossSdkScript();
-
-  if (!tossPaymentPromise) {
-    const tossPayments = window.TossPayments(getTossClientKey());
-    tossPaymentPromise = tossPayments.payment({ customerKey: getTossCustomerKey() });
-  }
-
-  return tossPaymentPromise;
 }
 
 function createFallbackOrder() {

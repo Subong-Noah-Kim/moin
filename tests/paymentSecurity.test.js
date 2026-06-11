@@ -75,6 +75,8 @@ const cacheBustedSourceFiles = [
   '../admin-status.js',
   '../payment-result.html',
   '../main.js',
+  '../modal-manager.js',
+  '../toss-checkout.js',
   '../admin.js',
   '../payment-result.js',
   '../payment-result-state.js',
@@ -791,15 +793,37 @@ test('public meetup rendering escapes dynamic content before writing HTML templa
 });
 
 test('checkout waits for Toss SDK loading and prevents duplicate pending orders', async () => {
-  const mainScript = await readProjectFile('../main.js');
+  const [mainScript, tossCheckoutModule] = await Promise.all([
+    readProjectFile('../main.js'),
+    readProjectFile('../toss-checkout.js'),
+  ]);
 
-  assert.match(mainScript, /let tossSdkScriptPromise/);
-  assert.match(mainScript, /await ensureTossSdkScript\(\)/);
-  assert.match(mainScript, /script\.addEventListener\('load', handleLoad/);
-  assert.match(mainScript, /script\.addEventListener\('error', handleError/);
+  assert.match(tossCheckoutModule, /let tossSdkScriptPromise/);
+  assert.match(tossCheckoutModule, /await ensureTossSdkScript\(\)/);
+  assert.match(tossCheckoutModule, /script\.addEventListener\('load', handleLoad/);
+  assert.match(tossCheckoutModule, /script\.addEventListener\('error', handleError/);
   assert.match(mainScript, /let checkoutInProgress = false/);
   assert.match(mainScript, /if \(checkoutInProgress\)/);
   assert.match(mainScript, /shouldUnlockForm = false/);
+});
+
+test('main.js delegates modal focus management and Toss helpers to extracted modules', async () => {
+  const mainScript = await readProjectFile('../main.js');
+
+  assert.match(mainScript, /from '\.\/modal-manager\.js\?v=__ASSET_VERSION__'/);
+  assert.match(mainScript, /from '\.\/toss-checkout\.js\?v=__ASSET_VERSION__'/);
+  assert.doesNotMatch(mainScript, /function openModal\(/);
+  assert.doesNotMatch(mainScript, /function closeModal\(/);
+  assert.doesNotMatch(mainScript, /function trapFocus\(/);
+  assert.doesNotMatch(mainScript, /function ensureTossSdkScript\(/);
+  assert.doesNotMatch(mainScript, /function getTossPayment\(/);
+});
+
+test('deploy workflow ships the extracted public modules', async () => {
+  const workflow = await readProjectFile('../.github/workflows/deploy-pages.yml');
+
+  assert.match(workflow, /cp modal-manager\.js dist\//);
+  assert.match(workflow, /cp toss-checkout\.js dist\//);
 });
 
 test('docs distinguish wired test integration from remaining production setup', async () => {
@@ -1787,16 +1811,17 @@ test('admin capacity UI uses admin RPC and strips derived availability fields', 
 });
 
 test('drawer and checkout modal use inert focus traps with opener restoration', async () => {
-  const [indexHtml, mainScript] = await Promise.all([
+  const [indexHtml, mainScript, modalManagerModule] = await Promise.all([
     readProjectFile('../index.html'),
     readProjectFile('../main.js'),
+    readProjectFile('../modal-manager.js'),
   ]);
 
   assert.match(indexHtml, /data-drawer hidden inert/);
   assert.match(indexHtml, /data-checkout-modal hidden inert/);
   assert.match(indexHtml, /class="drawer-panel"[^>]*tabindex="-1"/);
   assert.match(indexHtml, /class="checkout-panel"[^>]*tabindex="-1"/);
-  assert.match(mainScript, /function trapFocus/);
+  assert.match(modalManagerModule, /export function trapFocus/);
   assert.match(mainScript, /function getTopOpenModal/);
   assert.match(mainScript, /drawerRestoreFocusElement/);
   assert.match(mainScript, /checkoutRestoreFocusElement/);
