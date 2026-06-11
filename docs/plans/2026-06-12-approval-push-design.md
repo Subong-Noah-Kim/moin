@@ -47,9 +47,10 @@
   `claim_approval_push` 호출 → 구독별 Web Push 발송 → 404/410 구독 행 삭제 →
   `{ sent, failed, expired }` 요약 반환. 발송 암호화(RFC 8291)와 VAPID 서명은
   WebCrypto 기반 Deno 라이브러리 `jsr:@negrel/webpush`를 1순위로 사용하고,
-  Supabase 엣지 런타임에서 동작하지 않으면 `npm:web-push`로 대체한다(플랜
-  단계에서 배포 검증으로 확정). `VAPID_PRIVATE_KEY`·`VAPID_SUBJECT` secrets
-  필수(미설정 시 기동 거부, `PUBLIC_SUBMISSION_HASH_SALT` 관용구와 동일).
+  Supabase 엣지 런타임에서 동작하지 않으면 `npm:web-push`로 대체한다(배포
+  검증으로 확정). 라이브러리가 JWK 키쌍을 import하므로 secrets는
+  `VAPID_KEYS_JWK`(공개+개인 JWK JSON)와 `VAPID_SUBJECT`(mailto) 2개,
+  미설정 시 기동 거부(`PUBLIC_SUBMISSION_HASH_SALT` 관용구와 동일).
 - **`create-public-submission` (확장)**: `kind: 'push_subscription'` 추가 —
   기존 방문자 해시 반복 제출 제한을 그대로 통과시킨 뒤
   `register_push_subscription` RPC 호출.
@@ -74,9 +75,10 @@
 ### VAPID 키
 
 - `scripts/generate-vapid-keys.mjs` (신규, 일회성): Node WebCrypto로 P-256 키쌍
-  생성, 공개키(base64url)와 개인키(PKCS8 base64) 출력.
-- 공개키는 `push-config.js`에 커밋. **개인키는 리포에 넣지 않고**
-  `supabase secrets set VAPID_PRIVATE_KEY=...`로만 설정. `VAPID_SUBJECT`는
+  생성. stdout에 JWK 키쌍 JSON(secrets용), stderr에 application server key
+  (base64url 공개키, `push-config.js`용) 출력.
+- 공개키는 `push-config.js`에 커밋. **개인키가 포함된 JWK JSON은 리포에 넣지
+  않고** `supabase secrets set VAPID_KEYS_JWK=...`로만 설정. `VAPID_SUBJECT`는
   `mailto:` 연락처.
 
 ### 배포 (`deploy-pages.yml`)
