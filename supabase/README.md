@@ -41,17 +41,16 @@ Run `migrations/20260606080000_public_submission_abuse_controls.sql` first. This
 - `create_public_order` RPC
 - server-side rate-limit checks for anonymous application/order creation
 
-Then deploy the Edge Function:
-
-```bash
-supabase functions deploy create-public-submission --no-verify-jwt
-```
-
-Optional but recommended:
+Set the required visitor-hash salt secret first, then deploy the Edge Function:
 
 ```bash
 supabase secrets set PUBLIC_SUBMISSION_HASH_SALT=YOUR_RANDOM_SECRET
+supabase functions deploy create-public-submission --no-verify-jwt
 ```
+
+`PUBLIC_SUBMISSION_HASH_SALT` is required. The function refuses to build visitor hashes without it, so public application/order creation will fail until the secret is set.
+
+Both Edge Functions answer CORS requests only for the GitHub Pages origin (`https://subong-noah-kim.github.io`) and local dev origins (`http://localhost:5173`, `http://127.0.0.1:5173`). Update the `allowedOrigins` list in each function's `index.ts` if the frontend moves to a different domain.
 
 After the frontend has been deployed and application, screen-only demo order, and Toss test pending order creation have been checked, run `migrations/20260606090000_lock_public_direct_inserts.sql`.
 

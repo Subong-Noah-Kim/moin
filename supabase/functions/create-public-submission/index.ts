@@ -1,8 +1,20 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const allowedOrigins = new Set([
+  'https://subong-noah-kim.github.io',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]);
+const defaultAllowedOrigin = 'https://subong-noah-kim.github.io';
+
+function getCorsHeaders(request: Request) {
+  const origin = request.headers.get('origin') || '';
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : defaultAllowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    Vary: 'Origin',
+  };
+}
 
 type PublicSubmissionAction = 'application' | 'toss_order' | 'demo_order';
 
@@ -10,7 +22,6 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
       'Content-Type': 'application/json',
     },
   });
@@ -81,7 +92,7 @@ async function sha256Hex(value: string) {
 }
 
 async function getVisitorHash(request: Request) {
-  const salt = Deno.env.get('PUBLIC_SUBMISSION_HASH_SALT') || getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
+  const salt = getRequiredEnv('PUBLIC_SUBMISSION_HASH_SALT');
   const ip = getClientIp(request);
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
@@ -199,9 +210,9 @@ function getErrorMessage(error: unknown) {
   return message || '공개 신청/주문 생성에 실패했습니다.';
 }
 
-Deno.serve(async (request) => {
+async function handleRequest(request: Request) {
   if (request.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok');
   }
 
   if (request.method !== 'POST') {
@@ -230,4 +241,15 @@ Deno.serve(async (request) => {
       getErrorStatus(error),
     );
   }
+}
+
+Deno.serve(async (request) => {
+  const corsHeaders = getCorsHeaders(request);
+  const response = await handleRequest(request);
+
+  Object.entries(corsHeaders).forEach(([name, value]) => {
+    response.headers.set(name, value);
+  });
+
+  return response;
 });

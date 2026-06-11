@@ -56,7 +56,12 @@ import {
   getConfirmErrorMessage,
   getFailureStatusLabel,
 } from '../payment-result-state.js';
-import { clearAdminSession, getAmountFromMeetup, getStoredAdminSession } from '../supabase-client.js';
+import {
+  clearAdminSession,
+  confirmTossPayment,
+  getAmountFromMeetup,
+  getStoredAdminSession,
+} from '../supabase-client.js';
 import { createPublicAgenticStatus } from '../scripts/create-public-agentic-status.mjs';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
@@ -1854,6 +1859,102 @@ test('mobile bottom navigation is visible and tracks active sections', async () 
   assert.match(mainScript, /event\.preventDefault\(\)/);
   assert.match(mainScript, /section\.scrollIntoView\(\{ block: 'start' \}\)/);
   assert.doesNotMatch(mainScript, /data-mobile-apply/);
+});
+
+test('public submission visitor hash requires a dedicated salt secret', async () => {
+  const edgeFunction = await readProjectFile('../supabase/functions/create-public-submission/index.ts');
+
+  assert.match(edgeFunction, /getRequiredEnv\('PUBLIC_SUBMISSION_HASH_SALT'\)/);
+  assert.doesNotMatch(
+    edgeFunction,
+    /PUBLIC_SUBMISSION_HASH_SALT'\)\s*\|\|/,
+    'visitor hash salt must not fall back to another secret',
+  );
+  assert.doesNotMatch(
+    edgeFunction,
+    /getVisitorHash[\s\S]{0,200}SUPABASE_SERVICE_ROLE_KEY/,
+    'service role key must not be reused as the visitor hash salt',
+  );
+});
+
+test('edge functions restrict CORS to known site origins', async () => {
+  const sources = await Promise.all([
+    readProjectFile('../supabase/functions/create-public-submission/index.ts'),
+    readProjectFile('../supabase/functions/confirm-toss-payment/index.ts'),
+  ]);
+
+  sources.forEach((source) => {
+    assert.doesNotMatch(
+      source,
+      /'Access-Control-Allow-Origin':\s*'\*'/,
+      'CORS must not allow every origin',
+    );
+    assert.match(source, /https:\/\/subong-noah-kim\.github\.io/);
+    assert.match(source, /http:\/\/localhost:5173/);
+    assert.match(source, /Vary:\s*'Origin'|'Vary':\s*'Origin'/);
+  });
+});
+
+test('supabase client raises a clear error when a 200 response body is not valid JSON', async () => {
+  const globals = snapshotGlobals(['fetch']);
+
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    text: async () => '<html>upstream proxy error page</html>',
+  });
+
+  try {
+    await assert.rejects(
+      confirmTossPayment({ paymentKey: 'payment_key_test', orderId: 'order_json_test', amount: 39000 }),
+      (error) => error instanceof Error
+        && error.name !== 'SyntaxError'
+        && /JSON/.test(error.message),
+      'invalid JSON should surface a descriptive error, not a raw SyntaxError',
+    );
+  } finally {
+    restoreGlobals(globals);
+  }
+});
+
+test('payment result success callback warns when confirmation lacks meetup information', async () => {
+  const globals = snapshotGlobals(['document', 'window', 'sessionStorage', 'localStorage', 'fetch']);
+  const document = createPaymentResultDom();
+  const sessionStorage = createMemoryStorage();
+  const localStorage = createMemoryStorage();
+  const location = {
+    search: '?result=success&paymentKey=payment_secret_456&orderId=order_456&amount=39000',
+    pathname: '/moin/payment-result.html',
+    hash: '',
+  };
+
+  globalThis.document = document;
+  globalThis.window = {
+    location,
+    history: {
+      replaceState: () => {
+        location.search = '';
+      },
+    },
+  };
+  globalThis.sessionStorage = sessionStorage;
+  globalThis.localStorage = localStorage;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    text: async () => JSON.stringify({ ok: true }),
+  });
+
+  try {
+    await import(`../payment-result.js?missing-meetup-test=${Date.now()}`);
+  } finally {
+    restoreGlobals(globals);
+  }
+
+  assert.equal(localStorage.getItem('momentclub:paid'), null);
+  assert.equal(document.get('[data-success-title]').textContent, '테스트 결제 승인이 완료됐어요');
+  assert.equal(document.get('[data-confirm-status]').dataset.status, 'fail');
+  assert.match(document.get('[data-confirm-status]').textContent, /모임 정보를 받지 못해/);
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {

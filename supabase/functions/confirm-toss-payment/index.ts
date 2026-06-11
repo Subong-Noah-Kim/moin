@@ -1,8 +1,20 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const allowedOrigins = new Set([
+  'https://subong-noah-kim.github.io',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]);
+const defaultAllowedOrigin = 'https://subong-noah-kim.github.io';
+
+function getCorsHeaders(request: Request) {
+  const origin = request.headers.get('origin') || '';
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : defaultAllowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    Vary: 'Origin',
+  };
+}
 
 type OrderRow = {
   id: string;
@@ -34,7 +46,6 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...corsHeaders,
       'Content-Type': 'application/json',
     },
   });
@@ -320,9 +331,9 @@ async function handleFailureResult(payload: Record<string, unknown>) {
   });
 }
 
-Deno.serve(async (request) => {
+async function handleRequest(request: Request) {
   if (request.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok');
   }
 
   if (request.method !== 'POST') {
@@ -387,4 +398,15 @@ Deno.serve(async (request) => {
       400,
     );
   }
+}
+
+Deno.serve(async (request) => {
+  const corsHeaders = getCorsHeaders(request);
+  const response = await handleRequest(request);
+
+  Object.entries(corsHeaders).forEach(([name, value]) => {
+    response.headers.set(name, value);
+  });
+
+  return response;
 });

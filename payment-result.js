@@ -91,11 +91,19 @@ async function handleSuccessResult() {
     const resultBody = await confirmTossPayment({ paymentKey, orderId, amount });
     const meetupId = resultBody?.order?.meetup_id;
 
-    markMeetupPaid(meetupId);
     if (successTitle) successTitle.textContent = '테스트 결제 승인이 완료됐어요';
     if (successDescription) successDescription.textContent =
       '토스페이먼츠 테스트 결제 승인과 주문/결제 기록 업데이트가 완료됐습니다.';
-    setConfirmStatus('테스트 주문 상태가 결제완료로 변경되었습니다.', 'success');
+
+    if (meetupId) {
+      markMeetupPaid(meetupId);
+      setConfirmStatus('테스트 주문 상태가 결제완료로 변경되었습니다.', 'success');
+    } else {
+      setConfirmStatus(
+        '테스트 결제 승인은 완료됐지만 모임 정보를 받지 못해 이 브라우저에 결제 완료 표시를 저장하지 못했습니다.',
+        'fail',
+      );
+    }
   } catch (error) {
     console.error(error);
     if (successTitle) successTitle.textContent = '승인 처리가 필요해요';

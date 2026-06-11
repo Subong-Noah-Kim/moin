@@ -349,6 +349,18 @@ async function parseErrorMessage(response) {
   }
 }
 
+function parseJsonBody(bodyText) {
+  if (!bodyText) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(bodyText);
+  } catch {
+    throw new Error('Supabase 응답을 JSON으로 해석하지 못했습니다.');
+  }
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = requestTimeoutMs) {
   const controller = new AbortController();
   let timeoutId;
@@ -371,7 +383,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = requestTimeoutMs)
         return {
           ok: fetchResponse.ok,
           status: fetchResponse.status,
-          json: async () => (bodyText ? JSON.parse(bodyText) : null),
+          json: async () => parseJsonBody(bodyText),
           text: async () => bodyText,
         };
       })(),
@@ -407,7 +419,7 @@ function createResponseShim(status, bodyText) {
   return {
     ok: status >= 200 && status < 300,
     status,
-    json: async () => (bodyText ? JSON.parse(bodyText) : null),
+    json: async () => parseJsonBody(bodyText),
     text: async () => bodyText,
   };
 }

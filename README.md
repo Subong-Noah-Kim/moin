@@ -56,7 +56,11 @@ npm run dev
 supabase functions deploy create-public-submission --no-verify-jwt
 ```
 
-`PUBLIC_SUBMISSION_HASH_SALT`를 Supabase secret으로 추가하면 방문자 해시를 별도 salt로 만들 수 있습니다. 설정하지 않으면 Edge Function이 service role key를 salt로 사용합니다.
+`PUBLIC_SUBMISSION_HASH_SALT`는 필수 secret입니다. 함수 배포 전에 반드시 설정하세요. 설정하지 않으면 방문자 해시 생성이 실패해 공개 신청/주문 생성이 동작하지 않습니다.
+
+```bash
+supabase secrets set PUBLIC_SUBMISSION_HASH_SALT=임의의_긴_난수_문자열
+```
 
 ## 토스페이먼츠 테스트 연동
 
