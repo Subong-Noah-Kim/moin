@@ -28,6 +28,7 @@ type OrderRow = {
   provider_order_id: string | null;
   checkout_token: string | null;
   expires_at: string | null;
+  application_id: string | null;
 };
 
 type MeetupRow = {
@@ -164,7 +165,7 @@ async function findTossOrder(orderId: string) {
     provider_order_id: `eq.${orderId}`,
     provider: 'eq.tosspayments',
     select:
-      'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token,expires_at',
+      'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token,expires_at,application_id',
     limit: '2',
   });
   const rows = (await supabaseRequest(`orders?${query.toString()}`)) as OrderRow[];
@@ -244,7 +245,7 @@ function isExpiredPendingOrder(order: OrderRow) {
 async function markOrderFinalStatus(order: OrderRow, status: 'cancelled' | 'failed') {
   const query = new URLSearchParams({
     id: `eq.${order.id}`,
-    select: 'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token,expires_at',
+    select: 'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token,expires_at,application_id',
   });
 
   const rows = (await supabaseRequest(`orders?${query.toString()}`, {
@@ -256,6 +257,23 @@ async function markOrderFinalStatus(order: OrderRow, status: 'cancelled' | 'fail
   })) as OrderRow[];
 
   return rows[0];
+}
+
+async function findPaidOrderForApplication(applicationId: string | null, excludeOrderId: string) {
+  if (!applicationId) {
+    return null;
+  }
+
+  const query = new URLSearchParams({
+    application_id: `eq.${applicationId}`,
+    status: 'in.(paid,demo_paid)',
+    id: `neq.${excludeOrderId}`,
+    select: 'id,status',
+    limit: '1',
+  });
+  const rows = (await supabaseRequest(`orders?${query.toString()}`)) as Array<{ id: string }>;
+
+  return rows[0] || null;
 }
 
 async function findPaymentByKey(paymentKey: string) {
@@ -377,6 +395,15 @@ async function handleRequest(request: Request) {
         error: '결제 가능 시간이 만료되었습니다. 다시 신청해 주세요.',
         code: 'ORDER_EXPIRED',
         order: redactOrder(updatedOrder),
+      }, 409);
+    }
+
+    const paidSibling = await findPaidOrderForApplication(order.application_id, order.id);
+
+    if (paidSibling) {
+      return jsonResponse({
+        error: '이미 결제가 완료된 신청입니다.',
+        code: 'APPLICATION_ALREADY_PAID',
       }, 409);
     }
 

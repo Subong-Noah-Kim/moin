@@ -29,7 +29,7 @@
 - `create_public_order`: `p_application_token` 파라미터 추가.
   - 토큰으로 신청서 조회, 같은 모임인지·거절/취소 상태가 아닌지 검증, `application_id` 연결.
   - 같은 신청서에 paid/demo_paid 주문이 이미 있으면 차단 (`APPLICATION_ALREADY_PAID`, 409) — 1인 다좌석 방지.
-  - 같은 신청서의 유효한 pending 주문은 자동 취소 후 새 주문 생성 — 결제창 닫고 재시도할 때 pending이 쌓여 좌석을 이중 점유하던 실버그 해결.
+  - pending 자동 취소는 코드 리뷰에서 토스 캡처 경합(돈은 받았는데 주문이 취소됨)이 확인되어 제거. 이중 결제는 `confirm-toss-payment`가 캡처 전에 같은 신청서의 paid/demo_paid 주문을 확인해 409(`APPLICATION_ALREADY_PAID`)로 차단하는 방식으로 대체. 재시도 사용자의 pending 중복 점유는 30분 만료로 수용한다.
   - demo_order는 생성 즉시 demo_paid이므로 이 시점에 자동 승인.
 - `confirm_toss_payment_order`: 주문 paid 전환 후 같은 트랜잭션에서 연결 신청서를
   접수/검토중 → 승인으로 변경.

@@ -2200,6 +2200,28 @@ test('link migration issues application tokens and optionally links orders', asy
   assert.match(migration, /drop function if exists public\.create_public_order\(text, text, text, text, text, text, text\)/, 'old 7-arg overload must be dropped to avoid PostgREST ambiguity');
 });
 
+test('public submission function forwards application tokens and maps link errors', async () => {
+  const edgeFunction = await readProjectFile('../supabase/functions/create-public-submission/index.ts');
+
+  assert.match(edgeFunction, /p_application_token/);
+  assert.match(edgeFunction, /applicationToken/);
+  assert.match(edgeFunction, /APPLICATION_NOT_FOUND/);
+  assert.match(edgeFunction, /APPLICATION_ALREADY_PAID/);
+  assert.match(edgeFunction, /APPLICATION_NOT_PAYABLE/);
+  assert.match(edgeFunction, /APPLICATION_MEETUP_MISMATCH/);
+});
+
+test('toss confirmation blocks double payment before capturing money', async () => {
+  const edgeFunction = await readProjectFile('../supabase/functions/confirm-toss-payment/index.ts');
+
+  assert.match(edgeFunction, /application_id/, 'order select must include the linked application');
+  assert.match(
+    edgeFunction,
+    /APPLICATION_ALREADY_PAID[\s\S]+confirmWithToss/,
+    'the already-paid guard must run before the Toss capture call',
+  );
+});
+
 test('admin tables collapse into labeled mobile cards', async () => {
   const [adminHtml, adminStyles, adminScript] = await Promise.all([
     readProjectFile('../admin.html'),

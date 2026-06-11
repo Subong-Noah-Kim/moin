@@ -148,6 +148,7 @@ async function createOrder(
       p_payment_method: getPaymentMethod(payload),
       p_provider_order_id: getText(payload, 'providerOrderId') || null,
       p_checkout_token: getText(payload, 'checkoutToken') || null,
+      p_application_token: getText(payload, 'applicationToken') || null,
     }),
   });
 }
@@ -157,6 +158,18 @@ function getErrorStatus(error: unknown) {
 
   if (message.includes('PUBLIC_SUBMISSION_RATE_LIMITED')) {
     return 429;
+  }
+
+  if (message.includes('APPLICATION_NOT_FOUND')) {
+    return 404;
+  }
+
+  if (
+    message.includes('APPLICATION_ALREADY_PAID') ||
+    message.includes('APPLICATION_NOT_PAYABLE') ||
+    message.includes('APPLICATION_MEETUP_MISMATCH')
+  ) {
+    return 409;
   }
 
   if (message.includes('MEETUP_SOLD_OUT') || message.includes('MEETUP_REGISTRATION_CLOSED')) {
@@ -171,6 +184,22 @@ function getErrorCode(error: unknown) {
 
   if (message.includes('PUBLIC_SUBMISSION_RATE_LIMITED')) {
     return 'PUBLIC_SUBMISSION_RATE_LIMITED';
+  }
+
+  if (message.includes('APPLICATION_NOT_FOUND')) {
+    return 'APPLICATION_NOT_FOUND';
+  }
+
+  if (message.includes('APPLICATION_ALREADY_PAID')) {
+    return 'APPLICATION_ALREADY_PAID';
+  }
+
+  if (message.includes('APPLICATION_NOT_PAYABLE')) {
+    return 'APPLICATION_NOT_PAYABLE';
+  }
+
+  if (message.includes('APPLICATION_MEETUP_MISMATCH')) {
+    return 'APPLICATION_MEETUP_MISMATCH';
   }
 
   if (message.includes('MEETUP_SOLD_OUT')) {
@@ -193,6 +222,22 @@ function getErrorMessage(error: unknown) {
 
   if (message.includes('PUBLIC_SUBMISSION_RATE_LIMITED')) {
     return '짧은 시간 안에 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+  }
+
+  if (message.includes('APPLICATION_NOT_FOUND')) {
+    return '신청 내역을 찾지 못했습니다. 신청서를 다시 제출해 주세요.';
+  }
+
+  if (message.includes('APPLICATION_ALREADY_PAID')) {
+    return '이미 결제가 완료된 신청입니다.';
+  }
+
+  if (message.includes('APPLICATION_NOT_PAYABLE')) {
+    return '이 신청은 결제할 수 없는 상태입니다. 운영자에게 문의해 주세요.';
+  }
+
+  if (message.includes('APPLICATION_MEETUP_MISMATCH')) {
+    return '신청한 모임과 결제하려는 모임이 다릅니다.';
   }
 
   if (message.includes('MEETUP_SOLD_OUT')) {
