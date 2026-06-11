@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.create-public-submission]
 verify_jwt = false
+
+[functions.send-approval-push]
+verify_jwt = false

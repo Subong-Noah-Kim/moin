@@ -92,6 +92,21 @@ test('public submission function and client forward push subscriptions', async (
   assert.match(client, /result\.application \|\| result\.order \|\| result\.subscription/);
 });
 
+test('send-approval-push claims atomically, pushes, and prunes dead subscriptions', async () => {
+  const fn = await readProjectFile('supabase/functions/send-approval-push/index.ts');
+  assert.match(fn, /jsr:@negrel\/webpush/);
+  assert.match(fn, /rpc\/claim_approval_push/);
+  assert.match(fn, /VAPID_KEYS_JWK/);
+  assert.match(fn, /VAPID_SUBJECT/);
+  assert.match(fn, /importVapidKeys/);
+  assert.match(fn, /ApplicationServer\.new/);
+  assert.match(fn, /pushTextMessage/);
+  assert.match(fn, /404|410/);
+  assert.match(fn, /push_subscriptions\?id=eq\./);
+  const config = await readProjectFile('supabase/config.toml');
+  assert.match(config, /\[functions\.send-approval-push\]\nverify_jwt = false/);
+});
+
 test('push migration claims approval sends atomically', async () => {
   const sql = await readProjectFile(MIGRATION);
   assert.match(sql, /add column if not exists approval_notified_at timestamptz/);
