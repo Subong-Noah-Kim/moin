@@ -23,3 +23,14 @@ test('manifest declares an installable standalone app with relative scope', asyn
   const purposes = manifest.icons.map((icon) => icon.purpose || 'any');
   assert.ok(purposes.includes('maskable'));
 });
+
+test('manifest and apple touch icons exist as PNG files', async () => {
+  const manifest = JSON.parse(await readProjectFile('manifest.webmanifest'));
+  const iconPaths = manifest.icons.map((icon) => icon.src.replace(/^\.\//, ''));
+  iconPaths.push('icons/apple-touch-icon-180.png');
+  for (const iconPath of iconPaths) {
+    const file = await readFile(new URL(`../${iconPath}`, import.meta.url));
+    assert.ok(file.length > 0, `${iconPath} should not be empty`);
+    assert.equal(file.subarray(1, 4).toString(), 'PNG', `${iconPath} should be a PNG file`);
+  }
+});
