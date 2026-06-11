@@ -30,6 +30,7 @@ npm run dev
 - 관리자 주문/결제 기록 확인
 - 모바일 하단 내비게이션
 - 홈 화면 설치(PWA manifest)
+- 신청 승인 웹 푸시 알림
 
 ## Supabase 연결
 
