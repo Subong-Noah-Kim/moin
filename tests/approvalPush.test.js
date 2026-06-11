@@ -129,6 +129,13 @@ test('frontend wires push opt-in and admin approval send', async () => {
   assert.match(admin, /getApprovalPushSummaryMessage/);
 });
 
+test('pages deploy ships the service worker and push modules', async () => {
+  const workflow = await readProjectFile('.github/workflows/deploy-pages.yml');
+  assert.match(workflow, /cp sw\.js dist\//);
+  assert.match(workflow, /cp push-client\.js dist\//);
+  assert.match(workflow, /cp push-config\.js dist\//);
+});
+
 test('push migration claims approval sends atomically', async () => {
   const sql = await readProjectFile(MIGRATION);
   assert.match(sql, /add column if not exists approval_notified_at timestamptz/);
