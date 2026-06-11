@@ -39,13 +39,16 @@ moin 정적 웹앱을 iPhone Safari에서 "홈 화면에 추가"하면 주소창
 
 ### `icons/` (신규)
 
-brand-mark SVG 원본 1개 + Playwright(기존 devDependency)로 렌더링한 PNG:
+brand-mark SVG 원본 + 헤드리스 Chrome 스크린샷(`scripts/browser-smoke.mjs`와 같은
+시스템 Chrome 탐색 패턴)으로 렌더링한 PNG:
 
-- `icons/app-icon.svg` — 원본 (코럴 135deg 0–46% / 녹색·노랑 315deg 50% 분할,
-  둥근 사각형)
-- `icons/apple-touch-icon-180.png` — iOS 홈 화면용
-- `icons/icon-192.png`, `icons/icon-512.png` — manifest용
-- `icons/icon-maskable-512.png` — 안전 영역(중앙 80%)에 마크를 배치한 maskable
+- `icons/app-icon.svg` — 둥근 사각형 원본 (코럴 135deg 0–46% / 녹색·노랑 315deg
+  50% 분할, 모서리 반경 25%)
+- `icons/app-icon-fullbleed.svg` — 모서리 없는 전체 채움 변형. iOS와 maskable은
+  플랫폼이 직접 모서리를 깎으므로 투명 모서리가 있으면 안 된다.
+- `icons/apple-touch-icon-180.png` — iOS 홈 화면용 (fullbleed)
+- `icons/icon-192.png`, `icons/icon-512.png` — manifest용 (둥근 사각형)
+- `icons/icon-maskable-512.png` — maskable (fullbleed)
 
 렌더링은 일회성 스크립트(`scripts/render-app-icons.mjs`)로 수행하고 PNG를 커밋한다.
 스크립트도 커밋해 아이콘 변경 시 재생성 가능하게 한다.
@@ -60,6 +63,11 @@ brand-mark SVG 원본 1개 + Playwright(기존 devDependency)로 렌더링한 PN
 
 manifest는 자산 버저닝(`?v=__ASSET_VERSION__`) 대상에서 제외한다. manifest 갱신
 빈도가 낮고, iOS 설치 시점에만 읽혀 stale 위험이 실질적으로 없다.
+
+### `server.js` 변경
+
+로컬 정적 서버의 MIME 테이블에 `.webmanifest`(application/manifest+json),
+`.svg`, `.png`를 추가한다. 현재는 미등록 확장자가 octet-stream으로 내려간다.
 
 ### `deploy-pages.yml` 변경
 
