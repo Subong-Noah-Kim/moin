@@ -22,6 +22,14 @@ test('push migration stores subscriptions behind token validation and RLS', asyn
   assert.match(sql, /grant execute on function public\.register_push_subscription\(text, text, text, text, text\) to service_role/);
 });
 
+test('push config exposes a base64url VAPID application server key', async () => {
+  const { PUSH_APPLICATION_SERVER_KEY } = await import('../push-config.js');
+  assert.match(PUSH_APPLICATION_SERVER_KEY, /^[A-Za-z0-9_-]{40,}$/, 'must be base64url without padding');
+  const generator = await readProjectFile('scripts/generate-vapid-keys.mjs');
+  assert.match(generator, /generateKey\(\s*\{ name: 'ECDSA', namedCurve: 'P-256' \}/);
+  assert.match(generator, /base64url/);
+});
+
 test('push migration claims approval sends atomically', async () => {
   const sql = await readProjectFile(MIGRATION);
   assert.match(sql, /add column if not exists approval_notified_at timestamptz/);
