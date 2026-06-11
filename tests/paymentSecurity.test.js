@@ -45,9 +45,11 @@ import {
   createPublicFieldId,
 } from '../public-form.js';
 import {
+  persistPublicStringMap,
   persistPublicStringSet,
   publicStateMaxItems,
   publicStateMaxValueLength,
+  readPublicStringMap,
   readPublicStringSet,
 } from '../public-storage.js';
 import {
@@ -2220,6 +2222,34 @@ test('toss confirmation blocks double payment before capturing money', async () 
     /APPLICATION_ALREADY_PAID[\s\S]+confirmWithToss/,
     'the already-paid guard must run before the Toss capture call',
   );
+});
+
+test('public string map helpers persist and recover meetup token maps', () => {
+  const globals = snapshotGlobals(['localStorage']);
+  globalThis.localStorage = createMemoryStorage({
+    'momentclub:application-tokens': JSON.stringify({ 'salon-night': 'a'.repeat(64) }),
+    'momentclub:broken-map': '"not-an-object"',
+  });
+
+  try {
+    const map = readPublicStringMap('momentclub:application-tokens');
+    assert.equal(map.get('salon-night'), 'a'.repeat(64));
+
+    map.set('dating-values', 'b'.repeat(64));
+    persistPublicStringMap('momentclub:application-tokens', map);
+    assert.deepEqual(
+      JSON.parse(globalThis.localStorage.getItem('momentclub:application-tokens')),
+      { 'salon-night': 'a'.repeat(64), 'dating-values': 'b'.repeat(64) },
+    );
+
+    assert.equal(readPublicStringMap('momentclub:broken-map').size, 0, 'corrupted state recovers to empty map');
+
+    const oversized = new Map([['k', 'x'.repeat(publicStateMaxValueLength + 1)]]);
+    persistPublicStringMap('momentclub:oversized', oversized);
+    assert.equal(readPublicStringMap('momentclub:oversized').size, 0, 'over-length values are dropped');
+  } finally {
+    restoreGlobals(globals);
+  }
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {
