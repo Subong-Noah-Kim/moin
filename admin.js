@@ -31,13 +31,21 @@ import {
   canManuallyUpdateOrderStatus,
   getAgentStatusLabel,
   getApplicationStatusLabel,
-  getApplicationStatusOptions,
   getOrderStatusLabel,
-  getOrderStatusOptions,
-  getPaymentStatusLabel,
   getStatusClass,
   getTaskStatusLabel,
 } from './admin-status.js?v=__ASSET_VERSION__';
+import {
+  escapeHtml,
+  formatAgenticUpdated,
+  formatDate,
+  formatMoney,
+  getTypeLabel,
+  hasPaidLinkedOrder,
+  renderApplicationStatusOptions,
+  renderOrderStatusOptions,
+  renderPaymentRecord,
+} from './admin-render.js?v=__ASSET_VERSION__';
 
 const loginView = document.querySelector('[data-login-view]');
 const dashboardView = document.querySelector('[data-dashboard-view]');
@@ -71,13 +79,6 @@ const meetupImagePreviewImg = document.querySelector('[data-image-preview-img]')
 const meetupImagePreviewEmpty = document.querySelector('[data-image-preview-empty]');
 const meetupImageFileName = document.querySelector('[data-image-file-name]');
 
-const moneyFormatter = new Intl.NumberFormat('ko-KR');
-const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
-  month: 'short',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 let activeSession = getStoredAdminSession();
 let overview = {
   meetups: [],
@@ -98,104 +99,8 @@ if (shouldClearAuthParams) {
   clearAuthParamsFromUrl();
 }
 
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
-function formatDate(value) {
-  if (!value) return '-';
-  return dateFormatter.format(new Date(value));
-}
-
-function formatMoney(value) {
-  return `${moneyFormatter.format(Number(value || 0))}원`;
-}
-
-function getTypeLabel(type) {
-  if (type === 'event') return '원데이';
-  if (type === 'social') return '친목';
-  return '정기 모임';
-}
-
-function renderApplicationStatusOptions(currentStatus) {
-  return getApplicationStatusOptions(currentStatus)
-    .map(
-      (option) => `
-        <option value="${escapeHtml(option.value)}" ${option.selected ? 'selected' : ''}>
-          ${escapeHtml(option.label)}
-        </option>
-      `,
-    )
-    .join('');
-}
-
-function renderOrderStatusOptions(currentStatus) {
-  return getOrderStatusOptions(currentStatus)
-    .map(
-      (option) => `
-        <option value="${escapeHtml(option.value)}" ${option.selected ? 'selected' : ''}>
-          ${escapeHtml(option.label)}
-        </option>
-      `,
-    )
-    .join('');
-}
-
 function getPaymentForOrder(orderId) {
   return overview.payments.find((payment) => payment.order_id === orderId);
-}
-
-function formatPaymentKey(value) {
-  const key = String(value || '').trim();
-  if (!key) return '';
-  if (key.length <= 12) return key;
-  return `${key.slice(0, 6)}...${key.slice(-4)}`;
-}
-
-function renderPaymentRecord(order) {
-  const payment = getPaymentForOrder(order.id);
-
-  if (payment) {
-    const paidAt = formatDate(payment.paid_at || payment.created_at);
-    const key = formatPaymentKey(payment.provider_payment_key);
-
-    return `
-      <span class="pill is-paid">${escapeHtml(getPaymentStatusLabel(payment.status))}</span><br />
-      <span class="muted">${escapeHtml([paidAt, key].filter(Boolean).join(' · '))}</span>
-    `;
-  }
-
-  if (order.status === 'paid') {
-    return `
-      <span class="pill is-failed">기록 없음</span><br />
-      <span class="muted">확인 필요</span>
-    `;
-  }
-
-  if (order.status === 'pending' && order.provider === 'tosspayments') {
-    return '<span class="pill is-pending">승인 대기</span>';
-  }
-
-  if (order.status === 'demo_paid' || order.provider === 'demo') {
-    return '<span class="muted">데모 주문</span>';
-  }
-
-  return '<span class="muted">-</span>';
-}
-
-function formatAgenticUpdated(value) {
-  if (!value) return '업데이트 정보 없음';
-
-  try {
-    return `업데이트 ${dateFormatter.format(new Date(value))}`;
-  } catch {
-    return `업데이트 ${value}`;
-  }
 }
 
 function renderAgenticMessage(message) {
@@ -609,13 +514,6 @@ function renderStats() {
   document.querySelector('[data-stat-revenue]').textContent = formatMoney(revenue);
 }
 
-const paidOrderStatuses = ['paid', 'demo_paid'];
-
-function hasPaidLinkedOrder(application) {
-  return Array.isArray(application.orders)
-    && application.orders.some((order) => paidOrderStatuses.includes(order?.status));
-}
-
 function renderApplications() {
   document.querySelector('[data-applications-count]').textContent = `${overview.applications.length}건`;
   document.querySelector('[data-applications-body]').innerHTML =
@@ -680,7 +578,7 @@ function renderOrders() {
               }
             </td>
             <td data-label="수단">${escapeHtml(order.payment_method || order.provider || '-')}</td>
-            <td data-label="결제 기록">${renderPaymentRecord(order)}</td>
+            <td data-label="결제 기록">${renderPaymentRecord(order, getPaymentForOrder(order.id))}</td>
           </tr>
         `,
       )
@@ -953,7 +851,7 @@ async function loadOperationalData() {
     renderOrders();
     syncStatus.textContent = data.warnings?.length
       ? `${data.warnings.join(' ')} 운영 데이터 확인 완료`
-      : `운영 데이터 업데이트 ${dateFormatter.format(new Date())}`;
+      : `운영 데이터 업데이트 ${formatDate(new Date())}`;
   } catch (error) {
     console.error(error);
 
@@ -994,7 +892,7 @@ async function loadOrders() {
     }
     syncStatus.textContent = data.warnings?.length
       ? `${data.warnings.join(' ')} 주문 데이터 확인 완료`
-      : `주문 업데이트 ${dateFormatter.format(new Date())}`;
+      : `주문 업데이트 ${formatDate(new Date())}`;
   } catch (error) {
     console.error(error);
 
@@ -1039,8 +937,8 @@ async function loadOverview() {
       void loadAgenticStatus();
     }
     syncStatus.textContent = overview.warnings?.length
-      ? `${overview.warnings.join(' ')} 업데이트 ${dateFormatter.format(new Date())}`
-      : `업데이트 ${dateFormatter.format(new Date())}`;
+      ? `${overview.warnings.join(' ')} 업데이트 ${formatDate(new Date())}`
+      : `업데이트 ${formatDate(new Date())}`;
     void loadOperationalData();
     void loadOrders();
   } catch (error) {
@@ -1288,7 +1186,7 @@ meetupForm.addEventListener('submit', async (event) => {
 
     upsertMeetupInOverview(savedMeetup);
     closeMeetupForm();
-    syncStatus.textContent = `모임 저장 완료 ${dateFormatter.format(new Date())}`;
+    syncStatus.textContent = `모임 저장 완료 ${formatDate(new Date())}`;
   } catch (error) {
     console.error(error);
 
@@ -1339,7 +1237,7 @@ meetupsBody.addEventListener('click', async (event) => {
   try {
     const updatedMeetup = await setAdminMeetupVisibility(activeSession.accessToken, meetupId, nextVisibility);
     upsertMeetupInOverview(updatedMeetup);
-    syncStatus.textContent = `${nextVisibility ? '공개' : '숨김'} 완료 ${dateFormatter.format(new Date())}`;
+    syncStatus.textContent = `${nextVisibility ? '공개' : '숨김'} 완료 ${formatDate(new Date())}`;
   } catch (error) {
     console.error(error);
     syncStatus.textContent = getAdminWriteErrorMessage(error);

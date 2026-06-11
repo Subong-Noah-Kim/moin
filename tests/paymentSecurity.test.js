@@ -70,6 +70,14 @@ import {
 } from '../supabase-client.js';
 import { SUPABASE_URL } from '../supabase-config.js';
 import { createPublicAgenticStatus } from '../scripts/create-public-agentic-status.mjs';
+import {
+  escapeHtml as renderEscapeHtml,
+  formatMoney,
+  formatPaymentKey,
+  getTypeLabel,
+  hasPaidLinkedOrder,
+  renderPaymentRecord,
+} from '../admin-render.js';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
 const cacheBustedSourceFiles = [
@@ -91,6 +99,7 @@ const cacheBustedSourceFiles = [
   '../public-form.js',
   '../public-storage.js',
   '../supabase-client.js',
+  '../admin-render.js',
 ];
 
 async function readProjectFile(pathname) {
@@ -831,6 +840,7 @@ test('deploy workflow ships the extracted public modules', async () => {
   assert.match(workflow, /cp modal-manager\.js dist\//);
   assert.match(workflow, /cp toast-queue\.js dist\//);
   assert.match(workflow, /cp toss-checkout\.js dist\//);
+  assert.match(workflow, /cp admin-render\.js dist\//);
 });
 
 test('docs distinguish wired test integration from remaining production setup', async () => {
@@ -1107,9 +1117,10 @@ test('GitHub Pages workflow uses Node 24 compatible action versions', async () =
 });
 
 test('admin orders include payment record reconciliation', async () => {
-  const [adminHtml, adminScript, supabaseClient] = await Promise.all([
+  const [adminHtml, adminScript, adminRenderModule, supabaseClient] = await Promise.all([
     readProjectFile('../admin.html'),
     readProjectFile('../admin.js'),
+    readProjectFile('../admin-render.js'),
     readProjectFile('../supabase-client.js'),
   ]);
 
@@ -1118,10 +1129,10 @@ test('admin orders include payment record reconciliation', async () => {
   assert.match(supabaseClient, /payments: resolveAdminRows\('결제', paymentsResult, warnings\)/);
   assert.doesNotMatch(supabaseClient, /실제 결제 연동 전/);
   assert.match(adminHtml, /<th>결제 기록<\/th>/);
-  assert.match(adminScript, /function renderPaymentRecord/);
-  assert.match(adminScript, /getPaymentForOrder\(order\.id\)/);
+  assert.match(adminRenderModule, /function renderPaymentRecord/);
+  assert.match(adminScript, /renderPaymentRecord\(order, getPaymentForOrder\(order\.id\)\)/);
   assert.match(adminScript, /data-label="결제 기록"/);
-  assert.match(adminScript, /기록 없음/);
+  assert.match(adminRenderModule, /기록 없음/);
 });
 
 test('admin sessions use short-lived storage without refresh token persistence', async () => {
@@ -2416,6 +2427,37 @@ test('confirm error messaging recognizes an already-paid application', () => {
     getConfirmErrorMessage(new Error('unexpected failure')),
     '결제 승인 처리에 실패했습니다. 잠시 후 다시 시도하거나 운영자에게 문의해주세요.',
   );
+});
+
+test('admin render helpers build safe display strings', () => {
+  assert.equal(renderEscapeHtml('<b>&"\'</b>'), '&lt;b&gt;&amp;&quot;&#039;&lt;/b&gt;');
+  assert.equal(formatMoney(49000), '49,000원');
+  assert.equal(formatMoney(null), '0원');
+  assert.equal(getTypeLabel('event'), '원데이');
+  assert.equal(getTypeLabel('social'), '친목');
+  assert.equal(getTypeLabel('regular'), '정기 모임');
+  assert.equal(formatPaymentKey(''), '');
+  assert.equal(formatPaymentKey('short_key'), 'short_key');
+  assert.equal(formatPaymentKey('payment_secret_1234567890'), 'paymen...7890');
+
+  assert.equal(hasPaidLinkedOrder({}), false);
+  assert.equal(hasPaidLinkedOrder({ orders: [{ status: 'pending' }] }), false);
+  assert.equal(hasPaidLinkedOrder({ orders: [{ status: 'demo_paid' }] }), true);
+  assert.equal(hasPaidLinkedOrder({ orders: [null, { status: 'paid' }] }), true);
+});
+
+test('admin payment record markup reflects payment and order states', () => {
+  const paidRecord = renderPaymentRecord(
+    { id: 'o1', status: 'paid' },
+    { status: 'paid', paid_at: '2026-06-12T00:00:00Z', provider_payment_key: 'payment_secret_1234567890' },
+  );
+  assert.match(paidRecord, /pill is-paid/);
+  assert.match(paidRecord, /paymen\.\.\.7890/);
+
+  assert.match(renderPaymentRecord({ id: 'o2', status: 'paid' }, undefined), /기록 없음/);
+  assert.match(renderPaymentRecord({ id: 'o3', status: 'pending', provider: 'tosspayments' }, undefined), /승인 대기/);
+  assert.match(renderPaymentRecord({ id: 'o4', status: 'demo_paid', provider: 'demo' }, undefined), /데모 주문/);
+  assert.match(renderPaymentRecord({ id: 'o5', status: 'cancelled', provider: 'tosspayments' }, undefined), /-/);
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {
