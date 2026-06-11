@@ -191,7 +191,7 @@ async function callPublicSubmission(action, payload) {
 
   return {
     skipped: false,
-    rows: [result.application || result.order].filter(Boolean),
+    rows: [result.application || result.order || result.subscription].filter(Boolean),
   };
 }
 
@@ -587,6 +587,41 @@ export async function createTossPendingOrder({ meetup, payerName, paymentMethod,
     checkoutToken,
     applicationToken: applicationToken || '',
   });
+}
+
+export async function registerPushSubscription({ meetupId, applicationToken, endpoint, p256dh, auth }) {
+  return callPublicSubmission('push_subscription', {
+    meetupId,
+    applicationToken,
+    endpoint,
+    p256dh,
+    auth,
+  });
+}
+
+export async function sendApprovalPush(applicationId) {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, claimed: false, sent: 0 };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/send-approval-push`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ applicationId }),
+  });
+
+  if (!response.ok) {
+    const message = await parseErrorMessage(response);
+    throw new Error(message.text);
+  }
+
+  const body = await response.json();
+
+  return { skipped: false, ...(body?.result || {}) };
 }
 
 export async function confirmTossPayment({ paymentKey, orderId, amount }) {

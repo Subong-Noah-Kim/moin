@@ -79,6 +79,19 @@ test('service worker handles push display and click without any fetch caching', 
   assert.ok(!/caches\./.test(sw), 'sw.js must not touch the Cache API');
 });
 
+test('public submission function and client forward push subscriptions', async () => {
+  const fn = await readProjectFile('supabase/functions/create-public-submission/index.ts');
+  assert.match(fn, /'push_subscription'/);
+  assert.match(fn, /rpc\/register_push_subscription/);
+  assert.match(fn, /p_application_token: getText\(payload, 'applicationToken'\)/);
+  const client = await readProjectFile('supabase-client.js');
+  assert.match(client, /export async function registerPushSubscription/);
+  assert.match(client, /callPublicSubmission\('push_subscription'/);
+  assert.match(client, /export async function sendApprovalPush/);
+  assert.match(client, /functions\/v1\/send-approval-push/);
+  assert.match(client, /result\.application \|\| result\.order \|\| result\.subscription/);
+});
+
 test('push migration claims approval sends atomically', async () => {
   const sql = await readProjectFile(MIGRATION);
   assert.match(sql, /add column if not exists approval_notified_at timestamptz/);

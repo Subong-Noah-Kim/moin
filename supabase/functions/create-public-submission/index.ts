@@ -16,7 +16,7 @@ function getCorsHeaders(request: Request) {
   };
 }
 
-type PublicSubmissionAction = 'application' | 'toss_order' | 'demo_order';
+type PublicSubmissionAction = 'application' | 'toss_order' | 'demo_order' | 'push_subscription';
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -114,7 +114,7 @@ function getPaymentMethod(payload: Record<string, unknown>) {
 function getAction(payload: Record<string, unknown>): PublicSubmissionAction {
   const action = getText(payload, 'action') as PublicSubmissionAction;
 
-  if (!['application', 'toss_order', 'demo_order'].includes(action)) {
+  if (!['application', 'toss_order', 'demo_order', 'push_subscription'].includes(action)) {
     throw new Error('Unsupported public submission action.');
   }
 
@@ -129,6 +129,19 @@ async function createApplication(payload: Record<string, unknown>, visitorHash: 
       p_meetup_id: getText(payload, 'meetupId'),
       p_applicant_name: getText(payload, 'name'),
       p_interest: getText(payload, 'interest'),
+    }),
+  });
+}
+
+async function registerPushSubscription(payload: Record<string, unknown>, visitorHash: string) {
+  return supabaseRequest('rpc/register_push_subscription', {
+    method: 'POST',
+    body: JSON.stringify({
+      p_visitor_hash: visitorHash,
+      p_application_token: getText(payload, 'applicationToken'),
+      p_endpoint: getText(payload, 'endpoint'),
+      p_p256dh: getText(payload, 'p256dh'),
+      p_auth: getText(payload, 'auth'),
     }),
   });
 }
@@ -280,9 +293,14 @@ async function handleRequest(request: Request) {
     const payload = await request.json();
     const action = getAction(payload);
     const visitorHash = await getVisitorHash(request);
-    const result = action === 'application'
-      ? await createApplication(payload, visitorHash)
-      : await createOrder(action, payload, visitorHash);
+    let result;
+    if (action === 'application') {
+      result = await createApplication(payload, visitorHash);
+    } else if (action === 'push_subscription') {
+      result = await registerPushSubscription(payload, visitorHash);
+    } else {
+      result = await createOrder(action, payload, visitorHash);
+    }
 
     return jsonResponse({
       ok: true,
