@@ -38,6 +38,12 @@ test('local dev server declares manifest and icon content types', async () => {
   assert.match(server, /'\.png': 'image\/png'/);
 });
 
+test('pages deploy copies the manifest and icons', async () => {
+  const workflow = await readProjectFile('.github/workflows/deploy-pages.yml');
+  assert.match(workflow, /cp manifest\.webmanifest dist\//);
+  assert.match(workflow, /cp -R icons dist\//);
+});
+
 test('manifest and apple touch icons exist as PNG files', async () => {
   const manifest = JSON.parse(await readProjectFile('manifest.webmanifest'));
   const iconPaths = manifest.icons.map((icon) => icon.src.replace(/^\.\//, ''));
