@@ -78,6 +78,7 @@ import {
   hasPaidLinkedOrder,
   renderPaymentRecord,
 } from '../admin-render.js';
+import { escapeHtml } from '../escape-html.js';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
 const cacheBustedSourceFiles = [
@@ -100,6 +101,7 @@ const cacheBustedSourceFiles = [
   '../public-storage.js',
   '../supabase-client.js',
   '../admin-render.js',
+  '../escape-html.js',
 ];
 
 async function readProjectFile(pathname) {
@@ -798,7 +800,7 @@ test('Toss confirmation function validates server amount and failure checkout to
 test('public meetup rendering escapes dynamic content before writing HTML templates', async () => {
   const mainScript = await readProjectFile('../main.js');
 
-  assert.match(mainScript, /function escapeHtml/);
+  assert.match(mainScript, /import { escapeHtml } from '\.\/escape-html\.js\?v=__ASSET_VERSION__'/);
   assert.match(mainScript, /function escapeAttribute/);
   assert.match(mainScript, /function escapeImageUrl/);
   assert.match(mainScript, /createTagMarkup\(tags\) {\s+return tags\.map\(\(tag\) => `<span>\$\{escapeHtml\(tag\)\}<\/span>`\)/);
@@ -841,6 +843,7 @@ test('deploy workflow ships the extracted public modules', async () => {
   assert.match(workflow, /cp toast-queue\.js dist\//);
   assert.match(workflow, /cp toss-checkout\.js dist\//);
   assert.match(workflow, /cp admin-render\.js dist\//);
+  assert.match(workflow, /cp escape-html\.js dist\//);
 });
 
 test('docs distinguish wired test integration from remaining production setup', async () => {
@@ -2458,6 +2461,22 @@ test('admin payment record markup reflects payment and order states', () => {
   assert.match(renderPaymentRecord({ id: 'o3', status: 'pending', provider: 'tosspayments' }, undefined), /승인 대기/);
   assert.match(renderPaymentRecord({ id: 'o4', status: 'demo_paid', provider: 'demo' }, undefined), /데모 주문/);
   assert.match(renderPaymentRecord({ id: 'o5', status: 'cancelled', provider: 'tosspayments' }, undefined), /-/);
+});
+
+test('escapeHtml lives in a single shared module', async () => {
+  const [mainScript, adminRenderScript] = await Promise.all([
+    readProjectFile('../main.js'),
+    readProjectFile('../admin-render.js'),
+  ]);
+
+  assert.match(mainScript, /from '\.\/escape-html\.js\?v=__ASSET_VERSION__'/);
+  assert.match(adminRenderScript, /from '\.\/escape-html\.js\?v=__ASSET_VERSION__'/);
+  assert.doesNotMatch(mainScript, /function escapeHtml\(/);
+  assert.doesNotMatch(adminRenderScript, /function escapeHtml\(/);
+});
+
+test('shared escapeHtml module escapes HTML-sensitive characters', () => {
+  assert.equal(escapeHtml('<b>&"\'</b>'), '&lt;b&gt;&amp;&quot;&#039;&lt;/b&gt;');
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {

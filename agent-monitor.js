@@ -1,3 +1,5 @@
+import { escapeHtml } from './escape-html.js?v=__ASSET_VERSION__';
+
 const liveStatusUrl = './AGENTIC_LIVE_STATUS.json';
 const boardStatusUrl = './AGENTIC_STATUS.json';
 const fallbackPollIntervalMs = 5000;
@@ -39,15 +41,6 @@ const statusLabels = {
   paused: '일시중지',
   done: '완료',
 };
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
 
 function formatDate(value) {
   if (!value) return '-';

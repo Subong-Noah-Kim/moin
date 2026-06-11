@@ -13,6 +13,7 @@ import {
   getRegistrationStatusLabel,
   mergeMeetupAvailability,
 } from './public-availability.js?v=__ASSET_VERSION__';
+import { escapeHtml } from './escape-html.js?v=__ASSET_VERSION__';
 import { getPublicMeetupActionState } from './public-flow.js?v=__ASSET_VERSION__';
 import {
   createPublicApplicationPayload,
@@ -428,15 +429,6 @@ function normalizePriceLabel(priceLabel, amount) {
   }
 
   return trimmed;
-}
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
 }
 
 function escapeAttribute(value) {

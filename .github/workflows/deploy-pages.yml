@@ -66,6 +66,7 @@ jobs:
           cp admin-meetup-form.js dist/
           cp admin-render.js dist/
           cp admin-status.js dist/
+          cp escape-html.js dist/
           cp index.html dist/
           cp main.js dist/
           cp modal-manager.js dist/

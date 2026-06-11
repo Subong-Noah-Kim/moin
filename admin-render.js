@@ -3,6 +3,9 @@ import {
   getOrderStatusOptions,
   getPaymentStatusLabel,
 } from './admin-status.js?v=__ASSET_VERSION__';
+import { escapeHtml } from './escape-html.js?v=__ASSET_VERSION__';
+
+export { escapeHtml };
 
 const moneyFormatter = new Intl.NumberFormat('ko-KR');
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
@@ -11,15 +14,6 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
   hour: '2-digit',
   minute: '2-digit',
 });
-
-export function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
 
 export function formatDate(value) {
   if (!value) return '-';
