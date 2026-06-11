@@ -88,3 +88,22 @@ export function getStatusClass(status) {
 export function canManuallyUpdateOrderStatus(status) {
   return orderStatuses.includes(status);
 }
+
+export function getApprovalPushSummaryMessage(summary) {
+  const base = '신청 상태 승인 저장 완료';
+
+  if (!summary || summary.skipped) {
+    return base;
+  }
+
+  if (!summary.claimed) {
+    return `${base} · 보낼 알림이 없어요`;
+  }
+
+  const parts = [];
+  if (summary.sent > 0) parts.push(`승인 알림 ${summary.sent}건 발송`);
+  if (summary.failed > 0) parts.push(`알림 발송 실패 ${summary.failed}건`);
+  if (!parts.length) parts.push('보낼 알림이 없어요');
+
+  return [base, ...parts].join(' · ');
+}

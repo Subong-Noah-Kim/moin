@@ -107,6 +107,28 @@ test('send-approval-push claims atomically, pushes, and prunes dead subscription
   assert.match(config, /\[functions\.send-approval-push\]\nverify_jwt = false/);
 });
 
+test('approval push summary message covers sent, empty, and already-claimed cases', async () => {
+  const { getApprovalPushSummaryMessage } = await import('../admin-status.js');
+  assert.equal(getApprovalPushSummaryMessage({ skipped: true }), '신청 상태 승인 저장 완료');
+  assert.equal(getApprovalPushSummaryMessage({ claimed: false, sent: 0 }), '신청 상태 승인 저장 완료 · 보낼 알림이 없어요');
+  assert.equal(getApprovalPushSummaryMessage({ claimed: true, sent: 2, failed: 0, expired: 0 }), '신청 상태 승인 저장 완료 · 승인 알림 2건 발송');
+  assert.equal(getApprovalPushSummaryMessage({ claimed: true, sent: 0, failed: 1, expired: 0 }), '신청 상태 승인 저장 완료 · 알림 발송 실패 1건');
+  assert.equal(getApprovalPushSummaryMessage({ claimed: true, sent: 1, failed: 1, expired: 1 }), '신청 상태 승인 저장 완료 · 승인 알림 1건 발송 · 알림 발송 실패 1건');
+});
+
+test('frontend wires push opt-in and admin approval send', async () => {
+  const main = await readProjectFile('main.js');
+  assert.match(main, /from '\.\/push-client\.js\?v=__ASSET_VERSION__'/);
+  assert.match(main, /from '\.\/push-config\.js\?v=__ASSET_VERSION__'/);
+  assert.match(main, /serviceWorker\.register\('\.\/sw\.js'\)/);
+  assert.match(main, /data-push-optin/);
+  assert.match(main, /registerPushSubscription/);
+  const admin = await readProjectFile('admin.js');
+  assert.match(admin, /nextStatus === 'accepted'/);
+  assert.match(admin, /sendApprovalPush/);
+  assert.match(admin, /getApprovalPushSummaryMessage/);
+});
+
 test('push migration claims approval sends atomically', async () => {
   const sql = await readProjectFile(MIGRATION);
   assert.match(sql, /add column if not exists approval_notified_at timestamptz/);

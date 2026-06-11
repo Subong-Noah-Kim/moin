@@ -2021,3 +2021,13 @@ h1 {
   }
 
 }
+
+.push-optin {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.push-optin[hidden] {
+  display: none;
+}

@@ -7,7 +7,15 @@ import {
   getAmountFromMeetup,
   isSupabaseConfigured,
   recordTossPaymentFailure,
+  registerPushSubscription,
 } from './supabase-client.js?v=__ASSET_VERSION__';
+import {
+  applicationServerKeyToUint8Array,
+  createPushRegistrationPayload,
+  getPushOptInState,
+  isPushSupported,
+} from './push-client.js?v=__ASSET_VERSION__';
+import { PUSH_APPLICATION_SERVER_KEY } from './push-config.js?v=__ASSET_VERSION__';
 import {
   getPublicStatusClass as getStatusClass,
   getRegistrationStatusLabel,
@@ -286,6 +294,7 @@ const mobileNavSectionIds = ['meetups', 'waitlist', 'events'];
 const saved = readPublicStringSet('momentclub:saved');
 const notified = readPublicStringSet('momentclub:notified');
 const paid = readPublicStringSet('momentclub:paid');
+const pushOptedIn = readPublicStringSet('momentclub:push-optin');
 const applicationTokens = readPublicStringMap('momentclub:application-tokens');
 
 function getApplicationToken(meetupId) {
@@ -778,6 +787,7 @@ function openDrawer(itemId, opener = document.activeElement) {
         <p class="form-helper" id="${escapeAttribute(applicationInterestHelpId)}">모임에 끌린 이유를 한 줄로 적어주세요.</p>
         <button class="drawer-cta" type="submit">신청서 제출</button>
       </form>
+      <div class="push-optin" data-push-optin="${escapeAttribute(item.id)}" hidden></div>
     `
     : `
       <div class="registration-closed-note" role="status">
@@ -852,6 +862,7 @@ function openDrawer(itemId, opener = document.activeElement) {
   `;
 
   drawerRestoreFocusElement = openModal(drawer, 'drawer-open', restoreFocusTarget, 'input[name="name"]');
+  renderPushOptIn(item);
 }
 
 function refreshDrawerPaymentSummary(item) {
@@ -878,6 +889,76 @@ function refreshDrawerPaymentSummary(item) {
 
   payButton.disabled = actionState.paymentButtonDisabled;
   payButton.textContent = actionState.paymentButtonText;
+}
+
+function renderPushOptIn(item) {
+  if (!isModalOpen(drawer)) return;
+
+  const container = drawerContent.querySelector(`[data-push-optin="${CSS.escape(item.id)}"]`);
+  if (!container) return;
+
+  const state = getPushOptInState({
+    supported: isPushSupported(),
+    hasToken: hasStoredApplication(item.id),
+    permission: typeof Notification === 'undefined' ? 'default' : Notification.permission,
+    subscribed: pushOptedIn.has(item.id),
+  });
+
+  if (state.mode === 'hidden') {
+    container.hidden = true;
+    container.textContent = '';
+    return;
+  }
+
+  container.hidden = false;
+
+  if (state.mode === 'button') {
+    container.innerHTML = `<button class="ghost-button" type="button" data-push-optin-button="${escapeAttribute(item.id)}">${escapeHtml(state.label)}</button>`;
+    return;
+  }
+
+  container.textContent = state.message;
+}
+
+async function subscribeToApprovalPush(item, button) {
+  button.disabled = true;
+
+  try {
+    const permission = await Notification.requestPermission();
+
+    if (permission !== 'granted') {
+      renderPushOptIn(item);
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription()
+      || await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKeyToUint8Array(PUSH_APPLICATION_SERVER_KEY),
+      });
+    const payload = createPushRegistrationPayload({
+      meetupId: item.id,
+      applicationToken: getApplicationToken(item.id),
+      subscription,
+    });
+
+    if (!payload) {
+      showToast('알림 구독 정보를 만들지 못했어요. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    await registerPushSubscription(payload);
+    pushOptedIn.add(item.id);
+    persist('momentclub:push-optin', pushOptedIn);
+    showToast('승인되면 알림으로 알려드릴게요.');
+  } catch (error) {
+    console.error(error);
+    showToast('알림 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
+  } finally {
+    button.disabled = false;
+    renderPushOptIn(item);
+  }
 }
 
 function closeDrawer({ restoreFocus = true } = {}) {
@@ -1106,6 +1187,7 @@ async function completeCheckout(itemId, form) {
     if (error?.code === 'APPLICATION_NOT_FOUND') {
       clearApplicationToken(item.id);
       refreshDrawerPaymentSummary(item);
+      renderPushOptIn(item);
       const message = '신청 내역을 찾지 못했어요. 신청서를 다시 제출한 뒤 결제해주세요.';
       setCheckoutStatus(form, message, 'error');
       showToast(message);
@@ -1142,6 +1224,7 @@ async function submitApplication(form) {
     const confirmationToken = rows?.[0]?.confirmation_token || '';
     setApplicationToken(item.id, confirmationToken);
     refreshDrawerPaymentSummary(item);
+    renderPushOptIn(item);
     form.reset();
 
     if (!skipped && !confirmationToken) {
@@ -1189,6 +1272,13 @@ document.addEventListener('click', (event) => {
   const detailButton = event.target.closest('[data-detail]');
   if (detailButton) {
     openDrawer(detailButton.dataset.detail, detailButton);
+    return;
+  }
+
+  const pushButton = event.target.closest('[data-push-optin-button]');
+  if (pushButton) {
+    const item = meetups.find((meetup) => meetup.id === pushButton.dataset.pushOptinButton);
+    if (item) subscribeToApprovalPush(item, pushButton);
     return;
   }
 
@@ -1340,3 +1430,9 @@ renderSmallGroups();
 loadMeetupsFromDatabase();
 syncMobileNavFromHash();
 scheduleMobileNavUpdate();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch((error) => {
+    console.warn('service worker registration failed', error);
+  });
+}

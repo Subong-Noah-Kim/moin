@@ -8,6 +8,7 @@ import {
   fetchAdminOrders,
   getStoredAdminSession,
   isSupabaseConfigured,
+  sendApprovalPush,
   setAdminMeetupVisibility,
   signInAdmin,
   signOutAdmin,
@@ -31,6 +32,7 @@ import {
   canManuallyUpdateOrderStatus,
   getAgentStatusLabel,
   getApplicationStatusLabel,
+  getApprovalPushSummaryMessage,
   getOrderStatusLabel,
   getStatusClass,
   getTaskStatusLabel,
@@ -1065,7 +1067,20 @@ applicationsBody.addEventListener('change', async (event) => {
       nextStatus,
     );
     updateApplicationInOverview(updatedApplication);
-    syncStatus.textContent = `신청 상태 ${getApplicationStatusLabel(nextStatus)} 저장 완료`;
+
+    if (nextStatus === 'accepted') {
+      syncStatus.textContent = '신청 상태 승인 저장 완료 · 알림 확인 중';
+
+      try {
+        const pushSummary = await sendApprovalPush(applicationId);
+        syncStatus.textContent = getApprovalPushSummaryMessage(pushSummary);
+      } catch (pushError) {
+        console.error(pushError);
+        syncStatus.textContent = '신청 상태 승인 저장 완료 · 알림 발송 확인 실패';
+      }
+    } else {
+      syncStatus.textContent = `신청 상태 ${getApplicationStatusLabel(nextStatus)} 저장 완료`;
+    }
   } catch (error) {
     console.error(error);
     select.value = previousStatus;
