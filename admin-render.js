@@ -106,7 +106,7 @@ export function formatAgenticUpdated(value) {
   }
 }
 
-export const paidOrderStatuses = ['paid', 'demo_paid'];
+const paidOrderStatuses = ['paid', 'demo_paid'];
 
 export function hasPaidLinkedOrder(application) {
   return Array.isArray(application.orders)
