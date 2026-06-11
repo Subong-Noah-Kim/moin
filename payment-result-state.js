@@ -17,6 +17,10 @@ export function formatPaymentResultAmount(value) {
 export function getConfirmErrorMessage(error) {
   const message = error?.message || String(error);
 
+  if (error?.code === 'APPLICATION_ALREADY_PAID' || message.includes('이미 결제가 완료된 신청')) {
+    return '이미 결제가 완료된 신청입니다. 이전 결제가 정상 처리되어 추가 결제는 필요 없어요.';
+  }
+
   if (message.includes('network request failed') || message.includes('Load failed')) {
     return 'Supabase Edge Function(confirm-toss-payment) 호출에 실패했습니다. 함수 배포와 CORS 응답을 확인해주세요.';
   }

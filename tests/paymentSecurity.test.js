@@ -2394,6 +2394,20 @@ test('lock migration makes application tokens mandatory for public orders', asyn
   assert.match(migration, /where application_id is not null[\s\S]{0,80}status in \('paid', 'demo_paid'\)/);
 });
 
+test('confirm error messaging recognizes an already-paid application', () => {
+  const alreadyPaid = new Error('이미 결제가 완료된 신청입니다.');
+  alreadyPaid.code = 'APPLICATION_ALREADY_PAID';
+
+  assert.equal(
+    getConfirmErrorMessage(alreadyPaid),
+    '이미 결제가 완료된 신청입니다. 이전 결제가 정상 처리되어 추가 결제는 필요 없어요.',
+  );
+  assert.equal(
+    getConfirmErrorMessage(new Error('unexpected failure')),
+    '결제 승인 처리에 실패했습니다. 잠시 후 다시 시도하거나 운영자에게 문의해주세요.',
+  );
+});
+
 test('admin tables collapse into labeled mobile cards', async () => {
   const [adminHtml, adminStyles, adminScript] = await Promise.all([
     readProjectFile('../admin.html'),

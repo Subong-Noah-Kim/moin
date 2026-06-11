@@ -1113,6 +1113,7 @@ async function completeCheckout(itemId, form) {
 
     if (error?.code === 'APPLICATION_NOT_FOUND') {
       clearApplicationToken(item.id);
+      refreshDrawerPaymentSummary(item);
       const message = '신청 내역을 찾지 못했어요. 신청서를 다시 제출한 뒤 결제해주세요.';
       setCheckoutStatus(form, message, 'error');
       showToast(message);
