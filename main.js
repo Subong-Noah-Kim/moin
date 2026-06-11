@@ -20,7 +20,9 @@ import {
   createPublicFieldId as createFieldId,
 } from './public-form.js?v=__ASSET_VERSION__';
 import {
+  persistPublicStringMap,
   persistPublicStringSet as persist,
+  readPublicStringMap,
   readPublicStringSet,
 } from './public-storage.js?v=__ASSET_VERSION__';
 import {
@@ -283,6 +285,26 @@ const mobileNavSectionIds = ['meetups', 'waitlist', 'events'];
 const saved = readPublicStringSet('momentclub:saved');
 const notified = readPublicStringSet('momentclub:notified');
 const paid = readPublicStringSet('momentclub:paid');
+const applicationTokens = readPublicStringMap('momentclub:application-tokens');
+
+function getApplicationToken(meetupId) {
+  return applicationTokens.get(meetupId) || '';
+}
+
+function hasStoredApplication(meetupId) {
+  return Boolean(getApplicationToken(meetupId));
+}
+
+function setApplicationToken(meetupId, token) {
+  if (!meetupId || !token) return;
+  applicationTokens.set(meetupId, token);
+  persistPublicStringMap('momentclub:application-tokens', applicationTokens);
+}
+
+function clearApplicationToken(meetupId) {
+  if (!applicationTokens.delete(meetupId)) return;
+  persistPublicStringMap('momentclub:application-tokens', applicationTokens);
+}
 let activeFilter = 'all';
 let checkoutInProgress = false;
 let drawerRestoreFocusElement = null;
@@ -516,11 +538,6 @@ function createTagMarkup(tags) {
   return tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('');
 }
 
-function getPaymentButtonText(itemId) {
-  const item = meetups.find((meetup) => meetup.id === itemId);
-  return getPublicMeetupActionState(item, { isPaid: paid.has(itemId) }).paymentButtonText;
-}
-
 function renderMeetups() {
   const visible = getVisibleMeetups();
   resultCountEl.textContent = `${visible.length}개 모임`;
@@ -723,7 +740,7 @@ function openDrawer(itemId, opener = document.activeElement) {
     : opener;
   const recommendations = meetups.filter((meetup) => meetup.id !== item.id).slice(0, 2);
   const isPaid = paid.has(item.id);
-  const actionState = getPublicMeetupActionState(item, { isPaid });
+  const actionState = getPublicMeetupActionState(item, { isPaid, hasApplication: hasStoredApplication(item.id) });
   const {
     canRegister,
     registrationLabel,
@@ -845,6 +862,32 @@ function openDrawer(itemId, opener = document.activeElement) {
   drawerRestoreFocusElement = openModal(drawer, 'drawer-open', restoreFocusTarget, 'input[name="name"]');
 }
 
+function refreshDrawerPaymentSummary(item) {
+  if (!isModalOpen(drawer)) return;
+
+  const payButton = drawerContent.querySelector('.drawer-pay-button');
+  if (!payButton || payButton.dataset.checkout !== item.id) return;
+
+  const actionState = getPublicMeetupActionState(item, {
+    isPaid: paid.has(item.id),
+    hasApplication: hasStoredApplication(item.id),
+  });
+  const summary = payButton.closest('.payment-summary');
+
+  if (summary) {
+    summary.className = actionState.paymentSummaryClass;
+    const label = summary.querySelector('span');
+    const title = summary.querySelector('strong');
+    const description = summary.querySelector('p');
+    if (label) label.textContent = actionState.paymentSummaryLabel;
+    if (title) title.textContent = actionState.paymentSummaryTitle;
+    if (description) description.textContent = actionState.paymentSummaryDescription;
+  }
+
+  payButton.disabled = actionState.paymentButtonDisabled;
+  payButton.textContent = actionState.paymentButtonText;
+}
+
 function closeDrawer({ restoreFocus = true } = {}) {
   if (isModalOpen(checkoutModal)) {
     closeCheckout({ restoreFocus: false });
@@ -852,6 +895,19 @@ function closeDrawer({ restoreFocus = true } = {}) {
 
   closeModal(drawer, 'drawer-open', drawerRestoreFocusElement, restoreFocus);
   drawerRestoreFocusElement = null;
+}
+
+function focusDrawerApplicationForm(itemId, opener = document.activeElement) {
+  const applicationForm = isModalOpen(drawer)
+    ? drawerContent.querySelector('form[data-application-form]')
+    : null;
+
+  if (applicationForm?.dataset.applicationForm === itemId) {
+    applicationForm.querySelector('input[name="name"]')?.focus();
+    return;
+  }
+
+  openDrawer(itemId, opener);
 }
 
 function openCheckout(itemId, opener = document.activeElement) {
@@ -863,9 +919,15 @@ function openCheckout(itemId, opener = document.activeElement) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
 
-  const actionState = getPublicMeetupActionState(item);
+  const actionState = getPublicMeetupActionState(item, { isPaid: paid.has(item.id), hasApplication: hasStoredApplication(item.id) });
   if (actionState.blockReason) {
     showToast(actionState.blockReason);
+    return;
+  }
+
+  if (actionState.requiresApplication) {
+    showToast(actionState.paymentSummaryDescription);
+    focusDrawerApplicationForm(itemId, opener);
     return;
   }
 
@@ -958,7 +1020,7 @@ async function completeCheckout(itemId, form) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
 
-  const actionState = getPublicMeetupActionState(item);
+  const actionState = getPublicMeetupActionState(item, { isPaid: paid.has(item.id), hasApplication: hasStoredApplication(item.id) });
   if (actionState.blockReason) {
     setCheckoutStatus(form, actionState.blockReason, 'error');
     showToast(actionState.blockReason);
@@ -994,6 +1056,7 @@ async function completeCheckout(itemId, form) {
         paymentMethod,
         providerOrderId,
         checkoutToken,
+        applicationToken: getApplicationToken(item.id),
       });
 
       setCheckoutStatus(form, '토스 결제창으로 이동하는 중입니다.');
@@ -1034,7 +1097,12 @@ async function completeCheckout(itemId, form) {
       return;
     }
 
-    await createDemoOrder({ meetup: item, payerName, paymentMethod });
+    await createDemoOrder({
+      meetup: item,
+      payerName,
+      paymentMethod,
+      applicationToken: getApplicationToken(item.id),
+    });
     paid.add(itemId);
     persist('momentclub:paid', paid);
     closeCheckout({ restoreFocus: false });
@@ -1042,6 +1110,15 @@ async function completeCheckout(itemId, form) {
     showToast(`${item.title} 데모 결제 표시를 저장했어요.`);
   } catch (error) {
     console.error(error);
+
+    if (error?.code === 'APPLICATION_NOT_FOUND') {
+      clearApplicationToken(item.id);
+      const message = '신청 내역을 찾지 못했어요. 신청서를 다시 제출한 뒤 결제해주세요.';
+      setCheckoutStatus(form, message, 'error');
+      showToast(message);
+      return;
+    }
+
     setCheckoutStatus(form, error?.message || '결제를 다시 시도해주세요.', 'error');
     showToast(error?.message || '결제 기록 저장에 실패했어요. 잠시 후 다시 시도해주세요.');
   } finally {
@@ -1056,7 +1133,7 @@ async function submitApplication(form) {
   const item = meetups.find((meetup) => meetup.id === form.dataset.applicationForm);
   if (!item) return;
 
-  const actionState = getPublicMeetupActionState(item);
+  const actionState = getPublicMeetupActionState(item, { hasApplication: hasStoredApplication(item.id) });
   if (actionState.blockReason) {
     showToast(actionState.blockReason);
     return;
@@ -1068,8 +1145,18 @@ async function submitApplication(form) {
   setFormPending(form, true);
 
   try {
-    await createApplication({ meetup: item, name, interest });
+    const { skipped, rows } = await createApplication({ meetup: item, name, interest });
+    const confirmationToken = rows?.[0]?.confirmation_token || '';
+    setApplicationToken(item.id, confirmationToken);
+    refreshDrawerPaymentSummary(item);
     form.reset();
+
+    if (!skipped && !confirmationToken) {
+      console.warn('createApplication returned no confirmation_token; checkout stays gated.');
+      showToast('신청서는 저장됐지만 결제 연결 정보를 받지 못했어요. 새로고침 후 다시 신청해주세요.');
+      return;
+    }
+
     showToast(
       isSupabaseConfigured()
         ? `${item.title} 신청서를 저장했어요.`

@@ -34,9 +34,11 @@ export function getPublicMeetupActionState(item, { isPaid = false, hasApplicatio
         : registrationLabel,
     paymentSummaryDescription: isPaid
       ? '이 브라우저에 테스트 결제 확인 표시가 저장되어 있어요.'
-      : canRegister
-        ? '토스 테스트 결제와 서버 승인 흐름을 확인합니다. 실제 출금은 없습니다.'
-        : registrationDescription,
+      : requiresApplication
+        ? '신청서를 먼저 제출하면 결제할 수 있어요.'
+        : canRegister
+          ? '토스 테스트 결제와 서버 승인 흐름을 확인합니다. 실제 출금은 없습니다.'
+          : registrationDescription,
     paymentButtonText: requiresApplication
       ? '신청 후 결제'
       : getPaymentButtonTextForMeetup(item, { isPaid }),

@@ -1698,11 +1698,13 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   const openCheckoutBody = mainScript.slice(openCheckoutStart, completeCheckoutStart);
   const checkoutBody = mainScript.slice(completeCheckoutStart, submitApplicationStart);
   const applicationBody = mainScript.slice(submitApplicationStart, setFilterStart);
-  const openCheckoutGuardIndex = openCheckoutBody.indexOf('const actionState = getPublicMeetupActionState(item);');
-  const checkoutGuardIndex = checkoutBody.indexOf('const actionState = getPublicMeetupActionState(item);');
+  const checkoutGuardSource = 'const actionState = getPublicMeetupActionState(item, { isPaid: paid.has(item.id), hasApplication: hasStoredApplication(item.id) });';
+  const applicationGuardSource = 'const actionState = getPublicMeetupActionState(item, { hasApplication: hasStoredApplication(item.id) });';
+  const openCheckoutGuardIndex = openCheckoutBody.indexOf(checkoutGuardSource);
+  const checkoutGuardIndex = checkoutBody.indexOf(checkoutGuardSource);
   const checkoutCreateIndex = checkoutBody.indexOf('await createTossPendingOrder');
   const demoCreateIndex = checkoutBody.indexOf('await createDemoOrder');
-  const applicationGuardIndex = applicationBody.indexOf('const actionState = getPublicMeetupActionState(item);');
+  const applicationGuardIndex = applicationBody.indexOf(applicationGuardSource);
   const applicationCreateIndex = applicationBody.indexOf('await createApplication');
   const statusClassStructuredIndex = availabilityModule.indexOf("if (item?.availabilityKnown === true) return 'is-open';");
   const statusClassRawIndex = availabilityModule.indexOf("const value = String(item?.status || '');");
@@ -1734,8 +1736,8 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(formModule, /export function createPublicCheckoutPayload\(source\)/);
   assert.match(mainScript, /const \{ payerName, paymentMethod \} = createPublicCheckoutPayload\(formData\)/);
   assert.match(mainScript, /const \{ name, interest \} = createPublicApplicationPayload\(formData\)/);
-  assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item, \{ isPaid \}\)/);
-  assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item\)/);
+  assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item, \{ isPaid, hasApplication: hasStoredApplication\(item\.id\) \}\)/);
+  assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item, \{ hasApplication: hasStoredApplication\(item\.id\) \}\)/);
   assert.match(mainScript, /actionState\.paymentSummaryClass/);
   assert.match(mainScript, /actionState\.paymentButtonDisabled/);
   assert.match(mainScript, /actionState\.blockReason/);
@@ -2326,6 +2328,42 @@ test('public flow helper gates checkout behind a stored application', () => {
   const blockedWithoutApplication = getPublicMeetupActionState(soldOut, { hasApplication: false });
   assert.equal(blockedWithoutApplication.requiresApplication, false, 'block reasons win over the application gate');
   assert.equal(blockedWithoutApplication.paymentButtonText, '마감');
+});
+
+test('main.js stores application tokens and gates checkout on them', async () => {
+  const mainScript = await readProjectFile('../main.js');
+
+  assert.match(mainScript, /readPublicStringMap/);
+  assert.match(mainScript, /persistPublicStringMap/);
+  assert.match(mainScript, /momentclub:application-tokens/);
+  assert.match(mainScript, /hasApplication: hasStoredApplication\(/, 'every action-state call site must pass the stored-token flag');
+  assert.doesNotMatch(mainScript, /getPublicMeetupActionState\((\w+)\)(?!,)/, 'no action-state call site may omit the options bag');
+  assert.match(
+    mainScript,
+    /function openCheckout[\s\S]{0,600}requiresApplication[\s\S]{0,300}return;/,
+    'openCheckout must honor the application gate before building the modal',
+  );
+  assert.match(mainScript, /applicationToken: getApplicationToken\(/, 'checkout requests must carry the stored token');
+  assert.match(mainScript, /APPLICATION_NOT_FOUND/, 'stale tokens must be cleared on server rejection');
+  assert.match(mainScript, /confirmation_token/, 'application submissions must persist the returned token');
+  assert.match(
+    mainScript,
+    /신청서는 저장됐지만 결제 연결 정보를 받지 못했어요\. 새로고침 후 다시 신청해주세요\./,
+    'token-less live submissions must not show the plain success toast',
+  );
+});
+
+test('gated payment summary explains the application-first flow', () => {
+  const [open] = mergeMeetupAvailability(
+    [{ id: 'open', title: 'Open Meetup', price: '40,000원' }],
+    [{ meetup_id: 'open', capacity: 5, remaining_spots: 3, effective_registration_status: 'open', can_register: true }],
+  );
+
+  const gated = getPublicMeetupActionState(open, { hasApplication: false });
+  assert.equal(gated.paymentSummaryDescription, '신청서를 먼저 제출하면 결제할 수 있어요.');
+
+  const ungated = getPublicMeetupActionState(open, { hasApplication: true });
+  assert.match(ungated.paymentSummaryDescription, /토스 테스트 결제/);
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {
