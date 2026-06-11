@@ -1721,9 +1721,9 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(availabilityModule, /can_register === true/);
   assert.match(availabilityModule, /export function mergeMeetupAvailability\(items, availabilityRows, \{ requireAvailability = false \} = \{\}\)/);
   assert.match(availabilityModule, /export function getRegistrationBlockReason\(item\)/);
-  assert.match(flowModule, /export function getPublicMeetupActionState\(item, \{ isPaid = false \} = \{\}\)/);
+  assert.match(flowModule, /export function getPublicMeetupActionState\(item, \{ isPaid = false, hasApplication = true \} = \{\}\)/);
   assert.match(flowModule, /canSubmitApplication: canRegister/);
-  assert.match(flowModule, /canOpenCheckout: canRegister && !isPaid/);
+  assert.match(flowModule, /canOpenCheckout: canRegister && !isPaid && !requiresApplication/);
   assert.match(flowModule, /paymentButtonDisabled: isPaid \|\| !canRegister/);
   assert.match(availabilityModule, /new Map\([\s\S]*\.map\(normalizeAvailability\)[\s\S]*\[availability\.id, availability\]/);
   assert.match(mainScript, /let meetups = isSupabaseConfigured\(\)\s+\? mergeMeetupAvailability\(fallbackMeetups, \[\], \{ requireAvailability: true \}\)/);
@@ -2285,6 +2285,47 @@ test('checkout requests carry the application token to the submission function',
   } finally {
     restoreGlobals(globals);
   }
+});
+
+test('public flow helper gates checkout behind a stored application', () => {
+  const [open, soldOut] = mergeMeetupAvailability(
+    [
+      { id: 'open', title: 'Open Meetup', price: '40,000원' },
+      { id: 'sold-out', title: 'Sold Out Meetup', price: '20,000원' },
+    ],
+    [
+      { meetup_id: 'open', capacity: 5, remaining_spots: 3, effective_registration_status: 'open', can_register: true },
+      { meetup_id: 'sold-out', capacity: 2, remaining_spots: 0, effective_registration_status: 'sold_out', can_register: false },
+    ],
+  );
+
+  const noApplication = getPublicMeetupActionState(open, { hasApplication: false });
+  assert.equal(noApplication.requiresApplication, true);
+  assert.equal(noApplication.canOpenCheckout, false);
+  assert.equal(noApplication.paymentButtonDisabled, false, 'button stays clickable to guide users to the form');
+  assert.equal(noApplication.paymentButtonText, '신청 후 결제');
+  assert.equal(noApplication.canSubmitApplication, true, 'the application form itself must stay available');
+
+  const withApplication = getPublicMeetupActionState(open, { hasApplication: true });
+  assert.equal(withApplication.requiresApplication, false);
+  assert.equal(withApplication.canOpenCheckout, true);
+  assert.equal(withApplication.paymentButtonText, '결제하기');
+
+  const defaulted = getPublicMeetupActionState(open);
+  assert.equal(defaulted.requiresApplication, false, 'omitting the option must preserve legacy behavior');
+  assert.equal(defaulted.canOpenCheckout, true);
+
+  const paid = getPublicMeetupActionState(open, { hasApplication: true, isPaid: true });
+  assert.equal(paid.requiresApplication, false);
+  assert.equal(paid.canOpenCheckout, false);
+
+  const paidWithoutApplication = getPublicMeetupActionState(open, { hasApplication: false, isPaid: true });
+  assert.equal(paidWithoutApplication.requiresApplication, false, 'paid meetups never demand a new application');
+  assert.equal(paidWithoutApplication.paymentButtonText, '테스트 결제 완료');
+
+  const blockedWithoutApplication = getPublicMeetupActionState(soldOut, { hasApplication: false });
+  assert.equal(blockedWithoutApplication.requiresApplication, false, 'block reasons win over the application gate');
+  assert.equal(blockedWithoutApplication.paymentButtonText, '마감');
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {

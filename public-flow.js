@@ -6,19 +6,21 @@ import {
   isRegistrationAvailable,
 } from './public-availability.js?v=__ASSET_VERSION__';
 
-export function getPublicMeetupActionState(item, { isPaid = false } = {}) {
+export function getPublicMeetupActionState(item, { isPaid = false, hasApplication = true } = {}) {
   const canRegister = isRegistrationAvailable(item);
   const registrationLabel = getRegistrationStatusLabel(item);
   const registrationDescription = getRegistrationStatusDescription(item);
   const blockReason = getRegistrationBlockReason(item);
+  const requiresApplication = canRegister && !isPaid && !hasApplication;
 
   return {
     canRegister,
     registrationLabel,
     registrationDescription,
     blockReason,
+    requiresApplication,
     canSubmitApplication: canRegister,
-    canOpenCheckout: canRegister && !isPaid,
+    canOpenCheckout: canRegister && !isPaid && !requiresApplication,
     paymentSummaryClass: [
       'payment-summary',
       isPaid ? 'is-paid' : '',
@@ -35,7 +37,9 @@ export function getPublicMeetupActionState(item, { isPaid = false } = {}) {
       : canRegister
         ? '토스 테스트 결제와 서버 승인 흐름을 확인합니다. 실제 출금은 없습니다.'
         : registrationDescription,
-    paymentButtonText: getPaymentButtonTextForMeetup(item, { isPaid }),
+    paymentButtonText: requiresApplication
+      ? '신청 후 결제'
+      : getPaymentButtonTextForMeetup(item, { isPaid }),
     paymentButtonDisabled: isPaid || !canRegister,
   };
 }
