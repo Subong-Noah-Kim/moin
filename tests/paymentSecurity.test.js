@@ -62,6 +62,8 @@ import { createToastQueue } from '../toast-queue.js';
 import {
   clearAdminSession,
   confirmTossPayment,
+  createDemoOrder,
+  createTossPendingOrder,
   deleteMeetupImage,
   getAmountFromMeetup,
   getStoredAdminSession,
@@ -2247,6 +2249,39 @@ test('public string map helpers persist and recover meetup token maps', () => {
     const oversized = new Map([['k', 'x'.repeat(publicStateMaxValueLength + 1)]]);
     persistPublicStringMap('momentclub:oversized', oversized);
     assert.equal(readPublicStringMap('momentclub:oversized').size, 0, 'over-length values are dropped');
+  } finally {
+    restoreGlobals(globals);
+  }
+});
+
+test('checkout requests carry the application token to the submission function', async () => {
+  const globals = snapshotGlobals(['fetch']);
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push(JSON.parse(options.body));
+    return { ok: true, status: 200, text: async () => JSON.stringify({ ok: true, result: { order: {} } }) };
+  };
+
+  try {
+    await createDemoOrder({
+      meetup: { id: 'salon-night' },
+      payerName: '',
+      paymentMethod: '간편결제',
+      applicationToken: 'c'.repeat(64),
+    });
+    assert.equal(calls[0].applicationToken, 'c'.repeat(64));
+    assert.equal(calls[0].action, 'demo_order');
+
+    await createTossPendingOrder({
+      meetup: { id: 'salon-night' },
+      payerName: '',
+      paymentMethod: '카드',
+      providerOrderId: 'mc_order_test_1234',
+      checkoutToken: 'd'.repeat(64),
+      applicationToken: 'c'.repeat(64),
+    });
+    assert.equal(calls[1].applicationToken, 'c'.repeat(64));
+    assert.equal(calls[1].action, 'toss_order');
   } finally {
     restoreGlobals(globals);
   }

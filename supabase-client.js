@@ -567,21 +567,23 @@ export async function createApplication({ meetup, name, interest }) {
   });
 }
 
-export async function createDemoOrder({ meetup, payerName, paymentMethod }) {
+export async function createDemoOrder({ meetup, payerName, paymentMethod, applicationToken }) {
   return callPublicSubmission('demo_order', {
     meetupId: meetup.id,
     payerName: payerName ? payerName.trim() : '',
     paymentMethod,
+    applicationToken: applicationToken || '',
   });
 }
 
-export async function createTossPendingOrder({ meetup, payerName, paymentMethod, providerOrderId, checkoutToken }) {
+export async function createTossPendingOrder({ meetup, payerName, paymentMethod, providerOrderId, checkoutToken, applicationToken }) {
   return callPublicSubmission('toss_order', {
     meetupId: meetup.id,
     payerName: payerName ? payerName.trim() : '',
     paymentMethod,
     providerOrderId,
     checkoutToken,
+    applicationToken: applicationToken || '',
   });
 }
 
