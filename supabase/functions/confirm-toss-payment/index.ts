@@ -417,9 +417,21 @@ async function handleRequest(request: Request) {
     });
   } catch (error) {
     console.error(error);
+
+    const message = error instanceof Error ? error.message : '';
+
+    // The race loser of two concurrent confirms hits the paid-per-application
+    // unique index after capture; tell the user the payment already succeeded.
+    if (message.includes('orders_single_paid_per_application_idx')) {
+      return jsonResponse({
+        error: '이미 결제가 완료된 신청입니다.',
+        code: 'APPLICATION_ALREADY_PAID',
+      }, 409);
+    }
+
     return jsonResponse(
       {
-        error: error instanceof Error ? error.message : '결제 승인 처리에 실패했습니다.',
+        error: message || '결제 승인 처리에 실패했습니다.',
         code: error instanceof Error ? error.name : undefined,
       },
       400,

@@ -609,9 +609,11 @@ function renderStats() {
   document.querySelector('[data-stat-revenue]').textContent = formatMoney(revenue);
 }
 
+const paidOrderStatuses = ['paid', 'demo_paid'];
+
 function hasPaidLinkedOrder(application) {
   return Array.isArray(application.orders)
-    && application.orders.some((order) => ['paid', 'demo_paid'].includes(order?.status));
+    && application.orders.some((order) => paidOrderStatuses.includes(order?.status));
 }
 
 function renderApplications() {

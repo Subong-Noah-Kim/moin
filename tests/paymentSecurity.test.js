@@ -2394,6 +2394,16 @@ test('lock migration makes application tokens mandatory for public orders', asyn
   assert.match(migration, /where application_id is not null[\s\S]{0,80}status in \('paid', 'demo_paid'\)/);
 });
 
+test('toss confirmation maps the unique-index race loser to an already-paid response', async () => {
+  const edgeFunction = await readProjectFile('../supabase/functions/confirm-toss-payment/index.ts');
+
+  assert.match(
+    edgeFunction,
+    /orders_single_paid_per_application_idx[\s\S]{0,400}APPLICATION_ALREADY_PAID/,
+    'a unique violation from the paid-per-application index must surface as APPLICATION_ALREADY_PAID',
+  );
+});
+
 test('confirm error messaging recognizes an already-paid application', () => {
   const alreadyPaid = new Error('이미 결제가 완료된 신청입니다.');
   alreadyPaid.code = 'APPLICATION_ALREADY_PAID';

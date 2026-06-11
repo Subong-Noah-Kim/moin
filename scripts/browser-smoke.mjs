@@ -320,12 +320,12 @@ async function smokePublicPage(connection, baseUrl) {
     await waitForExpression(
       connection,
       page.sessionId,
-      `document.querySelector('[data-detail="' + ${idLiteral} + '"]') !== null`,
+      `document.querySelector('[data-detail="' + CSS.escape(${idLiteral}) + '"]') !== null`,
       'seeded meetup card after reload',
     );
 
     const summary = await evaluate(connection, page.sessionId, `(() => {
-      const seededDetail = document.querySelector('[data-detail="' + ${idLiteral} + '"]');
+      const seededDetail = document.querySelector('[data-detail="' + CSS.escape(${idLiteral}) + '"]');
       seededDetail?.click();
       return {
         title: document.title,
