@@ -12,6 +12,44 @@ Code review follow-up list. Keep this file as the source of truth for near-term 
 
 Status note: the P0 capacity, remaining-spots, and automatic sold-out rollout is now deployed and live-verified on Supabase, Edge Functions, and GitHub Pages. Existing published meetups currently have unlimited capacity, so the public label is usually `접수중`; capacity-enabled test meetups showed `잔여 N석`, `마감`, `신청 종료`, and reopened remaining-seat states correctly.
 
+## Current Priority Queue - 2026-06-12 Update
+
+Status note: the application-order link feature (신청 후 결제) is deployed and live-verified end to end: applications issue confirmation tokens, checkout is gated behind a stored application, every new order links to an application, payment auto-accepts the linked application, and double payment is blocked at order creation, pre-capture, and by a partial unique index. Test suite is at 79 passing. The items below are the agreed follow-up backlog.
+
+- [ ] Add an operator refund/cancel flow for paid orders
+  - Problem: `paid`/`demo_paid` orders are intentionally locked against manual status changes, so there is no operational path to refund or cancel a completed payment - including the documented concurrent-confirm race loser, whose duplicate Toss capture needs a manual refund.
+  - Files: `supabase/migrations/`, `supabase/functions/confirm-toss-payment/index.ts` (Toss cancel API), `admin.html`, `admin.js`, `supabase-client.js`, `tests/paymentSecurity.test.js`
+  - Done when: a registered admin can trigger a refund/cancel that calls the Toss cancel API, records the result in `payments`, and releases the seat, with the application link kept intact for audit.
+
+- [ ] Prepare the Toss live-key switch (business prerequisites)
+  - Problem: the codebase is test-key only by design; switching to live payments needs terms/refund/privacy notices, live key handling, and reconciliation checks before any code change matters.
+  - Files: `toss-config.js`, Supabase secrets, `README.md`
+  - Done when: business prerequisites are confirmed and a documented live/test key switch exists that cannot accidentally charge in test environments.
+
+- [ ] Continue the admin.js split (increment 2)
+  - Problem: admin.js is still ~1,270 lines mixing DOM wiring with markup building; the reviewed roadmap is to extract the agentic render cluster (`renderTaskDetailSection`, `renderTaskDetails`, markup parts of `renderAgenticStatus`) and then the table row templates (`buildOrderRow` style) into tested modules.
+  - Files: `admin.js`, `admin-render.js` (or sibling), `.github/workflows/deploy-pages.yml`, `tests/paymentSecurity.test.js`
+  - Done when: admin.js holds only DOM wiring, event handling, and session/fetch orchestration, with row/agentic markup unit-tested.
+
+- [ ] Share the edge function Supabase client helpers
+  - Problem: `supabaseRequest`/`readJson` are duplicated between the two edge functions and have already drifted (error body `message` extraction), and the error mapping is three parallel `includes()` chains that can silently diverge.
+  - Files: `supabase/functions/_shared/` (new), both `index.ts` files, `tests/paymentSecurity.test.js`
+  - Done when: one shared request helper and one `[{ match, status, code, message }]` lookup table drive both functions.
+
+- [ ] Consolidate the three escapeHtml copies
+  - Problem: identical implementations live in `main.js`, `agent-monitor.js`, and `admin-render.js`; a fix to one will not reach the others.
+  - Files: `main.js`, `agent-monitor.js`, `admin-render.js`, `tests/paymentSecurity.test.js` (a pin asserts the main.js copy)
+  - Done when: one exported implementation is imported everywhere, with the source-contract test updated.
+
+- [ ] Add an authenticated admin flow to the CI browser smoke
+  - Problem: CI smoke only verifies the admin login screen renders; the authenticated dashboard (tables, embeds, status edits) has no automated release gate.
+  - Files: `scripts/browser-smoke.mjs`, `.github/workflows/deploy-pages.yml`, GitHub repo secrets (read-only test admin)
+  - Done when: CI logs in with a secret-stored read-only admin account and asserts the dashboard tables render with the applicant/payment link columns.
+
+- [ ] Decide whether TODO.md moves to GitHub Issues
+  - Problem: this file is the backlog source of truth but is invisible to GitHub project tooling.
+  - Done when: an explicit decision is recorded (stay in-repo or migrate) and stale completed entries are archived either way.
+
 ## P0 - Before Real Payment Use
 
 - [x] Add capacity, remaining spots, and automatic sold-out controls
