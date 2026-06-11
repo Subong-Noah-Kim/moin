@@ -2170,6 +2170,36 @@ test('deploy pipeline runs the browser smoke checks before publishing', async ()
   assert.match(workflow, /npm run smoke:browser/);
 });
 
+test('link migration issues application tokens and optionally links orders', async () => {
+  const migration = await readProjectFile('../supabase/migrations/20260613000000_link_orders_to_applications.sql');
+
+  assert.match(migration, /add column if not exists confirmation_token text/);
+  assert.match(migration, /add column if not exists application_id uuid references public\.applications\(id\) on delete set null/);
+  assert.match(migration, /create unique index if not exists applications_confirmation_token_idx/);
+  assert.match(migration, /p_application_token text default null/);
+  assert.match(migration, /APPLICATION_NOT_FOUND/);
+  assert.match(migration, /APPLICATION_MEETUP_MISMATCH/);
+  assert.match(migration, /APPLICATION_NOT_PAYABLE/);
+  assert.match(migration, /APPLICATION_ALREADY_PAID/);
+  assert.match(
+    migration,
+    /v_action = 'demo_order' and v_application\.id is not null[\s\S]{0,200}status in \('submitted', 'reviewing'\)/,
+    'demo orders must auto-accept the linked application',
+  );
+  assert.match(
+    migration,
+    /v_order\.application_id is not null[\s\S]{0,200}status in \('submitted', 'reviewing'\)/,
+    'toss confirmation must auto-accept the linked application',
+  );
+  assert.match(
+    migration,
+    /insert into public\.applications \([\s\S]{0,200}confirmation_token/,
+    'application inserts must populate the token',
+  );
+  assert.match(migration, /grant execute on function public\.create_public_order\(text, text, text, text, text, text, text, text\) to service_role/);
+  assert.match(migration, /drop function if exists public\.create_public_order\(text, text, text, text, text, text, text\)/, 'old 7-arg overload must be dropped to avoid PostgREST ambiguity');
+});
+
 test('admin tables collapse into labeled mobile cards', async () => {
   const [adminHtml, adminStyles, adminScript] = await Promise.all([
     readProjectFile('../admin.html'),
