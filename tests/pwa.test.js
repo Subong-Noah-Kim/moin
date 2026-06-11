@@ -1,0 +1,56 @@
+import { readFile } from 'node:fs/promises';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+async function readProjectFile(relativePath) {
+  return readFile(new URL(`../${relativePath}`, import.meta.url), 'utf8');
+}
+
+test('manifest declares an installable standalone app with relative scope', async () => {
+  const manifest = JSON.parse(await readProjectFile('manifest.webmanifest'));
+  assert.equal(manifest.name, 'moin');
+  assert.equal(manifest.short_name, 'moin');
+  assert.equal(manifest.lang, 'ko');
+  assert.equal(manifest.display, 'standalone');
+  assert.equal(manifest.start_url, './');
+  assert.equal(manifest.scope, './');
+  assert.equal(manifest.background_color, '#fbf7ef');
+  assert.equal(manifest.theme_color, '#1f6a53');
+  assert.ok(Array.isArray(manifest.icons) && manifest.icons.length >= 3);
+  for (const icon of manifest.icons) {
+    assert.match(icon.src, /^\.\/icons\//, 'icon src must be relative for subpath deploys');
+  }
+  const purposes = manifest.icons.map((icon) => icon.purpose || 'any');
+  assert.ok(purposes.includes('maskable'));
+});
+
+test('index.html links the manifest, apple touch icon, and theme color', async () => {
+  const html = await readProjectFile('index.html');
+  assert.match(html, /<link rel="manifest" href="\.\/manifest\.webmanifest" \/>/);
+  assert.match(html, /<link rel="apple-touch-icon" href="\.\/icons\/apple-touch-icon-180\.png" \/>/);
+  assert.match(html, /<meta name="theme-color" content="#1f6a53" \/>/);
+});
+
+test('local dev server declares manifest and icon content types', async () => {
+  const server = await readProjectFile('server.js');
+  assert.match(server, /'\.webmanifest': 'application\/manifest\+json; charset=utf-8'/);
+  assert.match(server, /'\.svg': 'image\/svg\+xml'/);
+  assert.match(server, /'\.png': 'image\/png'/);
+});
+
+test('pages deploy copies the manifest and icons', async () => {
+  const workflow = await readProjectFile('.github/workflows/deploy-pages.yml');
+  assert.match(workflow, /cp manifest\.webmanifest dist\//);
+  assert.match(workflow, /cp -R icons dist\//);
+});
+
+test('manifest and apple touch icons exist as PNG files', async () => {
+  const manifest = JSON.parse(await readProjectFile('manifest.webmanifest'));
+  const iconPaths = manifest.icons.map((icon) => icon.src.replace(/^\.\//, ''));
+  iconPaths.push('icons/apple-touch-icon-180.png');
+  for (const iconPath of iconPaths) {
+    const file = await readFile(new URL(`../${iconPath}`, import.meta.url));
+    assert.ok(file.length > 0, `${iconPath} should not be empty`);
+    assert.equal(file.subarray(1, 4).toString(), 'PNG', `${iconPath} should be a PNG file`);
+  }
+});

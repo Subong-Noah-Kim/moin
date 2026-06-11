@@ -1,0 +1,16 @@
+{
+  "name": "moin",
+  "short_name": "moin",
+  "description": "취향 기반 모임과 원데이 이벤트를 탐색하고 신청하는 커뮤니티 플랫폼",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf7ef",
+  "theme_color": "#1f6a53",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
