@@ -150,6 +150,8 @@ Before deploying the capacity-aware Edge Functions, apply the capacity migration
 
 Then run `capacity-smoke-test.sql` in the Supabase SQL editor. The smoke test uses a transaction and ends with `ROLLBACK`, so successful runs should not leave test rows behind.
 
+Run `migrations/20260612000000_shorten_attempt_retention.sql` to shorten the rate-limit attempt log cleanup from one day to one hour. The limit windows are at most 10 minutes, so older rows never affect decisions.
+
 Do not deploy `functions/create-public-submission` or `functions/confirm-toss-payment` from this branch before all capacity migrations exist in the live Supabase project. The updated functions read `orders.expires_at` and expect the new capacity RPCs to be available.
 
 After the smoke test passes, deploy the two Edge Functions, then deploy the frontend/admin bundle that reads or displays structured capacity state.

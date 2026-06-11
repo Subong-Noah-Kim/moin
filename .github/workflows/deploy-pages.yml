@@ -31,6 +31,11 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Run browser smoke checks
+        run: npm run smoke:browser
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -63,6 +68,7 @@ jobs:
           cp index.html dist/
           cp main.js dist/
           cp modal-manager.js dist/
+          cp toast-queue.js dist/
           cp toss-checkout.js dist/
           cp payment-result.html dist/
           cp payment-result.js dist/

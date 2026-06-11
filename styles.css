@@ -385,6 +385,41 @@ h1 {
   white-space: nowrap;
 }
 
+.load-retry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+}
+
+.load-retry p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.load-retry button {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: 1px solid var(--coal);
+  border-radius: 999px;
+  background: var(--coal);
+  color: var(--paper);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.load-retry button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

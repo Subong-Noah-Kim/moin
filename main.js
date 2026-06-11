@@ -30,6 +30,7 @@ import {
   setInert,
   trapFocus,
 } from './modal-manager.js?v=__ASSET_VERSION__';
+import { createToastQueue } from './toast-queue.js?v=__ASSET_VERSION__';
 import {
   createSafeRandomId,
   ensureTossSdkScript,
@@ -273,6 +274,9 @@ const drawerContent = document.querySelector('[data-drawer-content]');
 const checkoutModal = document.querySelector('[data-checkout-modal]');
 const checkoutContent = document.querySelector('[data-checkout-content]');
 const toast = document.querySelector('[data-toast]');
+const loadRetryEl = document.querySelector('[data-load-retry]');
+const loadRetryMessageEl = document.querySelector('[data-load-retry-message]');
+const loadRetryButton = document.querySelector('[data-load-retry-button]');
 const header = document.querySelector('[data-header]');
 const mobileNavLinks = document.querySelectorAll('[data-mobile-nav]');
 const mobileNavSectionIds = ['meetups', 'waitlist', 'events'];
@@ -280,7 +284,6 @@ const saved = readPublicStringSet('momentclub:saved');
 const notified = readPublicStringSet('momentclub:notified');
 const paid = readPublicStringSet('momentclub:paid');
 let activeFilter = 'all';
-let toastTimer;
 let checkoutInProgress = false;
 let drawerRestoreFocusElement = null;
 let checkoutRestoreFocusElement = null;
@@ -292,11 +295,16 @@ function getTopOpenModal() {
   return null;
 }
 
+const toastQueue = createToastQueue({
+  show: (message) => {
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+  },
+  hide: () => toast.classList.remove('is-visible'),
+});
+
 function showToast(message) {
-  clearTimeout(toastTimer);
-  toast.textContent = message;
-  toast.classList.add('is-visible');
-  toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2200);
+  toastQueue.push(message);
 }
 
 function setActiveMobileNav(sectionId) {
@@ -629,8 +637,20 @@ function renderSmallGroups() {
     .join('');
 }
 
+function showLoadRetryNotice(message) {
+  if (!loadRetryEl) return;
+  if (loadRetryMessageEl) loadRetryMessageEl.textContent = message;
+  loadRetryEl.hidden = false;
+}
+
+function hideLoadRetryNotice() {
+  if (loadRetryEl) loadRetryEl.hidden = true;
+}
+
 async function loadMeetupsFromDatabase() {
   if (!isSupabaseConfigured()) return;
+
+  hideLoadRetryNotice();
 
   try {
     const [meetupsResult, availabilityResult] = await Promise.allSettled([
@@ -669,6 +689,7 @@ async function loadMeetupsFromDatabase() {
     if (availabilityResult.status !== 'fulfilled') {
       console.error(availabilityResult.reason);
       showToast('잔여석 상태를 확인하지 못해 신청과 결제를 잠시 막았어요.');
+      showLoadRetryNotice('잔여석 상태를 확인하지 못해 신청과 결제를 잠시 막았습니다. 다시 불러오면 풀릴 수 있어요.');
     }
   } catch (error) {
     console.error(error);
@@ -679,8 +700,20 @@ async function loadMeetupsFromDatabase() {
     renderEvents();
     renderSmallGroups();
     showToast('DB 모임 목록을 불러오지 못해 신청과 결제를 잠시 막았어요.');
+    showLoadRetryNotice('모임 목록을 불러오지 못해 신청과 결제를 잠시 막았습니다.');
   }
 }
+
+loadRetryButton?.addEventListener('click', async () => {
+  loadRetryButton.disabled = true;
+  showToast('모임 정보를 다시 불러오는 중입니다.');
+
+  try {
+    await loadMeetupsFromDatabase();
+  } finally {
+    loadRetryButton.disabled = false;
+  }
+});
 
 function openDrawer(itemId, opener = document.activeElement) {
   const item = meetups.find((meetup) => meetup.id === itemId);
@@ -1208,10 +1241,14 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-window.addEventListener('scroll', () => {
-  header.classList.toggle('is-scrolled', window.scrollY > 8);
-  scheduleMobileNavUpdate();
-});
+window.addEventListener(
+  'scroll',
+  () => {
+    header.classList.toggle('is-scrolled', window.scrollY > 8);
+    scheduleMobileNavUpdate();
+  },
+  { passive: true },
+);
 
 window.addEventListener('hashchange', syncMobileNavFromHash);
 window.addEventListener('resize', scheduleMobileNavUpdate);

@@ -56,6 +56,7 @@ import {
   getConfirmErrorMessage,
   getFailureStatusLabel,
 } from '../payment-result-state.js';
+import { createToastQueue } from '../toast-queue.js';
 import {
   clearAdminSession,
   confirmTossPayment,
@@ -76,6 +77,7 @@ const cacheBustedSourceFiles = [
   '../payment-result.html',
   '../main.js',
   '../modal-manager.js',
+  '../toast-queue.js',
   '../toss-checkout.js',
   '../admin.js',
   '../payment-result.js',
@@ -823,6 +825,7 @@ test('deploy workflow ships the extracted public modules', async () => {
   const workflow = await readProjectFile('../.github/workflows/deploy-pages.yml');
 
   assert.match(workflow, /cp modal-manager\.js dist\//);
+  assert.match(workflow, /cp toast-queue\.js dist\//);
   assert.match(workflow, /cp toss-checkout\.js dist\//);
 });
 
@@ -2033,6 +2036,138 @@ test('admin meetup form cleans up the uploaded image when saving the meetup fail
     /catch \(error\) \{[\s\S]{0,400}deleteMeetupImage\(activeSession\.accessToken, uploadedImageUrl\)/,
     'the meetup form submit catch block must clean up the uploaded image',
   );
+});
+
+function createManualScheduler() {
+  const tasks = [];
+
+  return {
+    schedule: (callback, delayMs) => {
+      tasks.push({ callback, delayMs });
+    },
+    runNext: () => {
+      const task = tasks.shift();
+      if (task) task.callback();
+      return task?.delayMs;
+    },
+    get pending() {
+      return tasks.length;
+    },
+  };
+}
+
+test('toast queue shows messages one at a time instead of overwriting them', () => {
+  const shown = [];
+  let visible = false;
+  const scheduler = createManualScheduler();
+  const queue = createToastQueue({
+    show: (message) => {
+      shown.push(message);
+      visible = true;
+    },
+    hide: () => {
+      visible = false;
+    },
+    schedule: scheduler.schedule,
+  });
+
+  queue.push('첫 번째 알림');
+  queue.push('두 번째 알림');
+
+  assert.deepEqual(shown, ['첫 번째 알림'], 'second message must wait for the first to finish');
+  assert.equal(visible, true);
+
+  scheduler.runNext();
+  assert.equal(visible, false, 'toast hides after its display window');
+
+  scheduler.runNext();
+  assert.deepEqual(shown, ['첫 번째 알림', '두 번째 알림']);
+  assert.equal(visible, true);
+});
+
+test('toast queue drops consecutive duplicates but replays messages after draining', () => {
+  const shown = [];
+  const scheduler = createManualScheduler();
+  const queue = createToastQueue({
+    show: (message) => shown.push(message),
+    hide: () => {},
+    schedule: scheduler.schedule,
+  });
+
+  assert.equal(queue.push('같은 알림'), true);
+  assert.equal(queue.push('같은 알림'), false, 'duplicate of the visible message is dropped');
+  assert.equal(queue.push('다른 알림'), true);
+  assert.equal(queue.push('다른 알림'), false, 'duplicate of the queued tail is dropped');
+
+  while (scheduler.pending) {
+    scheduler.runNext();
+  }
+
+  assert.deepEqual(shown, ['같은 알림', '다른 알림']);
+  assert.equal(queue.push('같은 알림'), true, 'the same text can reappear once the queue drained');
+  assert.deepEqual(shown, ['같은 알림', '다른 알림', '같은 알림']);
+});
+
+test('main.js routes toasts through the shared toast queue module', async () => {
+  const mainScript = await readProjectFile('../main.js');
+
+  assert.match(mainScript, /from '\.\/toast-queue\.js\?v=__ASSET_VERSION__'/);
+  assert.match(mainScript, /createToastQueue\(/);
+  assert.doesNotMatch(mainScript, /clearTimeout\(toastTimer\)/);
+});
+
+test('scroll handling registers a passive listener', async () => {
+  const mainScript = await readProjectFile('../main.js');
+
+  assert.match(
+    mainScript,
+    /window\.addEventListener\(\s*'scroll',[\s\S]{0,200}\{ passive: true \},?\s*\)/,
+    'the scroll listener must declare itself passive so it cannot block scrolling',
+  );
+});
+
+test('public page offers a retry control when meetup data fails to load', async () => {
+  const [indexHtml, mainScript, styles] = await Promise.all([
+    readProjectFile('../index.html'),
+    readProjectFile('../main.js'),
+    readProjectFile('../styles.css'),
+  ]);
+
+  assert.match(indexHtml, /data-load-retry hidden/);
+  assert.match(indexHtml, /data-load-retry-message/);
+  assert.match(indexHtml, /data-load-retry-button/);
+  assert.match(styles, /\.load-retry/);
+
+  assert.match(mainScript, /function showLoadRetryNotice\(/);
+  assert.match(mainScript, /function hideLoadRetryNotice\(/);
+  assert.match(
+    mainScript,
+    /loadRetryButton[\s\S]{0,200}await loadMeetupsFromDatabase\(\)/,
+    'the retry button must re-run the meetup load',
+  );
+  assert.match(
+    mainScript,
+    /catch \(error\) \{[\s\S]{0,400}showLoadRetryNotice\(/,
+    'a failed meetup load must surface the retry notice',
+  );
+});
+
+test('rate limit attempt log retention matches the limit windows', async () => {
+  const migration = await readProjectFile('../supabase/migrations/20260612000000_shorten_attempt_retention.sql');
+
+  assert.match(migration, /create or replace function public\.assert_public_submission_rate_limit/);
+  assert.match(migration, /now\(\) - interval '1 hour'/);
+  assert.doesNotMatch(
+    migration,
+    /interval '1 day'/,
+    'attempt rows only feed 5-10 minute windows, so a full day of retention is unnecessary',
+  );
+});
+
+test('deploy pipeline runs the browser smoke checks before publishing', async () => {
+  const workflow = await readProjectFile('../.github/workflows/deploy-pages.yml');
+
+  assert.match(workflow, /npm run smoke:browser/);
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {
