@@ -69,6 +69,16 @@ test('push registration payload extracts subscription keys and rejects partial i
   );
 });
 
+test('service worker handles push display and click without any fetch caching', async () => {
+  const sw = await readProjectFile('sw.js');
+  assert.match(sw, /addEventListener\('push'/);
+  assert.match(sw, /showNotification/);
+  assert.match(sw, /addEventListener\('notificationclick'/);
+  assert.match(sw, /openWindow/);
+  assert.ok(!/addEventListener\('fetch'/.test(sw), 'sw.js must not intercept fetch (no caching)');
+  assert.ok(!/caches\./.test(sw), 'sw.js must not touch the Cache API');
+});
+
 test('push migration claims approval sends atomically', async () => {
   const sql = await readProjectFile(MIGRATION);
   assert.match(sql, /add column if not exists approval_notified_at timestamptz/);
