@@ -152,6 +152,8 @@ Then run `capacity-smoke-test.sql` in the Supabase SQL editor. The smoke test us
 
 Run `migrations/20260612000000_shorten_attempt_retention.sql` to shorten the rate-limit attempt log cleanup from one day to one hour. The limit windows are at most 10 minutes, so older rows never affect decisions.
 
+Run `migrations/20260613000000_link_orders_to_applications.sql` to add application confirmation tokens, optional order-to-application linking, and auto-acceptance of linked applications on payment. Then, only after the token-collecting frontend is live and verified, run `migrations/20260614000000_require_application_for_orders.sql`. The second migration rejects tokenless public orders (`APPLICATION_REQUIRED`) and enforces at most one paid/demo_paid order per application via a partial unique index.
+
 As of 2026-06-12 the remote migration history is synced with this directory (`supabase migration repair` marked the earlier SQL-editor-applied migrations as applied). New migrations can now be applied with `npx supabase db push` instead of pasting SQL into the editor.
 
 Do not deploy `functions/create-public-submission` or `functions/confirm-toss-payment` from this branch before all capacity migrations exist in the live Supabase project. The updated functions read `orders.expires_at` and expect the new capacity RPCs to be available.

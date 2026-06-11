@@ -2215,6 +2215,7 @@ test('public submission function forwards application tokens and maps link error
   assert.match(edgeFunction, /APPLICATION_ALREADY_PAID/);
   assert.match(edgeFunction, /APPLICATION_NOT_PAYABLE/);
   assert.match(edgeFunction, /APPLICATION_MEETUP_MISMATCH/);
+  assert.match(edgeFunction, /APPLICATION_REQUIRED/);
 });
 
 test('toss confirmation blocks double payment before capturing money', async () => {
@@ -2378,6 +2379,19 @@ test('admin dashboard joins orders to applicants and flags paid applications', a
   assert.match(adminScript, /<td data-label="신청자">/);
   assert.match(adminScript, /hasPaidLinkedOrder/);
   assert.match(adminHtml, /<th>신청자<\/th>/);
+});
+
+test('lock migration makes application tokens mandatory for public orders', async () => {
+  const migration = await readProjectFile('../supabase/migrations/20260614000000_require_application_for_orders.sql');
+
+  assert.match(migration, /APPLICATION_REQUIRED/);
+  assert.match(migration, /create or replace function public\.create_public_order/);
+  assert.match(
+    migration,
+    /create unique index if not exists orders_single_paid_per_application_idx/,
+    'a partial unique index must backstop concurrent confirms',
+  );
+  assert.match(migration, /where application_id is not null[\s\S]{0,80}status in \('paid', 'demo_paid'\)/);
 });
 
 test('admin tables collapse into labeled mobile cards', async () => {

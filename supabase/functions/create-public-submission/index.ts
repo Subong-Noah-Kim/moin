@@ -160,6 +160,10 @@ function getErrorStatus(error: unknown) {
     return 429;
   }
 
+  if (message.includes('APPLICATION_REQUIRED')) {
+    return 409;
+  }
+
   if (message.includes('APPLICATION_NOT_FOUND')) {
     return 404;
   }
@@ -184,6 +188,10 @@ function getErrorCode(error: unknown) {
 
   if (message.includes('PUBLIC_SUBMISSION_RATE_LIMITED')) {
     return 'PUBLIC_SUBMISSION_RATE_LIMITED';
+  }
+
+  if (message.includes('APPLICATION_REQUIRED')) {
+    return 'APPLICATION_REQUIRED';
   }
 
   if (message.includes('APPLICATION_NOT_FOUND')) {
@@ -222,6 +230,10 @@ function getErrorMessage(error: unknown) {
 
   if (message.includes('PUBLIC_SUBMISSION_RATE_LIMITED')) {
     return '짧은 시간 안에 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+  }
+
+  if (message.includes('APPLICATION_REQUIRED')) {
+    return '신청서를 먼저 제출한 뒤 결제할 수 있습니다.';
   }
 
   if (message.includes('APPLICATION_NOT_FOUND')) {
