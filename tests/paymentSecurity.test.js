@@ -2366,6 +2366,20 @@ test('gated payment summary explains the application-first flow', () => {
   assert.match(ungated.paymentSummaryDescription, /토스 테스트 결제/);
 });
 
+test('admin dashboard joins orders to applicants and flags paid applications', async () => {
+  const [adminScript, clientScript, adminHtml] = await Promise.all([
+    readProjectFile('../admin.js'),
+    readProjectFile('../supabase-client.js'),
+    readProjectFile('../admin.html'),
+  ]);
+
+  assert.match(clientScript, /applications\(applicant_name\)/, 'orders select must embed the linked applicant');
+  assert.match(clientScript, /orders\(status\)/, 'applications select must embed linked order statuses');
+  assert.match(adminScript, /<td data-label="신청자">/);
+  assert.match(adminScript, /hasPaidLinkedOrder/);
+  assert.match(adminHtml, /<th>신청자<\/th>/);
+});
+
 test('admin tables collapse into labeled mobile cards', async () => {
   const [adminHtml, adminStyles, adminScript] = await Promise.all([
     readProjectFile('../admin.html'),

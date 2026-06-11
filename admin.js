@@ -609,6 +609,11 @@ function renderStats() {
   document.querySelector('[data-stat-revenue]').textContent = formatMoney(revenue);
 }
 
+function hasPaidLinkedOrder(application) {
+  return Array.isArray(application.orders)
+    && application.orders.some((order) => ['paid', 'demo_paid'].includes(order?.status));
+}
+
 function renderApplications() {
   document.querySelector('[data-applications-count]').textContent = `${overview.applications.length}건`;
   document.querySelector('[data-applications-body]').innerHTML =
@@ -629,6 +634,7 @@ function renderApplications() {
               >
                 ${renderApplicationStatusOptions(application.status)}
               </select>
+              ${hasPaidLinkedOrder(application) ? '<span class="pill is-paid">결제완료</span>' : ''}
             </td>
           </tr>
         `,
@@ -655,6 +661,7 @@ function renderOrders() {
             <td data-label="일시">${formatDate(order.created_at)}</td>
             <td data-label="모임">${escapeHtml(getMeetupTitle(order.meetup_id))}</td>
             <td data-label="구매자">${escapeHtml(order.buyer_name || '미입력')}</td>
+            <td data-label="신청자">${escapeHtml(order.applications?.applicant_name || '-')}</td>
             <td data-label="금액">${formatMoney(order.amount)}</td>
             <td data-label="상태">
               ${
@@ -675,14 +682,14 @@ function renderOrders() {
           </tr>
         `,
       )
-      .join('') || '<tr class="empty-row"><td colspan="7">주문 내역이 없습니다.</td></tr>';
+      .join('') || '<tr class="empty-row"><td colspan="8">주문 내역이 없습니다.</td></tr>';
 }
 
 function renderOrdersMessage(message, countLabel = '0건') {
   document.querySelector('[data-orders-count]').textContent = countLabel;
   document.querySelector('[data-orders-body]').innerHTML = `
     <tr class="empty-row">
-      <td colspan="7">${escapeHtml(message)}</td>
+      <td colspan="8">${escapeHtml(message)}</td>
     </tr>
   `;
 }

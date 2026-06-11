@@ -38,6 +38,7 @@ const adminApplicationFields = [
   'status',
   'source',
   'created_at',
+  'orders(status)',
 ].join(',');
 const adminOrderFields = [
   'id',
@@ -50,6 +51,7 @@ const adminOrderFields = [
   'payment_method',
   'source',
   'created_at',
+  'applications(applicant_name)',
 ].join(',');
 const adminPaymentFields = [
   'id',

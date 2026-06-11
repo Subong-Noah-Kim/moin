@@ -266,31 +266,67 @@ async function waitForExpression(connection, sessionId, expression, label, { tim
 async function smokePublicPage(connection, baseUrl) {
   const page = await createPage(connection, `${baseUrl}/`, 'public page', baseUrl);
 
+  const waitForMeetupCards = () => waitForExpression(
+    connection,
+    page.sessionId,
+    `document.querySelectorAll('[data-meetup-grid] .meetup-card').length > 0`,
+    'public meetup cards',
+  );
+
+  const waitForSupabaseSource = (timeoutMs) => waitForExpression(
+    connection,
+    page.sessionId,
+    `document.documentElement.dataset.meetupSource === 'supabase'`,
+    'public Supabase meetup source',
+    { timeoutMs },
+  );
+
   try {
-    await waitForExpression(
-      connection,
-      page.sessionId,
-      `document.querySelectorAll('[data-meetup-grid] .meetup-card').length > 0`,
-      'public meetup cards',
-    );
+    await waitForMeetupCards();
 
     let loadedSupabase = false;
     try {
-      await waitForExpression(
-        connection,
-        page.sessionId,
-        `document.documentElement.dataset.meetupSource === 'supabase'`,
-        'public Supabase meetup source',
-        { timeoutMs: 8000 },
-      );
+      await waitForSupabaseSource(8000);
       loadedSupabase = true;
     } catch {
       // Fallback rendering still catches static browser regressions when live data is slow.
     }
 
+    // Checkout is gated behind a stored application token. Seed one for the first
+    // meetup, then reload: main.js reads the token map once at module load.
+    const tokenMeetupId = await evaluate(connection, page.sessionId, `(() => {
+      const button = document.querySelector('[data-detail]');
+      const id = button?.dataset.detail;
+      if (!id) return '';
+      localStorage.setItem('momentclub:application-tokens', JSON.stringify({ [id]: 'f'.repeat(64) }));
+      return id;
+    })()`);
+
+    if (!tokenMeetupId) {
+      throw new Error('Could not find a meetup card to seed an application token for.');
+    }
+
+    const reloaded = connection.waitForEvent(page.sessionId, 'Page.loadEventFired');
+    await connection.send('Page.reload', {}, page.sessionId);
+    await reloaded;
+
+    await waitForMeetupCards();
+    if (loadedSupabase) {
+      // Wait for the same data source so the seeded meetup id still exists.
+      await waitForSupabaseSource(smokeTimeoutMs);
+    }
+
+    const idLiteral = JSON.stringify(tokenMeetupId);
+    await waitForExpression(
+      connection,
+      page.sessionId,
+      `document.querySelector('[data-detail="' + ${idLiteral} + '"]') !== null`,
+      'seeded meetup card after reload',
+    );
+
     const summary = await evaluate(connection, page.sessionId, `(() => {
-      const firstDetail = document.querySelector('[data-detail]');
-      firstDetail?.click();
+      const seededDetail = document.querySelector('[data-detail="' + ${idLiteral} + '"]');
+      seededDetail?.click();
       return {
         title: document.title,
         cardCount: document.querySelectorAll('[data-meetup-grid] .meetup-card').length,
