@@ -624,6 +624,34 @@ export async function sendApprovalPush(applicationId) {
   return { skipped: false, ...(body?.result || {}) };
 }
 
+export async function refundAdminOrder(accessToken, orderId, reason) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase가 연결되어 있지 않습니다.');
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/confirm-toss-payment`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ action: 'refund', orderId, reason }),
+  });
+
+  if (!response.ok) {
+    const message = await parseErrorMessage(response);
+    const error = new Error(message.text);
+    error.status = response.status;
+    error.code = message.code;
+    throw error;
+  }
+
+  const body = await response.json();
+
+  return { order: body?.order || null, payment: body?.payment || null };
+}
+
 export async function confirmTossPayment({ paymentKey, orderId, amount }) {
   if (!isSupabaseConfigured()) {
     throw new Error('Supabase is not configured.');

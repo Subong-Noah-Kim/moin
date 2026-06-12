@@ -168,7 +168,11 @@ export function buildOrderRows(orders, { getMeetupTitle, getPaymentForOrder }) {
                   >
                     ${renderOrderStatusOptions(order.status)}
                   </select>`
-                : `<span class="pill is-${escapeHtml(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span>`
+                : `<span class="pill is-${escapeHtml(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span>${
+                  paidOrderStatuses.includes(order.status)
+                    ? `<button class="ghost-button refund-button" type="button" data-refund-order="${escapeHtml(order.id)}">환불</button>`
+                    : ''
+                }`
             }
           </td>
           <td data-label="수단">${escapeHtml(order.payment_method || order.provider || '-')}</td>

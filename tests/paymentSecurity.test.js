@@ -2578,6 +2578,107 @@ test('edge functions share one client helper, CORS policy, and error table', asy
   assert.match(submissionFn, /mapPublicSubmissionError/);
 });
 
+test('refund migration adds the refunded status and an atomic service-role refund RPC', async () => {
+  const migration = await readProjectFile('../supabase/migrations/20260618000000_refund_paid_orders.sql');
+
+  assert.match(
+    migration,
+    /check \(status in \('pending', 'demo_paid', 'paid', 'cancelled', 'failed', 'refunded'\)\)/,
+    'orders must accept the refunded status',
+  );
+  assert.match(migration, /create or replace function public\.refund_paid_order/);
+  assert.match(
+    migration,
+    /for update/,
+    'the order row must be locked so concurrent refunds cannot double-run',
+  );
+  assert.match(migration, /ORDER_NOT_REFUNDABLE/);
+  assert.match(
+    migration,
+    /if v_order\.status not in \('paid', 'demo_paid'\) then/,
+    'only completed payments are refundable',
+  );
+  assert.match(
+    migration,
+    /\|\| jsonb_build_object\('refund', p_raw_payload\)/,
+    'the refund payload must merge into the payment raw payload, not overwrite the capture record',
+  );
+  assert.match(migration, /revoke all on function public\.refund_paid_order\(uuid, jsonb\) from public/);
+  assert.match(migration, /grant execute on function public\.refund_paid_order\(uuid, jsonb\) to service_role/);
+  assert.doesNotMatch(
+    migration,
+    /to authenticated/,
+    'refunds must only run through the admin-verified edge function',
+  );
+});
+
+test('refund action verifies the admin session and cancels through Toss before recording', async () => {
+  const edgeFunction = await readProjectFile('../supabase/functions/confirm-toss-payment/index.ts');
+
+  assert.match(edgeFunction, /action === 'refund'/);
+  assert.match(
+    edgeFunction,
+    /auth\/v1\/user/,
+    'the refund path must verify the caller holds a valid admin session token',
+  );
+  assert.match(
+    edgeFunction,
+    /관리자 인증이 필요합니다/,
+    'unauthenticated refund calls must get a clear 401 message',
+  );
+  assert.match(edgeFunction, /payments\/\$\{encodeURIComponent\(paymentKey\)\}\/cancel/);
+  assert.match(edgeFunction, /cancelReason/);
+  assert.match(
+    edgeFunction,
+    /ALREADY_CANCELED_PAYMENT/,
+    'a payment already cancelled at Toss must still be recorded as refunded locally',
+  );
+  assert.match(edgeFunction, /rpc\/refund_paid_order/);
+  assert.match(
+    edgeFunction,
+    /결제 기록이 없어/,
+    'paid Toss orders without a payment record must be blocked from blind refunds',
+  );
+});
+
+test('admin client and UI expose refunds only for completed payments', async () => {
+  const [supabaseClient, adminScript, adminRenderModule] = await Promise.all([
+    readProjectFile('../supabase-client.js'),
+    readProjectFile('../admin.js'),
+    readProjectFile('../admin-render.js'),
+  ]);
+
+  assert.match(supabaseClient, /export async function refundAdminOrder\(accessToken, orderId, reason\)/);
+  assert.match(supabaseClient, /action: 'refund'/);
+  assert.match(
+    supabaseClient,
+    /refundAdminOrder[\s\S]{0,600}Authorization: `Bearer \$\{accessToken\}`/,
+    'the refund call must carry the admin session token',
+  );
+  assert.match(adminScript, /data-refund-order/);
+  assert.match(adminScript, /refundAdminOrder\(/);
+  assert.match(adminScript, /confirm\(/, 'refunds are irreversible, so the operator must confirm');
+  assert.match(adminRenderModule, /data-refund-order="\$\{escapeHtml\(order\.id\)\}"/);
+
+  const { buildOrderRows } = await import('../admin-render.js');
+  const rows = buildOrderRows(
+    [
+      { id: 'paid1', meetup_id: 'm', amount: 1000, status: 'paid', provider: 'tosspayments', created_at: '2026-06-13T10:00:00+09:00' },
+      { id: 'demo1', meetup_id: 'm', amount: 1000, status: 'demo_paid', provider: 'demo', created_at: '2026-06-13T10:00:00+09:00' },
+      { id: 'pend1', meetup_id: 'm', amount: 1000, status: 'pending', provider: 'tosspayments', created_at: '2026-06-13T10:00:00+09:00' },
+      { id: 'refd1', meetup_id: 'm', amount: 1000, status: 'refunded', provider: 'tosspayments', created_at: '2026-06-13T10:00:00+09:00' },
+    ],
+    { getMeetupTitle: (id) => id, getPaymentForOrder: () => undefined },
+  );
+  assert.match(rows, /data-refund-order="paid1"/);
+  assert.match(rows, /data-refund-order="demo1"/);
+  assert.doesNotMatch(rows, /data-refund-order="pend1"/, 'pending orders are cancelled, not refunded');
+  assert.doesNotMatch(rows, /data-refund-order="refd1"/, 'refunded orders cannot be refunded again');
+
+  const { getOrderStatusLabel } = await import('../admin-status.js');
+  assert.equal(getOrderStatusLabel('refunded'), '환불됨');
+});
+
 test('admin row builders escape content, gate manual edits, and cover empty states', async () => {
   const {
     buildApplicationRows,

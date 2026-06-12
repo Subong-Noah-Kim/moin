@@ -16,6 +16,7 @@ const orderStatusLabels = {
   paid: '결제완료',
   cancelled: '취소',
   failed: '실패',
+  refunded: '환불됨',
 };
 
 const paymentStatusLabels = {

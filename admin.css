@@ -800,9 +800,17 @@ td strong {
 }
 
 .pill.is-cancelled,
-.pill.is-failed {
+.pill.is-failed,
+.pill.is-refunded {
   background: rgba(156, 59, 46, 0.13);
   color: var(--red);
+}
+
+.refund-button {
+  display: block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
 }
 
 .pill.is-running,

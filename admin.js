@@ -8,6 +8,7 @@ import {
   fetchAdminOrders,
   getStoredAdminSession,
   isSupabaseConfigured,
+  refundAdminOrder,
   sendApprovalPush,
   setAdminMeetupVisibility,
   signInAdmin,
@@ -887,6 +888,61 @@ ordersBody.addEventListener('change', async (event) => {
     syncStatus.textContent = getAdminWriteErrorMessage(error);
   } finally {
     select.disabled = false;
+  }
+});
+
+ordersBody.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-refund-order]');
+
+  if (!button) {
+    return;
+  }
+
+  const orderId = button.dataset.refundOrder;
+  const order = overview.orders.find((candidate) => candidate.id === orderId);
+
+  if (!order) {
+    return;
+  }
+
+  if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 환불해주세요.')) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `${getMeetupTitle(order.meetup_id)} 주문 ${formatMoney(order.amount)}을 환불할까요?\n토스 결제 취소는 되돌릴 수 없고, 좌석은 다시 열립니다.`,
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const reason = window.prompt('환불 사유를 입력해주세요.', '운영자 환불 처리');
+
+  if (reason === null) {
+    return;
+  }
+
+  button.disabled = true;
+  syncStatus.textContent = '환불 처리 중';
+
+  try {
+    const result = await refundAdminOrder(activeSession.accessToken, orderId, reason.trim() || '운영자 환불 처리');
+
+    if (result.payment) {
+      const others = overview.payments.filter((payment) => payment.id !== result.payment.id);
+      overview.payments = [...others, result.payment];
+    }
+
+    if (result.order) {
+      updateOrderInOverview(result.order);
+    }
+
+    syncStatus.textContent = `주문 환불 완료 (${getOrderStatusLabel('refunded')}) · 좌석이 반환되었습니다`;
+  } catch (error) {
+    console.error(error);
+    syncStatus.textContent = getAdminWriteErrorMessage(error);
+    button.disabled = false;
   }
 });
 

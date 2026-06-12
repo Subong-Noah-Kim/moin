@@ -242,6 +242,136 @@ async function confirmOrderAndPayment(order: OrderRow, tossPayment: Record<strin
   return result as { order?: Record<string, unknown>; payment?: Record<string, unknown> };
 }
 
+async function findOrderById(orderId: string) {
+  const query = new URLSearchParams({
+    id: `eq.${orderId}`,
+    select:
+      'id,meetup_id,buyer_name,amount,currency,status,provider,payment_method,provider_order_id,checkout_token,expires_at,application_id',
+    limit: '1',
+  });
+  const rows = (await supabaseRequest(`orders?${query.toString()}`)) as OrderRow[];
+
+  if (!rows.length) {
+    throw new Error('주문을 찾지 못했습니다.');
+  }
+
+  return rows[0];
+}
+
+async function findPaidPaymentForOrder(orderId: string) {
+  const query = new URLSearchParams({
+    order_id: `eq.${orderId}`,
+    status: 'eq.paid',
+    select: 'id,provider_payment_key,amount,status',
+    limit: '1',
+  });
+  const rows = (await supabaseRequest(`payments?${query.toString()}`)) as Array<{
+    provider_payment_key?: string;
+  }>;
+
+  return rows[0] || null;
+}
+
+async function isAdminSession(request: Request) {
+  const authHeader = request.headers.get('authorization') || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const supabaseUrl = getRequiredEnv('SUPABASE_URL').replace(/\/$/, '');
+    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        apikey: getRequiredEnv('SUPABASE_ANON_KEY'),
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function cancelTossPayment(paymentKey: string, reason: string) {
+  const response = await fetch(
+    `https://api.tosspayments.com/v1/payments/${encodeURIComponent(paymentKey)}/cancel`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: getTossAuthorization(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ cancelReason: reason }),
+    },
+  );
+  const body = await readJson(response);
+  const parsed = typeof body === 'object' && body ? (body as { code?: string; message?: string }) : {};
+
+  if (response.ok) {
+    return body;
+  }
+
+  // Toss already cancelled this capture (e.g. via the dashboard); still mark
+  // the order refunded locally so the books match.
+  if (parsed.code === 'ALREADY_CANCELED_PAYMENT') {
+    return { alreadyCanceled: true, ...parsed };
+  }
+
+  throw new Error(parsed.message || 'Toss 결제 취소에 실패했습니다.');
+}
+
+async function handleRefund(payload: Record<string, unknown>, request: Request) {
+  if (!(await isAdminSession(request))) {
+    return jsonResponse({ error: '관리자 인증이 필요합니다.' }, 401);
+  }
+
+  const orderId = String(payload.orderId || '').trim();
+  const reason = String(payload.reason || '').trim() || '운영자 환불 처리';
+
+  if (!orderId) {
+    return jsonResponse({ error: 'orderId is required.' }, 400);
+  }
+
+  const order = await findOrderById(orderId);
+
+  if (order.status !== 'paid' && order.status !== 'demo_paid') {
+    return jsonResponse(
+      { error: `환불할 수 없는 주문 상태입니다: ${order.status}`, code: 'ORDER_NOT_REFUNDABLE' },
+      409,
+    );
+  }
+
+  let refundRecord: Record<string, unknown> = { reason, source: 'demo' };
+
+  if (order.status === 'paid' && order.provider === 'tosspayments') {
+    const payment = await findPaidPaymentForOrder(order.id);
+    const paymentKey = String(payment?.provider_payment_key || '').trim();
+
+    if (!paymentKey) {
+      return jsonResponse(
+        {
+          error: '결제 기록이 없어 자동 환불할 수 없습니다. 토스 대시보드에서 직접 취소한 뒤 운영자에게 문의해 주세요.',
+          code: 'PAYMENT_RECORD_MISSING',
+        },
+        409,
+      );
+    }
+
+    const cancelResult = await cancelTossPayment(paymentKey, reason);
+    refundRecord = { reason, source: 'tosspayments', cancel: cancelResult };
+  }
+
+  const result = (await supabaseRequest('rpc/refund_paid_order', {
+    method: 'POST',
+    body: JSON.stringify({ p_order_id: order.id, p_raw_payload: refundRecord }),
+  })) as { order?: Record<string, unknown>; payment?: Record<string, unknown> };
+
+  return jsonResponse({ ok: true, order: result.order || null, payment: result.payment || null });
+}
+
 async function handleFailureResult(payload: Record<string, unknown>) {
   const { orderId, checkoutToken, code, message } = assertFailurePayload(payload);
   const order = await findTossOrder(orderId);
@@ -295,6 +425,10 @@ async function handleRequest(request: Request) {
 
     if (action === 'record-failure') {
       return await handleFailureResult(payload);
+    }
+
+    if (action === 'refund') {
+      return await handleRefund(payload, request);
     }
 
     const { paymentKey, orderId, amount } = assertPaymentPayload(payload);
