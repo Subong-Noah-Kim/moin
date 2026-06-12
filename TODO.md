@@ -14,7 +14,9 @@ Status note: the P0 capacity, remaining-spots, and automatic sold-out rollout is
 
 ## Current Priority Queue - 2026-06-12 Update
 
-Status note: the application-order link feature (신청 후 결제) is deployed and live-verified end to end: applications issue confirmation tokens, checkout is gated behind a stored application, every new order links to an application, payment auto-accepts the linked application, and double payment is blocked at order creation, pre-capture, and by a partial unique index. Test suite is at 79 passing. The items below are the agreed follow-up backlog.
+Status note: the application-order link feature (신청 후 결제) is deployed and live-verified end to end: applications issue confirmation tokens, checkout is gated behind a stored application, every new order links to an application, payment auto-accepts the linked application, and double payment is blocked at order creation, pre-capture, and by a partial unique index. The items below are the agreed follow-up backlog.
+
+Status note 2026-06-13: approval push notifications are deployed and verified on a real iPhone PWA end to end (opt-in checkbox → subscription stored → admin approval → push received, duplicate send blocked by the claim). Two launch bugs were fixed along the way: the rate limiter now accepts the `push_subscription` action (20260616000000), and the approval claim is only consumed when subscriptions exist (20260617000000). The drawer now gathers application form, push opt-in checkbox, and payment into one "신청과 결제" section. Test suite is at 98 passing.
 
 - [ ] Add an operator refund/cancel flow for paid orders
   - Problem: `paid`/`demo_paid` orders are intentionally locked against manual status changes, so there is no operational path to refund or cancel a completed payment - including the documented concurrent-confirm race loser, whose duplicate Toss capture needs a manual refund.
