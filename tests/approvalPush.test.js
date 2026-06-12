@@ -143,3 +143,24 @@ test('push migration claims approval sends atomically', async () => {
   assert.match(sql, /update public\.applications[\s\S]*?set approval_notified_at = now\(\)[\s\S]*?where[\s\S]*?status = 'accepted'[\s\S]*?approval_notified_at is null[\s\S]*?returning/);
   assert.match(sql, /grant execute on function public\.claim_approval_push\(uuid\) to service_role/);
 });
+
+test('rate limiter accepts the push_subscription action', async () => {
+  const sql = await readProjectFile('supabase/migrations/20260616000000_allow_push_subscription_rate_limit.sql');
+
+  assert.match(
+    sql,
+    /drop constraint if exists public_submission_attempts_action_check/,
+    'the attempts table check constraint must be rebuilt to accept push_subscription rows',
+  );
+  assert.match(
+    sql,
+    /check \(action in \('application', 'toss_order', 'demo_order', 'push_subscription'\)\)/,
+  );
+  assert.match(sql, /create or replace function public\.assert_public_submission_rate_limit/);
+  assert.match(
+    sql,
+    /if p_action not in \('application', 'toss_order', 'demo_order', 'push_subscription'\) then/,
+    'the function allowlist must accept push_subscription, otherwise every push opt-in fails',
+  );
+  assert.match(sql, /now\(\) - interval '1 hour'/, 'keep the shortened attempt retention from 20260612000000');
+});
