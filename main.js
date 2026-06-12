@@ -826,20 +826,24 @@ function openDrawer(itemId, opener = document.activeElement) {
 
       <div class="tag-row">${createTagMarkup(item.tags)}</div>
 
-      <section class="${escapeAttribute(actionState.paymentSummaryClass)}" aria-label="결제 요약">
-        <div>
-          <span>${escapeHtml(actionState.paymentSummaryLabel)}</span>
-          <strong>${escapeHtml(actionState.paymentSummaryTitle)}</strong>
-          <p>${escapeHtml(actionState.paymentSummaryDescription)}</p>
-        </div>
-        <button
-          class="drawer-pay-button"
-          type="button"
-          data-checkout="${escapeAttribute(item.id)}"
-          ${actionState.paymentButtonDisabled ? 'disabled' : ''}
-        >
-          ${escapeHtml(actionState.paymentButtonText)}
-        </button>
+      <section class="drawer-section drawer-apply-flow" aria-label="신청과 결제">
+        <h3>신청과 결제</h3>
+        ${applicationMarkup}
+        <section class="${escapeAttribute(actionState.paymentSummaryClass)}" aria-label="결제 요약">
+          <div>
+            <span>${escapeHtml(actionState.paymentSummaryLabel)}</span>
+            <strong>${escapeHtml(actionState.paymentSummaryTitle)}</strong>
+            <p>${escapeHtml(actionState.paymentSummaryDescription)}</p>
+          </div>
+          <button
+            class="drawer-pay-button"
+            type="button"
+            data-checkout="${escapeAttribute(item.id)}"
+            ${actionState.paymentButtonDisabled ? 'disabled' : ''}
+          >
+            ${escapeHtml(actionState.paymentButtonText)}
+          </button>
+        </section>
       </section>
 
       ${scheduleMarkup}
@@ -857,7 +861,6 @@ function openDrawer(itemId, opener = document.activeElement) {
           ${recommendations.map((meetup) => `<button type="button" data-detail="${escapeAttribute(meetup.id)}">${escapeHtml(meetup.title)}</button>`).join('')}
         </div>
       </section>
-      ${applicationMarkup}
     </div>
   `;
 
@@ -912,16 +915,30 @@ function renderPushOptIn(item) {
 
   container.hidden = false;
 
-  if (state.mode === 'button') {
-    container.innerHTML = `<button class="ghost-button" type="button" data-push-optin-button="${escapeAttribute(item.id)}">${escapeHtml(state.label)}</button>`;
+  if (state.mode === 'button' || state.mode === 'done') {
+    const checkboxId = createFieldId('push-optin', item.id, 'checkbox');
+    const isDone = state.mode === 'done';
+
+    container.innerHTML = `
+      <label class="push-optin-toggle" for="${escapeAttribute(checkboxId)}">
+        <input
+          id="${escapeAttribute(checkboxId)}"
+          type="checkbox"
+          data-push-optin-checkbox="${escapeAttribute(item.id)}"
+          ${isDone ? 'checked disabled' : ''}
+        />
+        <span>${escapeHtml(isDone ? state.message : state.label)}</span>
+      </label>
+      ${isDone ? '' : '<p class="push-optin-helper">신청이 승인되면 푸시 알림으로 바로 알려드려요.</p>'}
+    `;
     return;
   }
 
   container.textContent = state.message;
 }
 
-async function subscribeToApprovalPush(item, button) {
-  button.disabled = true;
+async function subscribeToApprovalPush(item, control) {
+  control.disabled = true;
 
   try {
     const permission = await Notification.requestPermission();
@@ -956,7 +973,7 @@ async function subscribeToApprovalPush(item, button) {
     console.error(error);
     showToast('알림 신청에 실패했어요. 잠시 후 다시 시도해주세요.');
   } finally {
-    button.disabled = false;
+    control.disabled = false;
     renderPushOptIn(item);
   }
 }
@@ -1275,13 +1292,6 @@ document.addEventListener('click', (event) => {
     return;
   }
 
-  const pushButton = event.target.closest('[data-push-optin-button]');
-  if (pushButton) {
-    const item = meetups.find((meetup) => meetup.id === pushButton.dataset.pushOptinButton);
-    if (item) subscribeToApprovalPush(item, pushButton);
-    return;
-  }
-
   const saveButton = event.target.closest('[data-save]');
   if (saveButton) {
     const id = saveButton.dataset.save;
@@ -1332,6 +1342,14 @@ document.addEventListener('click', (event) => {
     document.querySelector('#meetups')?.scrollIntoView({ block: 'start' });
     setActiveMobileNav('meetups');
   }
+});
+
+document.addEventListener('change', (event) => {
+  const checkbox = event.target.closest('[data-push-optin-checkbox]');
+  if (!checkbox || !checkbox.checked) return;
+
+  const item = meetups.find((meetup) => meetup.id === checkbox.dataset.pushOptinCheckbox);
+  if (item) subscribeToApprovalPush(item, checkbox);
 });
 
 document.addEventListener('submit', async (event) => {

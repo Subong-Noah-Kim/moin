@@ -164,3 +164,35 @@ test('rate limiter accepts the push_subscription action', async () => {
   );
   assert.match(sql, /now\(\) - interval '1 hour'/, 'keep the shortened attempt retention from 20260612000000');
 });
+
+test('push opt-in renders as a labeled checkbox instead of a ghost button', async () => {
+  const main = await readProjectFile('main.js');
+
+  assert.match(main, /data-push-optin-checkbox/);
+  assert.match(main, /type="checkbox"/);
+  assert.doesNotMatch(main, /data-push-optin-button/, 'the old ghost-button opt-in must be replaced');
+  assert.match(
+    main,
+    /addEventListener\('change'[\s\S]{0,400}data-push-optin-checkbox/,
+    'checking the box must trigger the subscription',
+  );
+
+  const styles = await readProjectFile('styles.css');
+  assert.match(styles, /\.push-optin-toggle/);
+  assert.match(styles, /\.push-optin-helper/);
+});
+
+test('drawer gathers application form, push opt-in, and payment into one flow section', async () => {
+  const main = await readProjectFile('main.js');
+
+  assert.match(
+    main,
+    /drawer-apply-flow[\s\S]*?\$\{applicationMarkup\}[\s\S]*?aria-label="결제 요약"/,
+    'application form (with push opt-in) must sit directly above the payment summary in one section',
+  );
+  assert.match(
+    main,
+    /aria-label="결제 요약"[\s\S]*?<\/section>[\s\S]*?\$\{scheduleMarkup\}/,
+    'schedule, FAQ, and recommendations move below the consolidated apply flow',
+  );
+});
