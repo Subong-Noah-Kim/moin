@@ -28,10 +28,11 @@ Status note 2026-06-13: approval push notifications are deployed and verified on
   - Files: `toss-config.js`, Supabase secrets, `README.md`
   - Done when: business prerequisites are confirmed and a documented live/test key switch exists that cannot accidentally charge in test environments.
 
-- [ ] Continue the admin.js split (increment 2)
+- [x] Continue the admin.js split (increment 2)
   - Problem: admin.js is still ~1,270 lines mixing DOM wiring with markup building; the reviewed roadmap is to extract the agentic render cluster (`renderTaskDetailSection`, `renderTaskDetails`, markup parts of `renderAgenticStatus`) and then the table row templates (`buildOrderRow` style) into tested modules.
   - Files: `admin.js`, `admin-render.js` (or sibling), `.github/workflows/deploy-pages.yml`, `tests/paymentSecurity.test.js`
   - Done when: admin.js holds only DOM wiring, event handling, and session/fetch orchestration, with row/agentic markup unit-tested.
+  - Status: deployed. All row templates (applications/orders/meetups/seat summary/empty rows) and the agentic cluster (summary cards, agent cards, task items, task details) moved into admin-render.js as exported `build*` functions with direct unit tests covering escaping, manual-edit gating, and empty states; admin.js (1,286 → 1,048 lines) holds no `<td`/`<article` markup, enforced by test pins. escapeHtml follow-ups landed too: admin-render no longer re-exports it, agent-monitor.js joined the single-module invariant test, and admin.js no longer needs escaping at all.
 
 - [x] Share the edge function Supabase client helpers
   - Problem: `supabaseRequest`/`readJson` are duplicated between the two edge functions and have already drifted (error body `message` extraction), and the error mapping is three parallel `includes()` chains that can silently diverge.

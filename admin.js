@@ -17,36 +17,24 @@ import {
   updateAdminOrderStatus,
   uploadMeetupImage,
 } from './supabase-client.js?v=__ASSET_VERSION__';
+import { createAdminMeetupPayload } from './admin-meetup-form.js?v=__ASSET_VERSION__';
+import { mergeAdminMeetupAvailability } from './admin-availability.js?v=__ASSET_VERSION__';
 import {
-  createAdminMeetupPayload,
-  normalizeAdminMeetupPriceLabel,
-} from './admin-meetup-form.js?v=__ASSET_VERSION__';
-import {
-  getSeatBreakdownText,
-  getSeatStatusClass,
-  getSeatStatusLabel,
-  getSeatSummaryText,
-  mergeAdminMeetupAvailability,
-} from './admin-availability.js?v=__ASSET_VERSION__';
-import {
-  canManuallyUpdateOrderStatus,
-  getAgentStatusLabel,
   getApplicationStatusLabel,
   getApprovalPushSummaryMessage,
   getOrderStatusLabel,
-  getStatusClass,
-  getTaskStatusLabel,
 } from './admin-status.js?v=__ASSET_VERSION__';
 import {
-  escapeHtml,
+  buildAgentCards,
+  buildAgenticSummaryCards,
+  buildApplicationRows,
+  buildEmptyRow,
+  buildMeetupRows,
+  buildOrderRows,
+  buildTaskItems,
   formatAgenticUpdated,
   formatDate,
   formatMoney,
-  getTypeLabel,
-  hasPaidLinkedOrder,
-  renderApplicationStatusOptions,
-  renderOrderStatusOptions,
-  renderPaymentRecord,
 } from './admin-render.js?v=__ASSET_VERSION__';
 
 const loginView = document.querySelector('[data-login-view]');
@@ -107,68 +95,11 @@ function getPaymentForOrder(orderId) {
 
 function renderAgenticMessage(message) {
   agenticSummary.innerHTML = '';
-  agenticAgents.innerHTML = `
-    <article class="agent-card">
-      <p>${escapeHtml(message)}</p>
-    </article>
-  `;
+  agenticAgents.innerHTML = buildAgentCards([], message);
   agenticTasks.innerHTML = '';
   agenticUpdated.textContent = '확인 지연';
   agenticAgentCount.textContent = '0명';
   agenticTaskCount.textContent = '0개';
-}
-
-function renderTaskDetailSection(label, value) {
-  if (!value) {
-    return '';
-  }
-
-  if (Array.isArray(value)) {
-    const items = value
-      .filter(Boolean)
-      .map((item) => `<li>${escapeHtml(item)}</li>`)
-      .join('');
-
-    if (!items) {
-      return '';
-    }
-
-    return `
-      <section>
-        <h4>${escapeHtml(label)}</h4>
-        <ul>${items}</ul>
-      </section>
-    `;
-  }
-
-  return `
-    <section>
-      <h4>${escapeHtml(label)}</h4>
-      <p>${escapeHtml(value)}</p>
-    </section>
-  `;
-}
-
-function renderTaskDetails(task) {
-  const details = task.details || {};
-  const sections = [
-    renderTaskDetailSection('요약', details.summary),
-    renderTaskDetailSection('무슨 작업인가요?', details.what),
-    renderTaskDetailSection('왜 필요한가요?', details.why),
-    renderTaskDetailSection('간단한 개발 방향', details.developmentDirection),
-    renderTaskDetailSection('알아둘 점', details.notes),
-  ].join('');
-
-  if (!sections) {
-    return '';
-  }
-
-  return `
-    <details class="task-detail">
-      <summary>상세 보기</summary>
-      <div>${sections}</div>
-    </details>
-  `;
 }
 
 function renderAgenticStatus(data) {
@@ -179,72 +110,10 @@ function renderAgenticStatus(data) {
   agenticUpdated.textContent = formatAgenticUpdated(data.updatedAt);
   agenticAgentCount.textContent = `${agents.length}명`;
   agenticTaskCount.textContent = `${tasks.length}개`;
-  agenticSummary.innerHTML = [
-    ['진행 Agent', summary.active ?? agents.filter((agent) => agent.status === 'running').length],
-    ['막힘', summary.blocked ?? agents.filter((agent) => agent.status === 'blocked').length],
-    ['로컬 완료', summary.doneLocal ?? tasks.filter((task) => task.status === 'done_local').length],
-    ['배포 필요', summary.deployNeeded ?? tasks.filter((task) => task.deployNeeded).length],
-  ]
-    .map(
-      ([label, value]) => `
-        <article>
-          <span>${escapeHtml(label)}</span>
-          <strong>${escapeHtml(value)}</strong>
-        </article>
-      `,
-    )
-    .join('');
-  agenticAgents.innerHTML =
-    agents
-      .map(
-        (agent) => `
-          <article class="agent-card">
-            <header>
-              <div>
-                <strong>${escapeHtml(agent.name)}</strong>
-                <small>${escapeHtml(agent.role || '-')} · ${escapeHtml(agent.lastUpdate || '-')}</small>
-              </div>
-              <span class="pill is-${escapeHtml(getStatusClass(agent.status))}">
-                ${escapeHtml(getAgentStatusLabel(agent.status))}
-              </span>
-            </header>
-            <p>${escapeHtml(agent.currentTask || '미할당')}</p>
-            <p><span class="muted">Next</span> ${escapeHtml(agent.next || '-')}</p>
-            ${agent.blocker ? `<p><span class="muted">Blocker</span> ${escapeHtml(agent.blocker)}</p>` : ''}
-          </article>
-        `,
-      )
-      .join('') || '<article class="agent-card"><p>Agent 상태가 없습니다.</p></article>';
-  agenticTasks.innerHTML =
-    tasks
-      .map((task) => {
-        const detailsMarkup = renderTaskDetails(task);
-        const detailClass = detailsMarkup ? ' has-detail' : '';
-        const detailTabIndex = detailsMarkup ? ' tabindex="0"' : '';
-
-        return `
-          <article class="task-item${detailClass}"${detailTabIndex}>
-            <header>
-              <div>
-                <strong>${escapeHtml(task.id)} · ${escapeHtml(task.title)}</strong>
-                <small>${escapeHtml(task.owner || '-')}</small>
-              </div>
-              <span class="pill is-${escapeHtml(getStatusClass(task.status))}">
-                ${escapeHtml(getTaskStatusLabel(task.status))}
-              </span>
-            </header>
-            <div class="task-meta">
-              <span class="pill">${escapeHtml(task.priority || '-')}</span>
-              <span class="pill">${task.deployNeeded ? '배포 필요' : task.status === 'deployed' ? '배포 완료' : '로컬'}</span>
-              ${task.commit ? `<span class="pill">${escapeHtml(task.commit)}</span>` : ''}
-            </div>
-            <p>${escapeHtml(task.next || '-')}</p>
-            ${detailsMarkup}
-          </article>
-        `;
-      })
-      .join('') || '<article class="task-item"><p>Task 상태가 없습니다.</p></article>';
-  agenticStatus.textContent = `작업판 확인 완료 · ${escapeHtml(data.branch || '-')}`;
+  agenticSummary.innerHTML = buildAgenticSummaryCards(summary, agents, tasks);
+  agenticAgents.innerHTML = buildAgentCards(agents);
+  agenticTasks.innerHTML = buildTaskItems(tasks);
+  agenticStatus.textContent = `작업판 확인 완료 · ${data.branch || '-'}`;
 }
 
 function toggleTaskDetail(taskItem) {
@@ -519,140 +388,33 @@ function renderStats() {
 function renderApplications() {
   document.querySelector('[data-applications-count]').textContent = `${overview.applications.length}건`;
   document.querySelector('[data-applications-body]').innerHTML =
-    overview.applications
-      .map(
-        (application) => `
-          <tr>
-            <td data-label="접수">${formatDate(application.created_at)}</td>
-            <td data-label="모임">${escapeHtml(getMeetupTitle(application.meetup_id))}</td>
-            <td data-label="이름">${escapeHtml(application.applicant_name)}</td>
-            <td data-label="관심 이유">${escapeHtml(application.interest)}</td>
-            <td data-label="상태">
-              <select
-                class="status-select is-${escapeHtml(application.status)}"
-                data-application-status="${escapeHtml(application.id)}"
-                data-current-status="${escapeHtml(application.status)}"
-                aria-label="${escapeHtml(application.applicant_name)} 신청 상태"
-              >
-                ${renderApplicationStatusOptions(application.status)}
-              </select>
-              ${hasPaidLinkedOrder(application) ? '<span class="pill is-paid">결제완료</span>' : ''}
-            </td>
-          </tr>
-        `,
-      )
-      .join('') || '<tr class="empty-row"><td colspan="5">신청 내역이 없습니다.</td></tr>';
+    buildApplicationRows(overview.applications, { getMeetupTitle });
 }
 
 function renderApplicationsMessage(message, countLabel = '0건') {
   document.querySelector('[data-applications-count]').textContent = countLabel;
-  document.querySelector('[data-applications-body]').innerHTML = `
-    <tr class="empty-row">
-      <td colspan="5">${escapeHtml(message)}</td>
-    </tr>
-  `;
+  document.querySelector('[data-applications-body]').innerHTML = buildEmptyRow(5, message);
 }
 
 function renderOrders() {
   document.querySelector('[data-orders-count]').textContent = `${overview.orders.length}건`;
   document.querySelector('[data-orders-body]').innerHTML =
-    overview.orders
-      .map(
-        (order) => `
-          <tr>
-            <td data-label="일시">${formatDate(order.created_at)}</td>
-            <td data-label="모임">${escapeHtml(getMeetupTitle(order.meetup_id))}</td>
-            <td data-label="구매자">${escapeHtml(order.buyer_name || '미입력')}</td>
-            <td data-label="신청자">${escapeHtml(order.applications?.applicant_name || '-')}</td>
-            <td data-label="금액">${formatMoney(order.amount)}</td>
-            <td data-label="상태">
-              ${
-                canManuallyUpdateOrderStatus(order.status)
-                  ? `<select
-                      class="status-select is-${escapeHtml(order.status)}"
-                      data-order-status="${escapeHtml(order.id)}"
-                      data-current-status="${escapeHtml(order.status)}"
-                      aria-label="${escapeHtml(order.buyer_name || '미입력')} 주문 상태"
-                    >
-                      ${renderOrderStatusOptions(order.status)}
-                    </select>`
-                  : `<span class="pill is-${escapeHtml(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span>`
-              }
-            </td>
-            <td data-label="수단">${escapeHtml(order.payment_method || order.provider || '-')}</td>
-            <td data-label="결제 기록">${renderPaymentRecord(order, getPaymentForOrder(order.id))}</td>
-          </tr>
-        `,
-      )
-      .join('') || '<tr class="empty-row"><td colspan="8">주문 내역이 없습니다.</td></tr>';
+    buildOrderRows(overview.orders, { getMeetupTitle, getPaymentForOrder });
 }
 
 function renderOrdersMessage(message, countLabel = '0건') {
   document.querySelector('[data-orders-count]').textContent = countLabel;
-  document.querySelector('[data-orders-body]').innerHTML = `
-    <tr class="empty-row">
-      <td colspan="8">${escapeHtml(message)}</td>
-    </tr>
-  `;
-}
-
-function renderSeatSummary(meetup) {
-  return `
-    <div class="seat-summary">
-      <span class="pill ${getSeatStatusClass(meetup)}">${escapeHtml(getSeatStatusLabel(meetup))}</span>
-      <strong>${escapeHtml(getSeatSummaryText(meetup))}</strong>
-      <span>${escapeHtml(getSeatBreakdownText(meetup))}</span>
-    </div>
-  `;
+  document.querySelector('[data-orders-body]').innerHTML = buildEmptyRow(8, message);
 }
 
 function renderMeetups() {
   document.querySelector('[data-meetups-count]').textContent = `${overview.meetups.length}개`;
-  document.querySelector('[data-meetups-body]').innerHTML =
-    overview.meetups
-      .map(
-        (meetup) => `
-          <tr>
-            <td data-label="모임">
-              <strong>${escapeHtml(meetup.title)}</strong><br />
-              <span class="muted">${escapeHtml(meetup.id)}</span>
-            </td>
-            <td data-label="분류">${escapeHtml(meetup.category)} · ${escapeHtml(getTypeLabel(meetup.type))}</td>
-            <td data-label="일정">${escapeHtml(meetup.date_label)}<br /><span class="muted">${escapeHtml(meetup.time_label)}</span></td>
-            <td data-label="장소">${escapeHtml(meetup.location)}</td>
-            <td data-label="가격">${escapeHtml(normalizeAdminMeetupPriceLabel(meetup.price_label, meetup.price_amount))}</td>
-            <td data-label="좌석">${renderSeatSummary(meetup)}</td>
-            <td data-label="상태">
-              <span class="pill ${meetup.is_published ? 'is-published' : ''}">
-                ${meetup.is_published ? '공개' : '숨김'}
-              </span>
-            </td>
-            <td data-label="관리">
-              <div class="row-actions">
-                <button type="button" data-edit-meetup="${escapeHtml(meetup.id)}">수정</button>
-                <button
-                  class="ghost-button"
-                  type="button"
-                  data-toggle-meetup="${escapeHtml(meetup.id)}"
-                  data-published="${meetup.is_published ? 'true' : 'false'}"
-                >
-                  ${meetup.is_published ? '숨김' : '공개'}
-                </button>
-              </div>
-            </td>
-          </tr>
-        `,
-      )
-      .join('') || '<tr class="empty-row"><td colspan="8">모임 데이터가 없습니다.</td></tr>';
+  document.querySelector('[data-meetups-body]').innerHTML = buildMeetupRows(overview.meetups);
 }
 
 function renderMeetupsMessage(message, countLabel = '0개') {
   document.querySelector('[data-meetups-count]').textContent = countLabel;
-  document.querySelector('[data-meetups-body]').innerHTML = `
-    <tr class="empty-row">
-      <td colspan="8">${escapeHtml(message)}</td>
-    </tr>
-  `;
+  document.querySelector('[data-meetups-body]').innerHTML = buildEmptyRow(8, message);
 }
 
 function setMeetupFormPending(isPending) {

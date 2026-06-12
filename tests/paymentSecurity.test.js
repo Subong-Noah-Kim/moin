@@ -71,7 +71,6 @@ import {
 import { SUPABASE_URL } from '../supabase-config.js';
 import { createPublicAgenticStatus } from '../scripts/create-public-agentic-status.mjs';
 import {
-  escapeHtml as renderEscapeHtml,
   formatMoney,
   formatPaymentKey,
   getTypeLabel,
@@ -1133,8 +1132,9 @@ test('admin orders include payment record reconciliation', async () => {
   assert.doesNotMatch(supabaseClient, /실제 결제 연동 전/);
   assert.match(adminHtml, /<th>결제 기록<\/th>/);
   assert.match(adminRenderModule, /function renderPaymentRecord/);
-  assert.match(adminScript, /renderPaymentRecord\(order, getPaymentForOrder\(order\.id\)\)/);
-  assert.match(adminScript, /data-label="결제 기록"/);
+  assert.match(adminRenderModule, /renderPaymentRecord\(order, getPaymentForOrder\(order\.id\)\)/);
+  assert.match(adminRenderModule, /data-label="결제 기록"/);
+  assert.match(adminScript, /buildOrderRows\(overview\.orders, \{ getMeetupTitle, getPaymentForOrder \}\)/);
   assert.match(adminRenderModule, /기록 없음/);
 });
 
@@ -1254,16 +1254,17 @@ test('admin dashboard renders redacted public agentic status from a static JSON 
   assert.match(adminScript, /publicResponse\.ok/);
   assert.match(adminScript, /function renderAgenticStatus/);
   assert.match(adminScript, /function loadAgenticStatus/);
-  assert.match(adminScript, /function renderTaskDetails/);
-  assert.match(adminScript, /const detailsMarkup = renderTaskDetails\(task\)/);
+  const agenticRenderModule = await readProjectFile('../admin-render.js');
+  assert.match(agenticRenderModule, /function buildTaskDetails/);
+  assert.match(agenticRenderModule, /const detailsMarkup = buildTaskDetails\(task\)/);
   assert.match(adminScript, /function toggleTaskDetail/);
   assert.match(adminScript, /agenticTasks\.addEventListener\('click', handleTaskItemClick\)/);
   assert.match(adminScript, /agenticTasks\.addEventListener\('keydown', handleTaskItemKeydown\)/);
   assert.match(adminScript, /event\.key !== 'Enter' && event\.key !== ' '/);
-  assert.match(adminScript, /상세 보기/);
-  assert.match(adminScript, /무슨 작업인가요\?/);
-  assert.match(adminScript, /왜 필요한가요\?/);
-  assert.match(adminScript, /간단한 개발 방향/);
+  assert.match(agenticRenderModule, /상세 보기/);
+  assert.match(agenticRenderModule, /무슨 작업인가요\?/);
+  assert.match(agenticRenderModule, /왜 필요한가요\?/);
+  assert.match(agenticRenderModule, /간단한 개발 방향/);
   assert.match(adminScript, /if \(getActiveTab\(\) === 'agentic'\)/);
   assert.match(adminScript, /if \(target === 'agentic'\)/);
   assert.doesNotMatch(adminScript, /showDashboard\(\);\s+void loadAgenticStatus\(\);/);
@@ -1811,9 +1812,10 @@ test('admin capacity UI uses admin RPC and strips derived availability fields', 
 
   assert.match(adminScript, /from '\.\/admin-availability\.js\?v=__ASSET_VERSION__'/);
   assert.match(adminScript, /from '\.\/admin-meetup-form\.js\?v=__ASSET_VERSION__'/);
-  assert.match(adminScript, /mergeAdminMeetupAvailability,/);
-  assert.match(adminScript, /getSeatStatusLabel,/);
-  assert.match(adminScript, /getSeatSummaryText,/);
+  assert.match(adminScript, /import \{ mergeAdminMeetupAvailability \}/);
+  const seatRenderModule = await readProjectFile('../admin-render.js');
+  assert.match(seatRenderModule, /getSeatStatusLabel,/);
+  assert.match(seatRenderModule, /getSeatSummaryText,/);
   assert.match(adminScript, /meetups: mergeAdminMeetupAvailability\(data\.meetups, data\.meetupAvailability\)/);
   assert.match(adminAvailabilityModule, /export function mergeAdminMeetupAvailability\(meetups, availabilityRows = \[\]\)/);
   assert.match(adminAvailabilityModule, /availability_known: false/);
@@ -1822,8 +1824,8 @@ test('admin capacity UI uses admin RPC and strips derived availability fields', 
   assert.match(adminFormModule, /export function createAdminMeetupPayload\(source/);
   assert.match(adminFormModule, /getCapacityPayloadValue\(getSourceValue\(source, 'capacity'\)\)/);
   assert.match(adminFormModule, /getRegistrationStatusPayloadValue\(getSourceValue\(source, 'registration_status'\)\)/);
-  assert.match(adminScript, /function renderSeatSummary\(meetup\)/);
-  assert.match(adminScript, /<td data-label="좌석">\$\{renderSeatSummary\(meetup\)\}<\/td>/);
+  assert.match(seatRenderModule, /function buildSeatSummary\(meetup\)/);
+  assert.match(seatRenderModule, /<td data-label="좌석">\$\{buildSeatSummary\(meetup\)\}<\/td>/);
   assert.match(adminScript, /return createAdminMeetupPayload\(formData, \{ includeId \}\)/);
   assert.match(adminFormModule, /registrationStatus === 'closed' && closeReason \? closeReason : null/);
 
@@ -2399,8 +2401,9 @@ test('admin dashboard joins orders to applicants and flags paid applications', a
 
   assert.match(clientScript, /applications\(applicant_name\)/, 'orders select must embed the linked applicant');
   assert.match(clientScript, /orders\(status\)/, 'applications select must embed linked order statuses');
-  assert.match(adminScript, /<td data-label="신청자">/);
-  assert.match(adminScript, /hasPaidLinkedOrder/);
+  const rowRenderModule = await readProjectFile('../admin-render.js');
+  assert.match(rowRenderModule, /<td data-label="신청자">/);
+  assert.match(rowRenderModule, /hasPaidLinkedOrder/);
   assert.match(adminHtml, /<th>신청자<\/th>/);
 });
 
@@ -2442,7 +2445,7 @@ test('confirm error messaging recognizes an already-paid application', () => {
 });
 
 test('admin render helpers build safe display strings', () => {
-  assert.equal(renderEscapeHtml('<b>&"\'</b>'), '&lt;b&gt;&amp;&quot;&#039;&lt;/b&gt;');
+  assert.equal(escapeHtml('<b>&"\'</b>'), '&lt;b&gt;&amp;&quot;&#039;&lt;/b&gt;');
   assert.equal(formatMoney(49000), '49,000원');
   assert.equal(formatMoney(null), '0원');
   assert.equal(getTypeLabel('event'), '원데이');
@@ -2473,15 +2476,29 @@ test('admin payment record markup reflects payment and order states', () => {
 });
 
 test('escapeHtml lives in a single shared module', async () => {
-  const [mainScript, adminRenderScript] = await Promise.all([
+  const [mainScript, adminRenderScript, agentMonitorScript, adminScript] = await Promise.all([
     readProjectFile('../main.js'),
     readProjectFile('../admin-render.js'),
+    readProjectFile('../agent-monitor.js'),
+    readProjectFile('../admin.js'),
   ]);
 
   assert.match(mainScript, /from '\.\/escape-html\.js\?v=__ASSET_VERSION__'/);
   assert.match(adminRenderScript, /from '\.\/escape-html\.js\?v=__ASSET_VERSION__'/);
+  assert.match(agentMonitorScript, /from '\.\/escape-html\.js\?v=__ASSET_VERSION__'/);
   assert.doesNotMatch(mainScript, /function escapeHtml\(/);
   assert.doesNotMatch(adminRenderScript, /function escapeHtml\(/);
+  assert.doesNotMatch(agentMonitorScript, /function escapeHtml\(/);
+  assert.doesNotMatch(
+    adminRenderScript,
+    /export \{ escapeHtml \}/,
+    'consumers must import escape-html.js directly instead of via a re-export',
+  );
+  assert.doesNotMatch(
+    adminScript,
+    /escapeHtml/,
+    'admin.js holds only DOM wiring, so it should not build escaped markup at all',
+  );
 });
 
 test('shared escapeHtml module escapes HTML-sensitive characters', () => {
@@ -2497,13 +2514,16 @@ test('admin tables collapse into labeled mobile cards', async () => {
 
   assert.match(adminHtml, /admin\.css\?v=__ASSET_VERSION__/);
   assert.match(adminHtml, /admin\.js\?v=__ASSET_VERSION__/);
-  assert.match(adminScript, /<td data-label="접수">/);
-  assert.match(adminScript, /<td data-label="관심 이유">/);
-  assert.match(adminScript, /<td data-label="일시">/);
-  assert.match(adminScript, /<td data-label="구매자">/);
-  assert.match(adminScript, /<td data-label="수단">/);
-  assert.match(adminScript, /<td data-label="결제 기록">/);
-  assert.match(adminScript, /<td data-label="관리">/);
+  const adminRenderScript = await readProjectFile('../admin-render.js');
+  assert.match(adminRenderScript, /<td data-label="접수">/);
+  assert.match(adminRenderScript, /<td data-label="관심 이유">/);
+  assert.match(adminRenderScript, /<td data-label="일시">/);
+  assert.match(adminRenderScript, /<td data-label="구매자">/);
+  assert.match(adminRenderScript, /<td data-label="수단">/);
+  assert.match(adminRenderScript, /<td data-label="결제 기록">/);
+  assert.match(adminRenderScript, /<td data-label="관리">/);
+  assert.doesNotMatch(adminScript, /<td /, 'row markup lives in admin-render.js, not admin.js');
+  assert.doesNotMatch(adminScript, /<article/, 'card markup lives in admin-render.js, not admin.js');
   assert.match(adminStyles, /\.table-section thead\s*\{\s*display: none;/);
   assert.match(adminStyles, /\.table-section tbody\s*\{\s*display: grid;/);
   assert.match(adminStyles, /\.table-section td::before\s*\{\s*content: attr\(data-label\);/);
@@ -2556,4 +2576,107 @@ test('edge functions share one client helper, CORS policy, and error table', asy
     assert.doesNotMatch(source, /async function notifyApprovalPush/, 'no per-function push hop copy may remain');
   }
   assert.match(submissionFn, /mapPublicSubmissionError/);
+});
+
+test('admin row builders escape content, gate manual edits, and cover empty states', async () => {
+  const {
+    buildApplicationRows,
+    buildEmptyRow,
+    buildMeetupRows,
+    buildOrderRows,
+  } = await import('../admin-render.js');
+  const getMeetupTitle = (id) => (id === 'm1' ? '취향 <살롱>' : id);
+
+  const applicationRows = buildApplicationRows(
+    [{
+      id: 'a1',
+      meetup_id: 'm1',
+      applicant_name: '<b>수봉</b>',
+      interest: '관심 & 이유',
+      status: 'submitted',
+      created_at: '2026-06-13T10:00:00+09:00',
+      orders: [{ status: 'paid' }],
+    }],
+    { getMeetupTitle },
+  );
+  assert.match(applicationRows, /&lt;b&gt;수봉&lt;\/b&gt;/);
+  assert.match(applicationRows, /취향 &lt;살롱&gt;/);
+  assert.match(applicationRows, /data-application-status="a1"/);
+  assert.match(applicationRows, /결제완료/);
+  assert.match(buildApplicationRows([], { getMeetupTitle }), /신청 내역이 없습니다/);
+
+  const orders = [
+    { id: 'o1', meetup_id: 'm1', buyer_name: '구매자', amount: 1000, status: 'pending', provider: 'tosspayments', created_at: '2026-06-13T10:00:00+09:00' },
+    { id: 'o2', meetup_id: 'm1', buyer_name: '구매자', amount: 1000, status: 'paid', provider: 'tosspayments', created_at: '2026-06-13T10:00:00+09:00' },
+  ];
+  const orderRows = buildOrderRows(orders, {
+    getMeetupTitle,
+    getPaymentForOrder: (orderId) => (orderId === 'o2' ? { status: 'approved', paid_at: '2026-06-13T10:05:00+09:00', provider_payment_key: 'key_1234567890abcd' } : undefined),
+  });
+  assert.match(orderRows, /data-order-status="o1"/, 'pending orders stay manually adjustable');
+  assert.doesNotMatch(orderRows, /data-order-status="o2"/, 'paid orders must not expose a manual status select');
+  assert.match(orderRows, /key_12\.\.\.abcd/);
+  assert.match(buildOrderRows([], { getMeetupTitle, getPaymentForOrder: () => undefined }), /주문 내역이 없습니다/);
+
+  const meetupRows = buildMeetupRows([{
+    id: 'm1',
+    title: '취향 <살롱>',
+    category: '문화',
+    type: 'social',
+    date_label: '6월 13일',
+    time_label: '19:00',
+    location: '성수',
+    price_label: '1,000원',
+    price_amount: 1000,
+    is_published: true,
+    availability: { registrationStatus: 'open' },
+  }]);
+  assert.match(meetupRows, /취향 &lt;살롱&gt;/);
+  assert.match(meetupRows, /data-edit-meetup="m1"/);
+  assert.match(meetupRows, /data-toggle-meetup="m1"/);
+  assert.match(meetupRows, /data-published="true"/);
+  assert.match(buildMeetupRows([]), /모임 데이터가 없습니다/);
+
+  assert.equal(
+    buildEmptyRow(5, '<주의>'),
+    '<tr class="empty-row"><td colspan="5">&lt;주의&gt;</td></tr>',
+  );
+});
+
+test('agentic markup builders cover summary, agents, tasks, and detail sections', async () => {
+  const {
+    buildAgentCards,
+    buildAgenticSummaryCards,
+    buildTaskDetailSection,
+    buildTaskDetails,
+    buildTaskItems,
+  } = await import('../admin-render.js');
+
+  assert.equal(buildTaskDetailSection('요약', ''), '');
+  assert.match(buildTaskDetailSection('요약', '<요점>'), /<h4>요약<\/h4>/);
+  assert.match(buildTaskDetailSection('요약', '<요점>'), /&lt;요점&gt;/);
+  assert.match(buildTaskDetailSection('목록', ['하나', '', '둘']), /<li>하나<\/li><li>둘<\/li>/);
+  assert.equal(buildTaskDetailSection('목록', [null, '']), '');
+
+  assert.equal(buildTaskDetails({}), '');
+  assert.match(buildTaskDetails({ details: { summary: '내용' } }), /<details class="task-detail">/);
+
+  const summaryCards = buildAgenticSummaryCards(
+    {},
+    [{ status: 'running' }, { status: 'blocked' }],
+    [{ status: 'done_local' }, { deployNeeded: true }],
+  );
+  assert.match(summaryCards, /진행 Agent[\s\S]*?<strong>1<\/strong>/);
+  assert.match(summaryCards, /막힘[\s\S]*?<strong>1<\/strong>/);
+
+  const agentCards = buildAgentCards([{ name: '<a>', status: 'running', blocker: '의존성' }]);
+  assert.match(agentCards, /&lt;a&gt;/);
+  assert.match(agentCards, /Blocker/);
+  assert.match(buildAgentCards([]), /Agent 상태가 없습니다/);
+  assert.match(buildAgentCards([], '연결 실패'), /연결 실패/);
+
+  const taskItems = buildTaskItems([{ id: 'T1', title: '작업', status: 'doing', details: { summary: '있음' } }]);
+  assert.match(taskItems, /task-item has-detail/);
+  assert.match(taskItems, /tabindex="0"/);
+  assert.match(buildTaskItems([]), /Task 상태가 없습니다/);
 });
