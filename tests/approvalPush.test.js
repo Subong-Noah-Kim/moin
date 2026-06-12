@@ -102,9 +102,37 @@ test('send-approval-push claims atomically, pushes, and prunes dead subscription
   assert.match(fn, /ApplicationServer\.new/);
   assert.match(fn, /pushTextMessage/);
   assert.match(fn, /404|410/);
-  assert.match(fn, /push_subscriptions\?id=eq\./);
+  assert.match(
+    fn,
+    /rpc\/delete_push_subscription/,
+    'pruning must go through the service-role RPC; service_role has no direct grants on push_subscriptions',
+  );
+  assert.doesNotMatch(
+    fn,
+    /push_subscriptions\?/,
+    'direct table access from edge functions fails with 403 under the locked-down grants',
+  );
   const config = await readProjectFile('supabase/config.toml');
   assert.match(config, /\[functions\.send-approval-push\]\nverify_jwt = false/);
+});
+
+test('refund push targets and subscription pruning run through security-definer RPCs', async () => {
+  const migration = await readProjectFile('supabase/migrations/20260619000000_refund_push_target_rpcs.sql');
+
+  assert.match(migration, /create or replace function public\.get_refund_push_targets/);
+  assert.match(migration, /create or replace function public\.delete_push_subscription/);
+  assert.match(migration, /security definer/);
+  assert.match(migration, /grant execute on function public\.get_refund_push_targets\(uuid\) to service_role/);
+  assert.match(migration, /grant execute on function public\.delete_push_subscription\(uuid\) to service_role/);
+  assert.doesNotMatch(migration, /to authenticated|to anon/);
+
+  const sendFn = await readProjectFile('supabase/functions/send-approval-push/index.ts');
+  assert.match(sendFn, /rpc\/get_refund_push_targets/);
+  assert.doesNotMatch(
+    sendFn,
+    /applications\?|meetups\?/,
+    'the refund target lookup must not read tables directly with the service role',
+  );
 });
 
 test('approval push summary message covers sent, empty, and already-claimed cases', async () => {

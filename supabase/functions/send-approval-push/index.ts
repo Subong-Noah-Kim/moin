@@ -38,7 +38,10 @@ function getPushErrorStatus(error: unknown) {
 }
 
 async function deleteSubscription(id: string) {
-  await supabaseRequest(`push_subscriptions?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+  await supabaseRequest('rpc/delete_push_subscription', {
+    method: 'POST',
+    body: JSON.stringify({ p_subscription_id: id }),
+  });
 }
 
 async function pushToSubscriptions(subscriptions: ClaimedSubscription[], message: string) {
@@ -87,27 +90,19 @@ async function handleRefundPush(request: Request, applicationId: string) {
     return jsonResponse({ error: '허용되지 않은 요청입니다.' }, 401);
   }
 
-  const applications = (await supabaseRequest(
-    `applications?id=eq.${encodeURIComponent(applicationId)}&select=id,meetup_id&limit=1`,
-  )) as Array<{ id: string; meetup_id: string }>;
-  const application = applications[0];
+  const targets = (await supabaseRequest('rpc/get_refund_push_targets', {
+    method: 'POST',
+    body: JSON.stringify({ p_application_id: applicationId }),
+  })) as { found?: boolean; meetup_title?: string; subscriptions?: ClaimedSubscription[] };
 
-  if (!application) {
+  if (!targets?.found) {
     return jsonResponse({ ok: true, result: { kind: 'refund', sent: 0, failed: 0, expired: 0 } });
   }
 
-  const meetups = (await supabaseRequest(
-    `meetups?id=eq.${encodeURIComponent(application.meetup_id)}&select=title&limit=1`,
-  )) as Array<{ title?: string }>;
-  const meetupTitle = meetups[0]?.title || '모임';
-
-  const subscriptions = (await supabaseRequest(
-    `push_subscriptions?application_id=eq.${encodeURIComponent(application.id)}&select=id,endpoint,p256dh,auth`,
-  )) as ClaimedSubscription[];
-
+  const subscriptions = targets.subscriptions || [];
   const message = JSON.stringify({
     title: '결제가 환불되었어요',
-    body: `${meetupTitle} 결제가 환불 처리되었습니다. 궁금한 점은 운영자에게 문의해 주세요.`,
+    body: `${targets.meetup_title || '모임'} 결제가 환불 처리되었습니다. 궁금한 점은 운영자에게 문의해 주세요.`,
     url: './',
   });
   const outcome = await pushToSubscriptions(subscriptions, message);
