@@ -1444,7 +1444,8 @@ test('public submissions route through an abuse-controlled Edge Function', async
   assert.doesNotMatch(edgeFunction, /p_payment_method: getText\(payload, 'paymentMethod'\)/);
   assert.match(edgeFunction, /rpc\/create_public_application/);
   assert.match(edgeFunction, /rpc\/create_public_order/);
-  assert.match(edgeFunction, /PUBLIC_SUBMISSION_RATE_LIMITED/);
+  const submissionErrors = await readProjectFile('../supabase/functions/_shared/public-submission-errors.ts');
+  assert.match(submissionErrors, /match: 'PUBLIC_SUBMISSION_RATE_LIMITED', status: 429/);
   assert.match(setupMigration, /create table if not exists public\.public_submission_attempts/);
   assert.match(setupMigration, /create or replace function public\.create_public_application/);
   assert.match(setupMigration, /create or replace function public\.create_public_order/);
@@ -1482,11 +1483,12 @@ test('capacity controls migration defines remaining spot and pending expiry cont
 });
 
 test('capacity guards wire public submissions and Toss confirmation expiry checks', async () => {
-  const [guardMigration, publicSubmissionFunction, tossConfirmFunction, supabaseClient] = await Promise.all([
+  const [guardMigration, publicSubmissionFunction, tossConfirmFunction, supabaseClient, submissionErrors] = await Promise.all([
     readProjectFile('../supabase/migrations/20260607010000_capacity_rpc_guards.sql'),
     readProjectFile('../supabase/functions/create-public-submission/index.ts'),
     readProjectFile('../supabase/functions/confirm-toss-payment/index.ts'),
     readProjectFile('../supabase-client.js'),
+    readProjectFile('../supabase/functions/_shared/public-submission-errors.ts'),
   ]);
   const applicationBody = guardMigration.slice(
     guardMigration.indexOf('create or replace function public.create_public_application'),
@@ -1532,14 +1534,10 @@ test('capacity guards wire public submissions and Toss confirmation expiry check
   assert.ok(sqlExpiryGuardIndex >= 0 && sqlExpiryGuardIndex < sqlPaidUpdateIndex);
   assert.match(guardMigration, /grant execute on function public\.confirm_toss_payment_order\(uuid, text, text, timestamptz, jsonb\) to service_role/);
 
-  assert.match(publicSubmissionFunction, /MEETUP_SOLD_OUT/);
-  assert.match(publicSubmissionFunction, /MEETUP_REGISTRATION_CLOSED/);
-  assert.match(publicSubmissionFunction, /return 409/);
-  assert.match(publicSubmissionFunction, /function getErrorCode\(error: unknown\)/);
-  assert.match(publicSubmissionFunction, /code: getErrorCode\(error\)/);
-  assert.match(publicSubmissionFunction, /모임 정원이 마감되었습니다/);
-  assert.match(publicSubmissionFunction, /이 모임은 지금 신청을 받지 않습니다/);
-  assert.match(publicSubmissionFunction, /신청 가능한 모임을 찾지 못했습니다/);
+  assert.match(publicSubmissionFunction, /mapPublicSubmissionError\(error\)/);
+  assert.match(submissionErrors, /match: 'MEETUP_SOLD_OUT', status: 409, code: 'MEETUP_SOLD_OUT', message: '모임 정원이 마감되었습니다/);
+  assert.match(submissionErrors, /match: 'MEETUP_REGISTRATION_CLOSED', status: 409, code: 'MEETUP_REGISTRATION_CLOSED', message: '이 모임은 지금 신청을 받지 않습니다/);
+  assert.match(submissionErrors, /message: '신청 가능한 모임을 찾지 못했습니다/);
 
   assert.match(tossConfirmFunction, /expires_at: string \| null/);
   assert.match(tossConfirmFunction, /checkout_token,expires_at/);
@@ -1928,20 +1926,29 @@ test('public submission visitor hash requires a dedicated salt secret', async ()
 });
 
 test('edge functions restrict CORS to known site origins', async () => {
+  const sharedHttp = await readProjectFile('../supabase/functions/_shared/http.ts');
+
+  assert.doesNotMatch(
+    sharedHttp,
+    /'Access-Control-Allow-Origin':\s*'\*'/,
+    'CORS must not allow every origin',
+  );
+  assert.match(sharedHttp, /https:\/\/subong-noah-kim\.github\.io/);
+  assert.match(sharedHttp, /http:\/\/localhost:5173/);
+  assert.match(sharedHttp, /Vary:\s*'Origin'|'Vary':\s*'Origin'/);
+
   const sources = await Promise.all([
     readProjectFile('../supabase/functions/create-public-submission/index.ts'),
     readProjectFile('../supabase/functions/confirm-toss-payment/index.ts'),
+    readProjectFile('../supabase/functions/send-approval-push/index.ts'),
   ]);
 
   sources.forEach((source) => {
-    assert.doesNotMatch(
+    assert.match(
       source,
-      /'Access-Control-Allow-Origin':\s*'\*'/,
-      'CORS must not allow every origin',
+      /import \{ getCorsHeaders, jsonResponse \} from '\.\.\/_shared\/http\.ts'/,
+      'every edge function must use the shared CORS policy',
     );
-    assert.match(source, /https:\/\/subong-noah-kim\.github\.io/);
-    assert.match(source, /http:\/\/localhost:5173/);
-    assert.match(source, /Vary:\s*'Origin'|'Vary':\s*'Origin'/);
   });
 });
 
@@ -2222,14 +2229,16 @@ test('link migration issues application tokens and optionally links orders', asy
 
 test('public submission function forwards application tokens and maps link errors', async () => {
   const edgeFunction = await readProjectFile('../supabase/functions/create-public-submission/index.ts');
+  const submissionErrors = await readProjectFile('../supabase/functions/_shared/public-submission-errors.ts');
 
   assert.match(edgeFunction, /p_application_token/);
   assert.match(edgeFunction, /applicationToken/);
-  assert.match(edgeFunction, /APPLICATION_NOT_FOUND/);
-  assert.match(edgeFunction, /APPLICATION_ALREADY_PAID/);
-  assert.match(edgeFunction, /APPLICATION_NOT_PAYABLE/);
-  assert.match(edgeFunction, /APPLICATION_MEETUP_MISMATCH/);
-  assert.match(edgeFunction, /APPLICATION_REQUIRED/);
+  assert.match(edgeFunction, /mapPublicSubmissionError\(error\)/);
+  assert.match(submissionErrors, /match: 'APPLICATION_NOT_FOUND', status: 404/);
+  assert.match(submissionErrors, /match: 'APPLICATION_ALREADY_PAID', status: 409/);
+  assert.match(submissionErrors, /match: 'APPLICATION_NOT_PAYABLE', status: 409/);
+  assert.match(submissionErrors, /match: 'APPLICATION_MEETUP_MISMATCH', status: 409/);
+  assert.match(submissionErrors, /match: 'APPLICATION_REQUIRED', status: 409/);
 });
 
 test('toss confirmation blocks double payment before capturing money', async () => {
@@ -2500,4 +2509,51 @@ test('admin tables collapse into labeled mobile cards', async () => {
   assert.match(adminStyles, /\.table-section td::before\s*\{\s*content: attr\(data-label\);/);
   assert.match(adminStyles, /\.row-actions\s*\{\s*width: 100%;/);
   assert.doesNotMatch(adminStyles, /position: sticky;\s*right: 0;/);
+});
+
+test('edge functions share one client helper, CORS policy, and error table', async () => {
+  const [shared, http, approvalPush, errors, confirmFn, submissionFn, sendFn] = await Promise.all([
+    readProjectFile('../supabase/functions/_shared/supabase.ts'),
+    readProjectFile('../supabase/functions/_shared/http.ts'),
+    readProjectFile('../supabase/functions/_shared/approval-push.ts'),
+    readProjectFile('../supabase/functions/_shared/public-submission-errors.ts'),
+    readProjectFile('../supabase/functions/confirm-toss-payment/index.ts'),
+    readProjectFile('../supabase/functions/create-public-submission/index.ts'),
+    readProjectFile('../supabase/functions/send-approval-push/index.ts'),
+  ]);
+
+  assert.match(shared, /export function getRequiredEnv/);
+  assert.match(shared, /export async function readJson/);
+  assert.match(shared, /export async function supabaseRequest/);
+  assert.match(
+    shared,
+    /body\?\.message/,
+    'the shared request helper must keep the richer error-message extraction',
+  );
+
+  assert.match(http, /export function getCorsHeaders/);
+  assert.match(http, /export function jsonResponse/);
+
+  assert.match(approvalPush, /export async function notifyApprovalPush/);
+  assert.match(
+    approvalPush,
+    /try \{[\s\S]*?\} catch/,
+    'a failed push hop must never fail the calling function',
+  );
+
+  assert.match(
+    errors,
+    /\{ match: '[A-Z_]+', status: \d+, code: '[A-Z_]+', message: '/,
+    'one lookup table drives public submission status, code, and message mapping',
+  );
+  assert.match(errors, /export function mapPublicSubmissionError/);
+
+  for (const source of [confirmFn, submissionFn, sendFn]) {
+    assert.match(source, /from '\.\.\/_shared\/supabase\.ts'/);
+    assert.match(source, /from '\.\.\/_shared\/http\.ts'/);
+    assert.doesNotMatch(source, /async function supabaseRequest/, 'no per-function copy may remain');
+    assert.doesNotMatch(source, /function getCorsHeaders/, 'no per-function CORS copy may remain');
+    assert.doesNotMatch(source, /async function notifyApprovalPush/, 'no per-function push hop copy may remain');
+  }
+  assert.match(submissionFn, /mapPublicSubmissionError/);
 });

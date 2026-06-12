@@ -1,20 +1,6 @@
-const allowedOrigins = new Set([
-  'https://subong-noah-kim.github.io',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-]);
-const defaultAllowedOrigin = 'https://subong-noah-kim.github.io';
-
-function getCorsHeaders(request: Request) {
-  const origin = request.headers.get('origin') || '';
-
-  return {
-    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : defaultAllowedOrigin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    Vary: 'Origin',
-  };
-}
+import { getCorsHeaders, jsonResponse } from '../_shared/http.ts';
+import { getRequiredEnv, readJson, supabaseRequest } from '../_shared/supabase.ts';
+import { notifyApprovalPush } from '../_shared/approval-push.ts';
 
 type OrderRow = {
   id: string;
@@ -42,61 +28,6 @@ type FailurePayload = {
   code: string;
   message: string;
 };
-
-function jsonResponse(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-}
-
-function getRequiredEnv(name: string) {
-  const value = Deno.env.get(name);
-
-  if (!value) {
-    throw new Error(`${name} is not configured.`);
-  }
-
-  return value;
-}
-
-async function readJson(response: Response) {
-  const bodyText = await response.text();
-
-  try {
-    return bodyText ? JSON.parse(bodyText) : null;
-  } catch {
-    return bodyText;
-  }
-}
-
-async function supabaseRequest(path: string, options: RequestInit = {}) {
-  const supabaseUrl = getRequiredEnv('SUPABASE_URL').replace(/\/$/, '');
-  const serviceRoleKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
-  const headers = new Headers(options.headers);
-
-  headers.set('apikey', serviceRoleKey);
-  headers.set('Authorization', `Bearer ${serviceRoleKey}`);
-  headers.set('Content-Type', 'application/json');
-
-  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    ...options,
-    headers,
-  });
-  const body = await readJson(response);
-
-  if (!response.ok) {
-    throw new Error(
-      typeof body === 'string'
-        ? body
-        : `Supabase request failed: ${response.status} ${JSON.stringify(body)}`,
-    );
-  }
-
-  return body;
-}
 
 function getTossAuthorization() {
   const secretKey = getRequiredEnv('TOSS_SECRET_KEY');
@@ -309,31 +240,6 @@ async function confirmOrderAndPayment(order: OrderRow, tossPayment: Record<strin
   });
 
   return result as { order?: Record<string, unknown>; payment?: Record<string, unknown> };
-}
-
-async function notifyApprovalPush(applicationId: unknown) {
-  const id = typeof applicationId === 'string' ? applicationId.trim() : '';
-
-  if (!id) {
-    return;
-  }
-
-  try {
-    const supabaseUrl = getRequiredEnv('SUPABASE_URL').replace(/\/$/, '');
-    const serviceRoleKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
-
-    await fetch(`${supabaseUrl}/functions/v1/send-approval-push`, {
-      method: 'POST',
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ applicationId: id }),
-    });
-  } catch (error) {
-    console.error('approval push send failed after auto-accept', error);
-  }
 }
 
 async function handleFailureResult(payload: Record<string, unknown>) {

@@ -33,10 +33,11 @@ Status note 2026-06-13: approval push notifications are deployed and verified on
   - Files: `admin.js`, `admin-render.js` (or sibling), `.github/workflows/deploy-pages.yml`, `tests/paymentSecurity.test.js`
   - Done when: admin.js holds only DOM wiring, event handling, and session/fetch orchestration, with row/agentic markup unit-tested.
 
-- [ ] Share the edge function Supabase client helpers
+- [x] Share the edge function Supabase client helpers
   - Problem: `supabaseRequest`/`readJson` are duplicated between the two edge functions and have already drifted (error body `message` extraction), and the error mapping is three parallel `includes()` chains that can silently diverge.
   - Files: `supabase/functions/_shared/` (new), both `index.ts` files, `tests/paymentSecurity.test.js`
   - Done when: one shared request helper and one `[{ match, status, code, message }]` lookup table drive both functions.
+  - Status: deployed and live-verified across all three functions. `_shared/supabase.ts` (request helper with the richer message extraction), `_shared/http.ts` (CORS allowlist + jsonResponse), `_shared/approval-push.ts` (auto-accept push hop), and `_shared/public-submission-errors.ts` (single `[{ match, status, code, message }]` table) replaced the per-function copies; the three index.ts files went from 1,030 to 654 lines total. Live probes confirmed mapped errors, CORS headers, and claim behavior, and the demo-order push E2E passed against the deployed functions.
 
 - [ ] Consolidate the three escapeHtml copies
   - Problem: identical implementations live in `main.js`, `agent-monitor.js`, and `admin-render.js`; a fix to one will not reach the others.

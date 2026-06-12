@@ -210,14 +210,18 @@ test('approval claim is not consumed while there is nothing to send', async () =
 });
 
 test('payment auto-accept paths trigger the approval push best-effort', async () => {
+  const sharedHop = await readProjectFile('supabase/functions/_shared/approval-push.ts');
+
+  assert.match(sharedHop, /functions\/v1\/send-approval-push/);
+  assert.match(
+    sharedHop,
+    /export async function notifyApprovalPush[\s\S]*?try \{[\s\S]*?\} catch/,
+    'a failed push hop must never fail the calling function',
+  );
+
   const confirmFn = await readProjectFile('supabase/functions/confirm-toss-payment/index.ts');
 
-  assert.match(confirmFn, /functions\/v1\/send-approval-push/);
-  assert.match(
-    confirmFn,
-    /async function notifyApprovalPush[\s\S]*?try \{[\s\S]*?\} catch/,
-    'a failed push hop must never fail the payment confirmation',
-  );
+  assert.match(confirmFn, /import \{ notifyApprovalPush \} from '\.\.\/_shared\/approval-push\.ts'/);
   assert.match(
     confirmFn,
     /confirmOrderAndPayment\(order, tossPayment\);[\s\S]{0,200}notifyApprovalPush\(/,
@@ -226,11 +230,7 @@ test('payment auto-accept paths trigger the approval push best-effort', async ()
 
   const submissionFn = await readProjectFile('supabase/functions/create-public-submission/index.ts');
 
-  assert.match(submissionFn, /functions\/v1\/send-approval-push/);
-  assert.match(
-    submissionFn,
-    /async function notifyApprovalPush[\s\S]*?try \{[\s\S]*?\} catch/,
-  );
+  assert.match(submissionFn, /import \{ notifyApprovalPush \} from '\.\.\/_shared\/approval-push\.ts'/);
   assert.match(
     submissionFn,
     /action === 'demo_order'[\s\S]{0,200}notifyApprovalPush\(/,
