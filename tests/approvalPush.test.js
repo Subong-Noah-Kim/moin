@@ -196,3 +196,15 @@ test('drawer gathers application form, push opt-in, and payment into one flow se
     'schedule, FAQ, and recommendations move below the consolidated apply flow',
   );
 });
+
+test('approval claim is not consumed while there is nothing to send', async () => {
+  const sql = await readProjectFile('supabase/migrations/20260617000000_claim_requires_subscription.sql');
+
+  assert.match(sql, /create or replace function public\.claim_approval_push/);
+  assert.match(
+    sql,
+    /and exists \(\s*select 1\s*from public\.push_subscriptions s\s*where s\.application_id = a\.id\s*\)/,
+    'claiming with zero subscriptions must not burn approval_notified_at, otherwise a later opt-in can never be notified',
+  );
+  assert.match(sql, /grant execute on function public\.claim_approval_push\(uuid\) to service_role/);
+});
