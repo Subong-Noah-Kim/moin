@@ -938,7 +938,8 @@ ordersBody.addEventListener('click', async (event) => {
       updateOrderInOverview(result.order);
     }
 
-    syncStatus.textContent = `주문 환불 완료 (${getOrderStatusLabel('refunded')}) · 좌석이 반환되었습니다`;
+    const pushNote = result.push?.sent > 0 ? ` · 환불 알림 ${result.push.sent}건 발송` : '';
+    syncStatus.textContent = `주문 환불 완료 (${getOrderStatusLabel('refunded')}) · 좌석이 반환되었습니다${pushNote}`;
   } catch (error) {
     console.error(error);
     syncStatus.textContent = getAdminWriteErrorMessage(error);

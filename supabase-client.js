@@ -649,7 +649,7 @@ export async function refundAdminOrder(accessToken, orderId, reason) {
 
   const body = await response.json();
 
-  return { order: body?.order || null, payment: body?.payment || null };
+  return { order: body?.order || null, payment: body?.payment || null, push: body?.push || null };
 }
 
 export async function confirmTossPayment({ paymentKey, orderId, amount }) {

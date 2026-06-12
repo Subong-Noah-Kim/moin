@@ -144,6 +144,50 @@ test('push migration claims approval sends atomically', async () => {
   assert.match(sql, /grant execute on function public\.claim_approval_push\(uuid\) to service_role/);
 });
 
+test('refunds notify the applicant through a service-role-only push kind', async () => {
+  const sendFn = await readProjectFile('supabase/functions/send-approval-push/index.ts');
+
+  assert.match(sendFn, /kind === 'refund'/);
+  assert.match(
+    sendFn,
+    /SUPABASE_SERVICE_ROLE_KEY/,
+    'the refund kind must only accept server-to-server calls, or anyone could spam pushes',
+  );
+  assert.match(sendFn, /허용되지 않은 요청입니다/);
+  assert.match(sendFn, /결제가 환불되었어요/);
+  assert.doesNotMatch(
+    sendFn.slice(
+      sendFn.indexOf('async function handleRefundPush'),
+      sendFn.indexOf('async function handleRequest'),
+    ),
+    /claim_approval_push/,
+    'refund pushes fetch subscriptions directly; the one-shot refund transition already dedupes',
+  );
+  assert.match(
+    sendFn,
+    /function pushToSubscriptions/,
+    'approval and refund kinds must share one send-and-prune loop',
+  );
+
+  const sharedHop = await readProjectFile('supabase/functions/_shared/approval-push.ts');
+  assert.match(sharedHop, /export function notifyRefundPush/);
+  assert.match(sharedHop, /kind/);
+
+  const confirmFn = await readProjectFile('supabase/functions/confirm-toss-payment/index.ts');
+  assert.match(confirmFn, /notifyRefundPush/);
+  assert.match(
+    confirmFn,
+    /rpc\/refund_paid_order[\s\S]{0,600}notifyRefundPush\(/,
+    'the refund push fires only after the refund is recorded',
+  );
+
+  const supabaseClient = await readProjectFile('supabase-client.js');
+  assert.match(supabaseClient, /push: body\?\.push \|\| null/);
+
+  const adminScript = await readProjectFile('admin.js');
+  assert.match(adminScript, /환불 알림/);
+});
+
 test('rate limiter accepts the push_subscription action', async () => {
   const sql = await readProjectFile('supabase/migrations/20260616000000_allow_push_subscription_rate_limit.sql');
 
@@ -215,13 +259,13 @@ test('payment auto-accept paths trigger the approval push best-effort', async ()
   assert.match(sharedHop, /functions\/v1\/send-approval-push/);
   assert.match(
     sharedHop,
-    /export async function notifyApprovalPush[\s\S]*?try \{[\s\S]*?\} catch/,
+    /async function notifyPush[\s\S]*?try \{[\s\S]*?\} catch/,
     'a failed push hop must never fail the calling function',
   );
 
   const confirmFn = await readProjectFile('supabase/functions/confirm-toss-payment/index.ts');
 
-  assert.match(confirmFn, /import \{ notifyApprovalPush \} from '\.\.\/_shared\/approval-push\.ts'/);
+  assert.match(confirmFn, /import \{ notifyApprovalPush, notifyRefundPush \} from '\.\.\/_shared\/approval-push\.ts'/);
   assert.match(
     confirmFn,
     /confirmOrderAndPayment\(order, tossPayment\);[\s\S]{0,200}notifyApprovalPush\(/,

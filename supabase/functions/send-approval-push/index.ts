@@ -41,6 +41,80 @@ async function deleteSubscription(id: string) {
   await supabaseRequest(`push_subscriptions?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
+async function pushToSubscriptions(subscriptions: ClaimedSubscription[], message: string) {
+  const appServer = await getApplicationServer();
+  let sent = 0;
+  let failed = 0;
+  let expired = 0;
+
+  for (const subscription of subscriptions) {
+    try {
+      const subscriber = appServer.subscribe({
+        endpoint: subscription.endpoint,
+        keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+      });
+      await subscriber.pushTextMessage(message, {});
+      sent += 1;
+    } catch (error) {
+      const status = getPushErrorStatus(error);
+
+      if (status === 404 || status === 410) {
+        expired += 1;
+        await deleteSubscription(subscription.id).catch((cleanupError) => {
+          console.error('failed to prune expired subscription', cleanupError);
+        });
+      } else {
+        failed += 1;
+        console.error('push send failed', error);
+      }
+    }
+  }
+
+  return { sent, failed, expired };
+}
+
+function isServiceRoleRequest(request: Request) {
+  const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+
+  return Boolean(token) && token === getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
+}
+
+async function handleRefundPush(request: Request, applicationId: string) {
+  // No one-shot claim here: the paid -> refunded transition only ever happens
+  // once per order, so the caller fires exactly once. The gate that matters is
+  // that only our own functions (service role) may trigger it.
+  if (!isServiceRoleRequest(request)) {
+    return jsonResponse({ error: '허용되지 않은 요청입니다.' }, 401);
+  }
+
+  const applications = (await supabaseRequest(
+    `applications?id=eq.${encodeURIComponent(applicationId)}&select=id,meetup_id&limit=1`,
+  )) as Array<{ id: string; meetup_id: string }>;
+  const application = applications[0];
+
+  if (!application) {
+    return jsonResponse({ ok: true, result: { kind: 'refund', sent: 0, failed: 0, expired: 0 } });
+  }
+
+  const meetups = (await supabaseRequest(
+    `meetups?id=eq.${encodeURIComponent(application.meetup_id)}&select=title&limit=1`,
+  )) as Array<{ title?: string }>;
+  const meetupTitle = meetups[0]?.title || '모임';
+
+  const subscriptions = (await supabaseRequest(
+    `push_subscriptions?application_id=eq.${encodeURIComponent(application.id)}&select=id,endpoint,p256dh,auth`,
+  )) as ClaimedSubscription[];
+
+  const message = JSON.stringify({
+    title: '결제가 환불되었어요',
+    body: `${meetupTitle} 결제가 환불 처리되었습니다. 궁금한 점은 운영자에게 문의해 주세요.`,
+    url: './',
+  });
+  const outcome = await pushToSubscriptions(subscriptions, message);
+
+  return jsonResponse({ ok: true, result: { kind: 'refund', ...outcome } });
+}
+
 async function handleRequest(request: Request) {
   if (request.method === 'OPTIONS') {
     return new Response('ok');
@@ -53,9 +127,14 @@ async function handleRequest(request: Request) {
   try {
     const payload = await request.json();
     const applicationId = String(payload.applicationId || '').trim();
+    const kind = String(payload.kind || 'approval').trim();
 
     if (!applicationId) {
       return jsonResponse({ error: 'applicationId is required.' }, 400);
+    }
+
+    if (kind === 'refund') {
+      return await handleRefundPush(request, applicationId);
     }
 
     const claim = await supabaseRequest('rpc/claim_approval_push', {
@@ -67,42 +146,15 @@ async function handleRequest(request: Request) {
       return jsonResponse({ ok: true, result: { claimed: false, sent: 0, failed: 0, expired: 0 } });
     }
 
-    const appServer = await getApplicationServer();
     const subscriptions = (claim.subscriptions || []) as ClaimedSubscription[];
     const message = JSON.stringify({
       title: '신청이 승인되었어요',
       body: `${claim.meetup_title} 신청이 승인되었습니다. 모임에서 만나요!`,
       url: './',
     });
+    const outcome = await pushToSubscriptions(subscriptions, message);
 
-    let sent = 0;
-    let failed = 0;
-    let expired = 0;
-
-    for (const subscription of subscriptions) {
-      try {
-        const subscriber = appServer.subscribe({
-          endpoint: subscription.endpoint,
-          keys: { p256dh: subscription.p256dh, auth: subscription.auth },
-        });
-        await subscriber.pushTextMessage(message, {});
-        sent += 1;
-      } catch (error) {
-        const status = getPushErrorStatus(error);
-
-        if (status === 404 || status === 410) {
-          expired += 1;
-          await deleteSubscription(subscription.id).catch((cleanupError) => {
-            console.error('failed to prune expired subscription', cleanupError);
-          });
-        } else {
-          failed += 1;
-          console.error('push send failed', error);
-        }
-      }
-    }
-
-    return jsonResponse({ ok: true, result: { claimed: true, sent, failed, expired } });
+    return jsonResponse({ ok: true, result: { claimed: true, ...outcome } });
   } catch (error) {
     console.error(error);
     return jsonResponse({ error: '승인 알림 발송에 실패했습니다.' }, 500);

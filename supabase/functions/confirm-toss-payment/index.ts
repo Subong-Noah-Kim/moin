@@ -1,6 +1,6 @@
 import { getCorsHeaders, jsonResponse } from '../_shared/http.ts';
 import { getRequiredEnv, readJson, supabaseRequest } from '../_shared/supabase.ts';
-import { notifyApprovalPush } from '../_shared/approval-push.ts';
+import { notifyApprovalPush, notifyRefundPush } from '../_shared/approval-push.ts';
 
 type OrderRow = {
   id: string;
@@ -369,7 +369,14 @@ async function handleRefund(payload: Record<string, unknown>, request: Request) 
     body: JSON.stringify({ p_order_id: order.id, p_raw_payload: refundRecord }),
   })) as { order?: Record<string, unknown>; payment?: Record<string, unknown> };
 
-  return jsonResponse({ ok: true, order: result.order || null, payment: result.payment || null });
+  const push = await notifyRefundPush(result.order?.application_id);
+
+  return jsonResponse({
+    ok: true,
+    order: result.order || null,
+    payment: result.payment || null,
+    push,
+  });
 }
 
 async function handleFailureResult(payload: Record<string, unknown>) {
