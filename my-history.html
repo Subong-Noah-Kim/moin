@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="이메일로 받은 링크 하나로 내 신청과 결제 이력을 확인합니다" />
+    <title>내 신청 이력 | moin</title>
+    <link rel="stylesheet" href="./styles.css?v=__ASSET_VERSION__" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png" />
+    <meta name="theme-color" content="#1f6a53" />
+  </head>
+  <body class="history-page">
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="moin 홈">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>moin</span>
+      </a>
+    </header>
+
+    <main class="history-main">
+      <h1>내 신청 이력</h1>
+      <p class="history-intro">
+        신청할 때 적은 이메일로 1회용 확인 링크를 보내드려요. 비밀번호나 회원가입은 없습니다.
+      </p>
+
+      <section data-history-request-view>
+        <form class="history-email-form" data-history-email-form>
+          <label class="field-group" for="historyEmail">
+            <span>이메일</span>
+            <input
+              id="historyEmail"
+              name="email"
+              type="email"
+              autocomplete="email"
+              inputmode="email"
+              required
+            />
+          </label>
+          <button class="drawer-cta" type="submit">확인 링크 받기</button>
+        </form>
+      </section>
+
+      <section data-history-result-view hidden>
+        <p class="history-session" data-history-email></p>
+        <div data-history-list></div>
+        <button class="ghost-button" type="button" data-history-signout>다른 이메일로 보기</button>
+      </section>
+
+      <p class="history-status" role="status" data-history-status></p>
+    </main>
+
+    <script type="module" src="./my-history.js?v=__ASSET_VERSION__"></script>
+  </body>
+</html>

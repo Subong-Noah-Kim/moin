@@ -101,6 +101,9 @@ const cacheBustedSourceFiles = [
   '../supabase-client.js',
   '../admin-render.js',
   '../escape-html.js',
+  '../my-history.html',
+  '../my-history.js',
+  '../history-view.js',
 ];
 
 async function readProjectFile(pathname) {
@@ -463,6 +466,7 @@ test('public form helpers build stable IDs and normalized payloads', () => {
   const applicationFormData = new FormData();
   applicationFormData.append('name', '  Subong  ');
   applicationFormData.append('interest', '  네트워킹  ');
+  applicationFormData.append('email', '  Subong@Example.com  ');
   const checkoutFormData = new FormData();
   checkoutFormData.append('payer', '  ');
   checkoutFormData.append('method', '  임의값  ');
@@ -475,10 +479,12 @@ test('public form helpers build stable IDs and normalized payloads', () => {
     createPublicApplicationPayload({
       name: '  Noah  ',
       interest: '  영화와 대화  ',
+      email: '  noah@example.com  ',
     }),
     {
       name: 'Noah',
       interest: '영화와 대화',
+      email: 'noah@example.com',
     },
   );
 
@@ -487,6 +493,7 @@ test('public form helpers build stable IDs and normalized payloads', () => {
     {
       name: 'Subong',
       interest: '네트워킹',
+      email: 'Subong@Example.com',
     },
   );
 
@@ -1748,7 +1755,7 @@ test('public meetup UI reads availability RPC and fails closed in configured mod
   assert.match(formModule, /export function createPublicApplicationPayload\(source\)/);
   assert.match(formModule, /export function createPublicCheckoutPayload\(source\)/);
   assert.match(mainScript, /const \{ payerName, paymentMethod \} = createPublicCheckoutPayload\(formData\)/);
-  assert.match(mainScript, /const \{ name, interest \} = createPublicApplicationPayload\(formData\)/);
+  assert.match(mainScript, /const \{ name, interest, email \} = createPublicApplicationPayload\(formData\)/);
   assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item, \{ isPaid, hasApplication: hasStoredApplication\(item\.id\) \}\)/);
   assert.match(mainScript, /const actionState = getPublicMeetupActionState\(item, \{ hasApplication: hasStoredApplication\(item\.id\) \}\)/);
   assert.match(mainScript, /actionState\.paymentSummaryClass/);

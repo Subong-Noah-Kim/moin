@@ -749,6 +749,8 @@ function openDrawer(itemId, opener = document.activeElement) {
   } = actionState;
   const applicationNameId = createFieldId('application', item.id, 'name');
   const applicationNameHelpId = createFieldId(applicationNameId, 'help');
+  const applicationEmailId = createFieldId('application', item.id, 'email');
+  const applicationEmailHelpId = createFieldId(applicationEmailId, 'help');
   const applicationInterestId = createFieldId('application', item.id, 'interest');
   const applicationInterestHelpId = createFieldId(applicationInterestId, 'help');
   const scheduleMarkup = item.schedule.length
@@ -774,6 +776,19 @@ function openDrawer(itemId, opener = document.activeElement) {
           />
         </label>
         <p class="form-helper" id="${escapeAttribute(applicationNameHelpId)}">신청 확인에 사용할 이름을 적어주세요.</p>
+        <label class="field-group" for="${escapeAttribute(applicationEmailId)}">
+          <span>이메일</span>
+          <input
+            id="${escapeAttribute(applicationEmailId)}"
+            name="email"
+            type="email"
+            autocomplete="email"
+            inputmode="email"
+            aria-describedby="${escapeAttribute(applicationEmailHelpId)}"
+            required
+          />
+        </label>
+        <p class="form-helper" id="${escapeAttribute(applicationEmailHelpId)}">신청 확인과 모임 안내에만 사용해요. 어느 기기에서든 이 이메일로 내 신청 이력을 확인할 수 있어요.</p>
         <label class="field-group" for="${escapeAttribute(applicationInterestId)}">
           <span>이 모임에 끌린 이유</span>
           <input
@@ -1232,12 +1247,12 @@ async function submitApplication(form) {
   }
 
   const formData = new FormData(form);
-  const { name, interest } = createPublicApplicationPayload(formData);
+  const { name, interest, email } = createPublicApplicationPayload(formData);
 
   setFormPending(form, true);
 
   try {
-    const { skipped, rows } = await createApplication({ meetup: item, name, interest });
+    const { skipped, rows } = await createApplication({ meetup: item, name, interest, email });
     const confirmationToken = rows?.[0]?.confirmation_token || '';
     setApplicationToken(item.id, confirmationToken);
     refreshDrawerPaymentSummary(item);

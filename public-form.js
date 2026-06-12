@@ -25,6 +25,7 @@ export function createPublicApplicationPayload(source) {
   return {
     name: getTextValue(source, 'name'),
     interest: getTextValue(source, 'interest'),
+    email: getTextValue(source, 'email'),
   };
 }
 

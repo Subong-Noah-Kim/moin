@@ -2074,3 +2074,130 @@ h1 {
 .drawer-apply-flow .payment-summary {
   margin-top: 16px;
 }
+
+.history-page {
+  background: var(--soft);
+}
+
+.history-main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+.history-main h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+.history-intro {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.history-email-form {
+  display: grid;
+  gap: 10px;
+}
+
+.history-email-form input {
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.history-session {
+  margin: 0 0 14px;
+  font-weight: 800;
+}
+
+.history-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.history-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-status,
+.history-order-status {
+  font-size: 0.8rem;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.history-status.is-accepted,
+.history-order-status.is-paid,
+.history-order-status.is-demo_paid {
+  background: var(--green-2);
+  color: var(--green);
+}
+
+.history-status.is-rejected,
+.history-order-status.is-failed,
+.history-order-status.is-refunded {
+  background: rgba(201, 75, 53, 0.12);
+  color: var(--coral);
+}
+
+.history-muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.history-orders {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.history-orders li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.history-empty {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.history-status[role='status'] {
+  background: none;
+  padding: 0;
+}
+
+.history-page .history-status[data-history-status] {
+  display: block;
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  white-space: normal;
+}
+
+.history-email-form + .history-status {
+  margin-top: 14px;
+}

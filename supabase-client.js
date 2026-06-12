@@ -561,11 +561,12 @@ export async function fetchPublicMeetupAvailability() {
   return callReadRpc('list_public_meetup_availability');
 }
 
-export async function createApplication({ meetup, name, interest }) {
+export async function createApplication({ meetup, name, interest, email }) {
   return callPublicSubmission('application', {
     meetupId: meetup.id,
     name: name.trim(),
     interest: interest.trim(),
+    email: (email || '').trim(),
   });
 }
 

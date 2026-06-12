@@ -53,6 +53,22 @@ function getAction(payload: Record<string, unknown>): PublicSubmissionAction {
   return action;
 }
 
+function getValidatedEmail(payload: Record<string, unknown>) {
+  const email = getText(payload, 'email').toLowerCase();
+
+  if (!email) {
+    throw new Error('EMAIL_REQUIRED: applicant email is required');
+  }
+
+  const atIndex = email.indexOf('@');
+
+  if (email.length < 5 || email.length > 320 || atIndex < 1 || atIndex === email.length - 1) {
+    throw new Error('EMAIL_INVALID: applicant email is malformed');
+  }
+
+  return email;
+}
+
 async function createApplication(payload: Record<string, unknown>, visitorHash: string) {
   return supabaseRequest('rpc/create_public_application', {
     method: 'POST',
@@ -61,6 +77,7 @@ async function createApplication(payload: Record<string, unknown>, visitorHash: 
       p_meetup_id: getText(payload, 'meetupId'),
       p_applicant_name: getText(payload, 'name'),
       p_interest: getText(payload, 'interest'),
+      p_applicant_email: getValidatedEmail(payload),
     }),
   });
 }
