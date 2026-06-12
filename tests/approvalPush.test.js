@@ -116,6 +116,32 @@ test('send-approval-push claims atomically, pushes, and prunes dead subscription
   assert.match(config, /\[functions\.send-approval-push\]\nverify_jwt = false/);
 });
 
+test('one device can hold push subscriptions for multiple applications', async () => {
+  const migration = await readProjectFile('supabase/migrations/20260620000000_per_application_push_subscriptions.sql');
+
+  assert.match(
+    migration,
+    /drop constraint if exists push_subscriptions_endpoint_key/,
+    'the device-wide endpoint uniqueness must go away',
+  );
+  assert.match(
+    migration,
+    /unique \(endpoint, application_id\)/,
+    'one subscription row per device and application',
+  );
+  assert.match(migration, /create or replace function public\.register_push_subscription/);
+  assert.match(
+    migration,
+    /on conflict \(endpoint, application_id\) do update/,
+    're-opting into the same application refreshes keys instead of stealing the row from other applications',
+  );
+  assert.doesNotMatch(
+    migration,
+    /set application_id = excluded\.application_id/,
+    'the upsert must no longer repoint the subscription to the latest application',
+  );
+});
+
 test('refund push targets and subscription pruning run through security-definer RPCs', async () => {
   const migration = await readProjectFile('supabase/migrations/20260619000000_refund_push_target_rpcs.sql');
 
