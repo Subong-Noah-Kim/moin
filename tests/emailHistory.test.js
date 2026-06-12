@@ -94,6 +94,12 @@ test('history page requests a magic link and reads the session from the callback
   assert.match(script, /access_token/);
   assert.match(script, /rpc\/get_my_history/);
   assert.match(script, /replaceState/, 'session tokens must be cleaned from the URL after capture');
+  assert.match(
+    script,
+    /error_description/,
+    'an expired or already-used link must surface a visible message instead of silently showing the form',
+  );
+  assert.match(script, /만료되었거나 이미 사용/);
 
   const index = await readProjectFile('index.html');
   assert.match(index, /my-history\.html/, 'the public site must link to the history page');

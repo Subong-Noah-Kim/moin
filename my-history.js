@@ -151,10 +151,28 @@ signOutButton.addEventListener('click', () => {
   setStatus('');
 });
 
+function readErrorFromHash() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+
+  if (!params.get('error') && !params.get('error_code')) {
+    return '';
+  }
+
+  const description = params.get('error_description') || '';
+
+  return description.includes('expired') || params.get('error_code') === 'otp_expired'
+    ? '확인 링크가 만료되었거나 이미 사용되었습니다. 이메일을 다시 입력해 새 링크를 받아주세요.'
+    : `확인에 실패했습니다: ${description || params.get('error_code') || params.get('error')}`;
+}
+
 const hashSession = readSessionFromHash();
+const hashError = readErrorFromHash();
 
 if (hashSession) {
   storeSession(hashSession);
+}
+
+if (hashSession || hashError) {
   window.history.replaceState(null, '', getPageUrl());
 }
 
@@ -168,4 +186,8 @@ if (activeSession) {
   });
 } else {
   showRequestView();
+
+  if (hashError) {
+    setStatus(hashError);
+  }
 }
