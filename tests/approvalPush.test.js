@@ -208,3 +208,32 @@ test('approval claim is not consumed while there is nothing to send', async () =
   );
   assert.match(sql, /grant execute on function public\.claim_approval_push\(uuid\) to service_role/);
 });
+
+test('payment auto-accept paths trigger the approval push best-effort', async () => {
+  const confirmFn = await readProjectFile('supabase/functions/confirm-toss-payment/index.ts');
+
+  assert.match(confirmFn, /functions\/v1\/send-approval-push/);
+  assert.match(
+    confirmFn,
+    /async function notifyApprovalPush[\s\S]*?try \{[\s\S]*?\} catch/,
+    'a failed push hop must never fail the payment confirmation',
+  );
+  assert.match(
+    confirmFn,
+    /confirmOrderAndPayment\(order, tossPayment\);[\s\S]{0,200}notifyApprovalPush\(/,
+    'the push hop runs after the payment is confirmed and the application auto-accepted',
+  );
+
+  const submissionFn = await readProjectFile('supabase/functions/create-public-submission/index.ts');
+
+  assert.match(submissionFn, /functions\/v1\/send-approval-push/);
+  assert.match(
+    submissionFn,
+    /async function notifyApprovalPush[\s\S]*?try \{[\s\S]*?\} catch/,
+  );
+  assert.match(
+    submissionFn,
+    /action === 'demo_order'[\s\S]{0,200}notifyApprovalPush\(/,
+    'demo orders auto-accept their application, so they need the same push hop',
+  );
+});

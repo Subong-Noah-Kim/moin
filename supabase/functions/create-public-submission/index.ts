@@ -146,6 +146,31 @@ async function registerPushSubscription(payload: Record<string, unknown>, visito
   });
 }
 
+async function notifyApprovalPush(applicationId: unknown) {
+  const id = typeof applicationId === 'string' ? applicationId.trim() : '';
+
+  if (!id) {
+    return;
+  }
+
+  try {
+    const supabaseUrl = getRequiredEnv('SUPABASE_URL').replace(/\/$/, '');
+    const serviceRoleKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
+
+    await fetch(`${supabaseUrl}/functions/v1/send-approval-push`, {
+      method: 'POST',
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ applicationId: id }),
+    });
+  } catch (error) {
+    console.error('approval push send failed after auto-accept', error);
+  }
+}
+
 async function createOrder(
   action: Extract<PublicSubmissionAction, 'toss_order' | 'demo_order'>,
   payload: Record<string, unknown>,
@@ -300,6 +325,11 @@ async function handleRequest(request: Request) {
       result = await registerPushSubscription(payload, visitorHash);
     } else {
       result = await createOrder(action, payload, visitorHash);
+
+      if (action === 'demo_order') {
+        const order = (result as { order?: { application_id?: unknown } })?.order;
+        await notifyApprovalPush(order?.application_id);
+      }
     }
 
     return jsonResponse({

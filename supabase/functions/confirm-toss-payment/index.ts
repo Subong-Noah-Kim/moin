@@ -311,6 +311,31 @@ async function confirmOrderAndPayment(order: OrderRow, tossPayment: Record<strin
   return result as { order?: Record<string, unknown>; payment?: Record<string, unknown> };
 }
 
+async function notifyApprovalPush(applicationId: unknown) {
+  const id = typeof applicationId === 'string' ? applicationId.trim() : '';
+
+  if (!id) {
+    return;
+  }
+
+  try {
+    const supabaseUrl = getRequiredEnv('SUPABASE_URL').replace(/\/$/, '');
+    const serviceRoleKey = getRequiredEnv('SUPABASE_SERVICE_ROLE_KEY');
+
+    await fetch(`${supabaseUrl}/functions/v1/send-approval-push`, {
+      method: 'POST',
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ applicationId: id }),
+    });
+  } catch (error) {
+    console.error('approval push send failed after auto-accept', error);
+  }
+}
+
 async function handleFailureResult(payload: Record<string, unknown>) {
   const { orderId, checkoutToken, code, message } = assertFailurePayload(payload);
   const order = await findTossOrder(orderId);
@@ -409,6 +434,8 @@ async function handleRequest(request: Request) {
 
     const tossPayment = await confirmWithToss(paymentKey, orderId, amount);
     const result = await confirmOrderAndPayment(order, tossPayment);
+
+    await notifyApprovalPush(result.order?.application_id);
 
     return jsonResponse({
       ok: true,
