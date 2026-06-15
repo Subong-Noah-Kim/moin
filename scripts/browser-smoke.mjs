@@ -212,7 +212,7 @@ function attachDiagnostics(connection, sessionId, baseUrl, label) {
   });
 }
 
-async function createPage(connection, url, label, baseUrl) {
+async function createPage(connection, url, label, baseUrl, preloadScript) {
   const { targetId } = await connection.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await connection.send('Target.attachToTarget', { targetId, flatten: true });
   const detachDiagnostics = attachDiagnostics(connection, sessionId, baseUrl, label);
@@ -221,6 +221,10 @@ async function createPage(connection, url, label, baseUrl) {
   await connection.send('Runtime.enable', {}, sessionId);
   await connection.send('Log.enable', {}, sessionId);
   await connection.send('Network.enable', {}, sessionId);
+
+  if (preloadScript) {
+    await connection.send('Page.addScriptToEvaluateOnNewDocument', { source: preloadScript }, sessionId);
+  }
 
   const load = connection.waitForEvent(sessionId, 'Page.loadEventFired');
   await connection.send('Page.navigate', { url }, sessionId);
@@ -394,6 +398,84 @@ async function smokeAdminPage(connection, baseUrl) {
   }
 }
 
+// Verifies the authenticated admin dashboard renders WITHOUT real credentials:
+// a fake session is seeded into sessionStorage and every Supabase REST/RPC call
+// is answered with fixtures. No admin password ever touches CI (the repo is
+// public), and no live data is read or written.
+const ADMIN_DASHBOARD_PRELOAD = `(() => {
+  try {
+    sessionStorage.setItem('momentclub:admin-session', JSON.stringify({
+      accessToken: 'smoke-mock-token',
+      expiresAt: Date.now() + 3600000,
+      user: { email: 'smoke@moin.test' },
+    }));
+  } catch (error) { /* storage unavailable */ }
+
+  const meetup = { id: 'm-smoke', type: 'social', category: '문화', title: '스모크 점검 모임', description: 'CI 점검용', host_name: '운영', host_role: '호스트', status_label: null, date_label: '6월 20일', time_label: '19:00', location: '성수', price_amount: 10000, price_label: '10,000원', tags: ['점검'], image_url: '', schedule: [], capacity: null, registration_status: 'open', closed_at: null, close_reason: null, is_published: true, created_at: '2026-06-15T10:00:00+09:00' };
+  const availability = { meetup_id: 'm-smoke', capacity: null, remaining_spots: null, registration_status: 'open', effective_registration_status: 'open', active_order_count: 1, paid_order_count: 1, closed_at: null, close_reason: null };
+  const application = { id: 'a-smoke', meetup_id: 'm-smoke', applicant_name: '스모크 신청자', interest: '점검', status: 'submitted', source: 'edge-function', created_at: '2026-06-15T10:00:00+09:00', orders: [{ status: 'paid' }] };
+  const order = { id: 'o-smoke', meetup_id: 'm-smoke', buyer_name: '스모크 구매자', amount: 10000, currency: 'KRW', status: 'paid', provider: 'tosspayments', payment_method: '카드', source: 'web', created_at: '2026-06-15T10:00:00+09:00', refund_requested_at: '2026-06-15T11:00:00+09:00', refund_request_reason: '점검용 환불 요청', applications: { applicant_name: '스모크 신청자' } };
+  const payment = { id: 'p-smoke', order_id: 'o-smoke', meetup_id: 'm-smoke', amount: 10000, currency: 'KRW', status: 'paid', provider: 'tosspayments', payment_method: '카드', provider_payment_key: 'smoke_key_1234567890', paid_at: '2026-06-15T11:00:00+09:00', created_at: '2026-06-15T11:00:00+09:00' };
+
+  function fixtureFor(url) {
+    if (url.includes('/rest/v1/rpc/list_admin_meetup_availability')) return [availability];
+    if (url.includes('/rest/v1/meetups')) return [meetup];
+    if (url.includes('/rest/v1/applications')) return [application];
+    if (url.includes('/rest/v1/orders')) return [order];
+    if (url.includes('/rest/v1/payments')) return [payment];
+    return [];
+  }
+
+  const realFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    const url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.includes('.supabase.co/rest/v1/')) {
+      return Promise.resolve(new Response(JSON.stringify(fixtureFor(url)), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+    }
+    return realFetch(input, init);
+  };
+})();`;
+
+async function smokeAdminDashboard(connection, baseUrl) {
+  const page = await createPage(connection, `${baseUrl}/admin.html`, 'admin dashboard', baseUrl, ADMIN_DASHBOARD_PRELOAD);
+
+  try {
+    await waitForExpression(
+      connection,
+      page.sessionId,
+      `(() => {
+        const dashboard = document.querySelector('[data-dashboard-view]');
+        return dashboard && !dashboard.hidden
+          && document.querySelectorAll('[data-orders-body] tr').length > 0
+          && document.querySelectorAll('[data-applications-body] tr').length > 0
+          && document.querySelectorAll('[data-meetups-body] tr').length > 0;
+      })()`,
+      'authenticated admin dashboard tables',
+    );
+
+    const summary = await evaluate(connection, page.sessionId, `(() => ({
+      orders: document.querySelectorAll('[data-orders-body] tr').length,
+      applicants: document.body.textContent.includes('스모크 신청자'),
+      refundAlert: !document.querySelector('[data-refund-alert]').hidden,
+      refundCount: document.querySelector('[data-refund-alert-count]')?.textContent,
+      loginHidden: document.querySelector('[data-login-view]').hidden,
+    }))()`);
+
+    if (!summary.loginHidden) throw new Error('login view still showing after mock session');
+    if (!summary.applicants) throw new Error('applicant row did not render in the dashboard');
+    if (!summary.refundAlert || summary.refundCount !== '1') {
+      throw new Error(`refund-request alert did not surface (alert=${summary.refundAlert}, count=${summary.refundCount})`);
+    }
+
+    console.log(`✓ admin dashboard rendered (${summary.orders} order row, refund alert ${summary.refundCount})`);
+  } finally {
+    await page.close();
+  }
+}
+
 async function smokePaymentResultPage(connection, baseUrl) {
   const page = await createPage(connection, `${baseUrl}/payment-result.html`, 'payment result page', baseUrl);
 
@@ -432,6 +514,7 @@ async function main() {
 
     await smokePublicPage(connection, baseUrl);
     await smokeAdminPage(connection, baseUrl);
+    await smokeAdminDashboard(connection, baseUrl);
     await smokePaymentResultPage(connection, baseUrl);
 
     if (diagnostics.length) {

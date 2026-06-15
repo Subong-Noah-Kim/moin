@@ -123,3 +123,19 @@ test('admin dashboard has a refund-request alert wired to the orders tab', async
   assert.match(admin, /data-refund-alert/);
   assert.match(admin, /data-tab-button="orders"/, 'the alert button jumps to the orders tab');
 });
+
+test('CI browser smoke verifies the authenticated admin dashboard with a mocked session', async () => {
+  const smoke = await readProjectFile('scripts/browser-smoke.mjs');
+
+  assert.match(smoke, /async function smokeAdminDashboard/);
+  assert.match(smoke, /await smokeAdminDashboard\(connection, baseUrl\)/);
+  assert.match(smoke, /momentclub:admin-session/, 'a fake session is seeded, not a real login');
+  assert.match(smoke, /\.supabase\.co\/rest\/v1\//, 'Supabase calls are answered with fixtures');
+  assert.match(smoke, /data-orders-body[\s\S]{0,500}length > 0/, 'asserts the order table renders');
+  assert.match(smoke, /data-refund-alert/, 'also covers the refund-request alert');
+  assert.doesNotMatch(
+    smoke,
+    /ADMIN_PASSWORD|SMOKE_ADMIN|process\.env\.[A-Z_]*PASS/,
+    'no real admin credentials are read in CI',
+  );
+});
