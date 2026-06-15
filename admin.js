@@ -35,6 +35,7 @@ import {
   buildMeetupRows,
   buildOrderRows,
   buildTaskItems,
+  countPendingRefundRequests,
   formatAgenticUpdated,
   formatDate,
   formatMoney,
@@ -399,10 +400,21 @@ function renderApplicationsMessage(message, countLabel = '0건') {
   document.querySelector('[data-applications-body]').innerHTML = buildEmptyRow(5, message);
 }
 
+function renderRefundAlert() {
+  const alert = document.querySelector('[data-refund-alert]');
+  if (!alert) return;
+
+  const count = countPendingRefundRequests(overview.orders);
+  const countEl = alert.querySelector('[data-refund-alert-count]');
+  if (countEl) countEl.textContent = count;
+  alert.hidden = count === 0;
+}
+
 function renderOrders() {
   document.querySelector('[data-orders-count]').textContent = `${overview.orders.length}건`;
   document.querySelector('[data-orders-body]').innerHTML =
     buildOrderRows(overview.orders, { getMeetupTitle, getPaymentForOrder });
+  renderRefundAlert();
 }
 
 function renderOrdersMessage(message, countLabel = '0건') {
@@ -1090,6 +1102,10 @@ meetupsBody.addEventListener('click', async (event) => {
   } finally {
     toggleButton.disabled = false;
   }
+});
+
+document.querySelector('[data-refund-alert-go]')?.addEventListener('click', () => {
+  document.querySelector('[data-tab-button="orders"]')?.click();
 });
 
 tabButtons.forEach((button) => {

@@ -117,6 +117,31 @@ export function hasPaidLinkedOrder(application) {
     && application.orders.some((order) => paidOrderStatuses.includes(order?.status));
 }
 
+// A user-flagged order still awaiting the operator's refund (a refunded order
+// is no longer pending, so it drops out of the count and the priority sort).
+export function isPendingRefundRequest(order) {
+  return Boolean(order?.refund_requested_at) && paidOrderStatuses.includes(order?.status);
+}
+
+export function countPendingRefundRequests(orders) {
+  if (!Array.isArray(orders)) return 0;
+  return orders.filter(isPendingRefundRequest).length;
+}
+
+export function sortOrdersForReview(orders) {
+  if (!Array.isArray(orders)) return [];
+
+  return orders
+    .map((order, index) => ({ order, index }))
+    .sort((a, b) => {
+      const aPending = isPendingRefundRequest(a.order) ? 0 : 1;
+      const bPending = isPendingRefundRequest(b.order) ? 0 : 1;
+      if (aPending !== bPending) return aPending - bPending;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.order);
+}
+
 export function buildEmptyRow(colSpan, message) {
   return `<tr class="empty-row"><td colspan="${colSpan}">${escapeHtml(message)}</td></tr>`;
 }
@@ -148,10 +173,10 @@ export function buildApplicationRows(applications, { getMeetupTitle }) {
 }
 
 export function buildOrderRows(orders, { getMeetupTitle, getPaymentForOrder }) {
-  return orders
+  return sortOrdersForReview(orders)
     .map(
       (order) => `
-        <tr>
+        <tr${isPendingRefundRequest(order) ? ' class="is-refund-requested"' : ''}>
           <td data-label="일시">${formatDate(order.created_at)}</td>
           <td data-label="모임">${escapeHtml(getMeetupTitle(order.meetup_id))}</td>
           <td data-label="구매자">${escapeHtml(order.buyer_name || '미입력')}</td>

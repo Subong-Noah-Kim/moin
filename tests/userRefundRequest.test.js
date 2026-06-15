@@ -79,3 +79,47 @@ test('admin order rows flag a pending refund request', async () => {
   assert.match(rows, /환불 요청됨/, 'a requested order is flagged for the operator');
   assert.match(rows, /일정이 안 맞아요/, 'the reason is shown to the operator');
 });
+
+test('admin surfaces and prioritizes pending refund requests', async () => {
+  const renderModule = await readProjectFile('admin-render.js');
+  assert.match(renderModule, /export function isPendingRefundRequest/);
+  assert.match(renderModule, /export function countPendingRefundRequests/);
+
+  const { buildOrderRows, countPendingRefundRequests, isPendingRefundRequest } = await import('../admin-render.js');
+
+  assert.equal(isPendingRefundRequest({ status: 'paid', refund_requested_at: 'x' }), true);
+  assert.equal(isPendingRefundRequest({ status: 'paid' }), false);
+  assert.equal(isPendingRefundRequest({ status: 'refunded', refund_requested_at: 'x' }), false, 'a refunded order is no longer pending');
+
+  assert.equal(
+    countPendingRefundRequests([
+      { status: 'paid', refund_requested_at: 'x' },
+      { status: 'demo_paid', refund_requested_at: 'y' },
+      { status: 'paid' },
+      { status: 'refunded', refund_requested_at: 'z' },
+    ]),
+    2,
+  );
+
+  const rows = buildOrderRows(
+    [
+      { id: 'normal', meetup_id: 'm', amount: 1000, status: 'paid', provider: 'tosspayments', created_at: '2026-06-15T12:00:00+09:00' },
+      { id: 'requested', meetup_id: 'm', amount: 1000, status: 'paid', provider: 'tosspayments', created_at: '2026-06-15T10:00:00+09:00', refund_requested_at: '2026-06-15T11:00:00+09:00' },
+    ],
+    { getMeetupTitle: (id) => id, getPaymentForOrder: () => undefined },
+  );
+  assert.ok(rows.indexOf('requested') < rows.indexOf('normal'), 'requested orders float to the top');
+  assert.match(rows, /<tr class="is-refund-requested"/);
+});
+
+test('admin dashboard has a refund-request alert wired to the orders tab', async () => {
+  const html = await readProjectFile('admin.html');
+  assert.match(html, /data-refund-alert/);
+  assert.match(html, /data-refund-alert-count/);
+  assert.match(html, /data-refund-alert-go/);
+
+  const admin = await readProjectFile('admin.js');
+  assert.match(admin, /countPendingRefundRequests/);
+  assert.match(admin, /data-refund-alert/);
+  assert.match(admin, /data-tab-button="orders"/, 'the alert button jumps to the orders tab');
+});
