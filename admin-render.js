@@ -170,7 +170,7 @@ export function buildOrderRows(orders, { getMeetupTitle, getPaymentForOrder }) {
                   </select>`
                 : `<span class="pill is-${escapeHtml(order.status)}">${escapeHtml(getOrderStatusLabel(order.status))}</span>${
                   paidOrderStatuses.includes(order.status)
-                    ? `<button class="ghost-button refund-button" type="button" data-refund-order="${escapeHtml(order.id)}">환불</button>`
+                    ? `${order.refund_requested_at ? `<span class="pill refund-requested-pill" title="${escapeHtml(order.refund_request_reason || '')}">환불 요청됨</span>` : ''}<button class="ghost-button refund-button" type="button" data-refund-order="${escapeHtml(order.id)}">환불</button>${order.refund_request_reason ? `<span class="refund-reason muted">사유: ${escapeHtml(order.refund_request_reason)}</span>` : ''}`
                     : ''
                 }`
             }

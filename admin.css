@@ -813,6 +813,20 @@ td strong {
   font-size: 0.78rem;
 }
 
+.refund-requested-pill {
+  display: inline-block;
+  margin-top: 6px;
+  background: rgba(163, 107, 17, 0.15);
+  color: var(--amber);
+}
+
+.refund-reason {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
 .pill.is-running,
 .pill.is-in_progress {
   background: rgba(163, 107, 17, 0.15);

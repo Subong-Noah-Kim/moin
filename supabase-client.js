@@ -51,6 +51,8 @@ const adminOrderFields = [
   'payment_method',
   'source',
   'created_at',
+  'refund_requested_at',
+  'refund_request_reason',
   'applications(applicant_name)',
 ].join(',');
 const adminPaymentFields = [

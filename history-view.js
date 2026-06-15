@@ -42,6 +42,24 @@ function formatHistoryDate(value) {
   }
 }
 
+const refundableOrderStatuses = ['paid', 'demo_paid'];
+
+function buildRefundControl(order) {
+  if (!refundableOrderStatuses.includes(order.status)) {
+    return '';
+  }
+
+  if (order.refund_requested_at) {
+    return '<span class="history-refund-requested">환불 요청됨</span>';
+  }
+
+  if (!order.id) {
+    return '';
+  }
+
+  return `<button type="button" class="history-refund-button" data-refund-request="${escapeHtml(order.id)}">환불 요청</button>`;
+}
+
 function buildOrderLines(orders) {
   if (!Array.isArray(orders) || !orders.length) {
     return '';
@@ -56,6 +74,7 @@ function buildOrderLines(orders) {
               <span class="history-order-status is-${escapeHtml(order.status)}">${escapeHtml(getHistoryOrderStatusText(order.status))}</span>
               <span>${escapeHtml(moneyFormatter.format(Number(order.amount || 0)))}원</span>
               <span class="history-muted">${escapeHtml(formatHistoryDate(order.created_at))}</span>
+              ${buildRefundControl(order)}
             </li>
           `,
         )

@@ -93,7 +93,54 @@ async function requestMagicLink(email) {
   }
 }
 
+let currentSession = null;
+
+async function requestOrderRefund(orderId, reason) {
+  if (!currentSession) {
+    throw new Error('세션이 만료되었어요. 다시 링크로 접속해 주세요.');
+  }
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/request_order_refund`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${currentSession.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_order_id: orderId, p_reason: reason }),
+  });
+
+  if (!response.ok) {
+    throw new Error('환불 요청을 보내지 못했어요. 잠시 후 다시 시도해 주세요.');
+  }
+}
+
+listContainer.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-refund-request]');
+  if (!button) return;
+
+  const orderId = button.dataset.refundRequest;
+  if (!window.confirm('이 결제 건의 환불을 요청할까요? 운영자가 확인 후 처리합니다.')) {
+    return;
+  }
+
+  const reason = window.prompt('환불 사유를 적어주세요. (선택)', '') || '';
+  button.disabled = true;
+  setStatus('환불 요청을 보내는 중입니다.');
+
+  try {
+    await requestOrderRefund(orderId, reason.trim());
+    await loadHistory(currentSession);
+    setStatus('환불 요청을 접수했어요. 운영자가 확인 후 처리해 드릴게요.');
+  } catch (error) {
+    console.error(error);
+    button.disabled = false;
+    setStatus(error.message);
+  }
+});
+
 async function loadHistory(session) {
+  currentSession = session;
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_my_history`, {
     method: 'POST',
     headers: {
@@ -145,6 +192,7 @@ emailForm.addEventListener('submit', async (event) => {
 
 signOutButton.addEventListener('click', () => {
   clearSession();
+  currentSession = null;
   listContainer.innerHTML = '';
   emailLabel.textContent = '';
   showRequestView();
