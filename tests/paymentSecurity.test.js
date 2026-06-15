@@ -104,6 +104,7 @@ const cacheBustedSourceFiles = [
   '../my-history.html',
   '../my-history.js',
   '../history-view.js',
+  '../pwa-install.js',
 ];
 
 async function readProjectFile(pathname) {

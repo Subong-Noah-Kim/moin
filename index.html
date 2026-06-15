@@ -35,6 +35,17 @@
       </button>
     </header>
 
+    <aside class="install-banner" data-install-banner hidden>
+      <div class="install-banner-text">
+        <strong>moin을 홈 화면에 추가하기</strong>
+        <span>앱처럼 빠르게 열고, 신청 승인·환불 알림도 받을 수 있어요.</span>
+      </div>
+      <div class="install-banner-actions">
+        <button type="button" class="install-banner-cta" data-install-action>추가하기</button>
+        <button type="button" class="install-banner-close" data-install-dismiss aria-label="설치 안내 닫기">×</button>
+      </div>
+    </aside>
+
     <main id="top">
       <section class="hero-shell" aria-labelledby="hero-title">
         <aside class="hero-feature" aria-label="추천 모임">
@@ -252,6 +263,20 @@
         <div data-checkout-content></div>
       </article>
     </aside>
+
+    <div class="install-guide" data-install-guide hidden>
+      <div class="install-guide-backdrop" data-install-guide-close></div>
+      <article class="install-guide-card" role="dialog" aria-modal="true" aria-labelledby="installGuideTitle" tabindex="-1">
+        <button class="icon-button install-guide-close" type="button" data-install-guide-close aria-label="안내 닫기">×</button>
+        <h3 id="installGuideTitle">홈 화면에 추가하기</h3>
+        <ol class="install-guide-steps">
+          <li>화면 아래쪽 <strong>공유 아이콘</strong>(<span aria-hidden="true">⬆️</span>)을 누르세요.</li>
+          <li>메뉴에서 <strong>‘홈 화면에 추가’</strong>를 선택하세요.</li>
+          <li><strong>‘추가’</strong>를 누르면 끝이에요.</li>
+        </ol>
+        <p class="install-guide-note" data-install-guide-note>홈 화면 앱에서 열면 신청 승인·환불 알림을 받을 수 있어요.</p>
+      </article>
+    </div>
 
     <div class="toast" data-toast role="status" aria-live="polite"></div>
 

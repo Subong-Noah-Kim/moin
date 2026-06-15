@@ -22,6 +22,7 @@ import {
   mergeMeetupAvailability,
 } from './public-availability.js?v=__ASSET_VERSION__';
 import { escapeHtml } from './escape-html.js?v=__ASSET_VERSION__';
+import { detectInstallEnv, getInstallPromptMode } from './pwa-install.js?v=__ASSET_VERSION__';
 import { getPublicMeetupActionState } from './public-flow.js?v=__ASSET_VERSION__';
 import {
   createPublicApplicationPayload,
@@ -998,6 +999,16 @@ function renderPushOptIn(item) {
     return;
   }
 
+  if (state.mode === 'install-hint') {
+    container.innerHTML = `
+      <div class="push-install-hint">
+        <p>${escapeHtml(state.message)}</p>
+        <button type="button" class="ghost-button" data-install-action>홈 화면에 추가하기</button>
+      </div>
+    `;
+    return;
+  }
+
   container.textContent = state.message;
 }
 
@@ -1344,6 +1355,21 @@ function openApplyPrompt(opener = document.activeElement) {
 }
 
 document.addEventListener('click', (event) => {
+  if (event.target.closest('[data-install-action]')) {
+    openInstallFlow();
+    return;
+  }
+
+  if (event.target.closest('[data-install-dismiss]')) {
+    dismissInstallBanner();
+    return;
+  }
+
+  if (event.target.closest('[data-install-guide-close]')) {
+    closeInstallGuide();
+    return;
+  }
+
   const checkoutButton = event.target.closest('[data-checkout]');
   if (checkoutButton) {
     openCheckout(checkoutButton.dataset.checkout, checkoutButton);
@@ -1518,3 +1544,85 @@ if ('serviceWorker' in navigator) {
     console.warn('service worker registration failed', error);
   });
 }
+
+let deferredInstallPrompt = null;
+const installBanner = document.querySelector('[data-install-banner]');
+const installGuide = document.querySelector('[data-install-guide]');
+
+function readInstallDismissed() {
+  try {
+    return localStorage.getItem('momentclub:install-dismissed') === '1';
+  } catch {
+    return false;
+  }
+}
+
+function getInstallMode() {
+  return getInstallPromptMode({
+    ...detectInstallEnv(),
+    dismissed: readInstallDismissed(),
+    hasDeferredPrompt: Boolean(deferredInstallPrompt),
+  });
+}
+
+function refreshInstallBanner() {
+  if (!installBanner) return;
+  const mode = getInstallMode();
+  installBanner.hidden = !(mode === 'native' || mode === 'ios-guide' || mode === 'ios-browser');
+}
+
+function openInstallGuide({ browserOnly = false } = {}) {
+  if (!installGuide) return;
+  const note = installGuide.querySelector('[data-install-guide-note]');
+  if (note) {
+    note.textContent = browserOnly
+      ? '아이폰에서는 Safari 브라우저에서만 홈 화면에 추가할 수 있어요. Safari로 열어주세요.'
+      : '홈 화면 앱에서 열면 신청 승인·환불 알림을 받을 수 있어요.';
+  }
+  installGuide.hidden = false;
+}
+
+function closeInstallGuide() {
+  if (installGuide) installGuide.hidden = true;
+}
+
+async function openInstallFlow() {
+  const mode = getInstallMode();
+
+  if (mode === 'native' && deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    try {
+      await deferredInstallPrompt.userChoice;
+    } catch (error) {
+      console.warn('install prompt dismissed', error);
+    }
+    deferredInstallPrompt = null;
+    refreshInstallBanner();
+    return;
+  }
+
+  openInstallGuide({ browserOnly: mode === 'ios-browser' });
+}
+
+function dismissInstallBanner() {
+  try {
+    localStorage.setItem('momentclub:install-dismissed', '1');
+  } catch {
+    // best effort; the banner still hides for this session
+  }
+  if (installBanner) installBanner.hidden = true;
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  refreshInstallBanner();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  dismissInstallBanner();
+  closeInstallGuide();
+});
+
+refreshInstallBanner();
