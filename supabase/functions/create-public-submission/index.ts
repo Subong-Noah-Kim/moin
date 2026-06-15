@@ -1,6 +1,7 @@
 import { getCorsHeaders, jsonResponse } from '../_shared/http.ts';
 import { getRequiredEnv, supabaseRequest } from '../_shared/supabase.ts';
 import { notifyApprovalPush } from '../_shared/approval-push.ts';
+import { notifyApplicationReceived } from '../_shared/application-email.ts';
 import { mapPublicSubmissionError } from '../_shared/public-submission-errors.ts';
 
 type PublicSubmissionAction = 'application' | 'toss_order' | 'demo_order' | 'push_subscription';
@@ -131,6 +132,9 @@ async function handleRequest(request: Request) {
     let result;
     if (action === 'application') {
       result = await createApplication(payload, visitorHash);
+
+      const application = (result as { application?: Record<string, unknown> })?.application;
+      await notifyApplicationReceived(application);
     } else if (action === 'push_subscription') {
       result = await registerPushSubscription(payload, visitorHash);
     } else {
