@@ -68,10 +68,11 @@ Status note 2026-06-13: approval push notifications are deployed and verified on
   - Files: `main.js`, `agent-monitor.js`, `admin-render.js`, `tests/paymentSecurity.test.js` (a pin asserts the main.js copy)
   - Done when: one exported implementation is imported everywhere, with the source-contract test updated.
 
-- [ ] Add an authenticated admin flow to the CI browser smoke
+- [x] Add an authenticated admin flow to the CI browser smoke
   - Problem: CI smoke only verifies the admin login screen renders; the authenticated dashboard (tables, embeds, status edits) has no automated release gate.
   - Files: `scripts/browser-smoke.mjs`, `.github/workflows/deploy-pages.yml`, GitHub repo secrets (read-only test admin)
   - Done when: CI logs in with a secret-stored read-only admin account and asserts the dashboard tables render with the applicant/payment link columns.
+  - Status: deployed via a CREDENTIAL-FREE approach instead of secret-stored creds (the repo is public and there's no read-only admin tier, so a real admin password in CI was rejected as too risky). `smokeAdminDashboard` seeds a fake session into sessionStorage and answers every Supabase REST/RPC call with fixtures, then asserts the orders/applications/meetups tables render, the applicant row appears, and the refund-request alert surfaces (count 1) — no admin password in CI, no live data read/written. Runs in CI before publish; verified passing locally and in the deploy run. If real end-to-end auth coverage is ever wanted, do it only after adding a read-only admin tier + a staging project.
 
 - [ ] Decide whether TODO.md moves to GitHub Issues
   - Problem: this file is the backlog source of truth but is invisible to GitHub project tooling.
