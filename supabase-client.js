@@ -625,6 +625,31 @@ export async function sendApprovalPush(applicationId) {
   return { skipped: false, ...(body?.result || {}) };
 }
 
+export async function sendRejectionNotice(applicationId) {
+  if (!isSupabaseConfigured()) {
+    return { skipped: true, claimed: false, emailed: 0, sent: 0 };
+  }
+
+  const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/send-approval-push`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ applicationId, kind: 'rejection' }),
+  });
+
+  if (!response.ok) {
+    const message = await parseErrorMessage(response);
+    throw new Error(message.text);
+  }
+
+  const body = await response.json();
+
+  return { skipped: false, ...(body?.result || {}) };
+}
+
 export async function refundAdminOrder(accessToken, orderId, reason) {
   if (!isSupabaseConfigured()) {
     throw new Error('Supabase가 연결되어 있지 않습니다.');

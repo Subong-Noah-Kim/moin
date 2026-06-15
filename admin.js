@@ -10,6 +10,7 @@ import {
   isSupabaseConfigured,
   refundAdminOrder,
   sendApprovalPush,
+  sendRejectionNotice,
   setAdminMeetupVisibility,
   signInAdmin,
   signOutAdmin,
@@ -24,6 +25,7 @@ import {
   getApplicationStatusLabel,
   getApprovalPushSummaryMessage,
   getOrderStatusLabel,
+  getRejectionNoticeSummaryMessage,
 } from './admin-status.js?v=__ASSET_VERSION__';
 import {
   buildAgentCards,
@@ -840,6 +842,16 @@ applicationsBody.addEventListener('change', async (event) => {
       } catch (pushError) {
         console.error(pushError);
         syncStatus.textContent = '신청 상태 승인 저장 완료 · 알림 발송 확인 실패';
+      }
+    } else if (nextStatus === 'rejected') {
+      syncStatus.textContent = '신청 상태 미선정 저장 완료 · 안내 확인 중';
+
+      try {
+        const noticeSummary = await sendRejectionNotice(applicationId);
+        syncStatus.textContent = getRejectionNoticeSummaryMessage(noticeSummary);
+      } catch (noticeError) {
+        console.error(noticeError);
+        syncStatus.textContent = '신청 상태 미선정 저장 완료 · 안내 발송 확인 실패';
       }
     } else {
       syncStatus.textContent = `신청 상태 ${getApplicationStatusLabel(nextStatus)} 저장 완료`;

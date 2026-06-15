@@ -1,6 +1,8 @@
 import * as webpush from 'jsr:@negrel/webpush';
 import { getCorsHeaders, jsonResponse } from '../_shared/http.ts';
 import { getRequiredEnv, supabaseRequest } from '../_shared/supabase.ts';
+import { buildApplicationRejectionEmail } from '../_shared/application-email.ts';
+import { sendBrevoEmail } from '../_shared/brevo-email.ts';
 
 let appServerPromise: Promise<webpush.ApplicationServer> | null = null;
 
@@ -110,6 +112,54 @@ async function handleRefundPush(request: Request, applicationId: string) {
   return jsonResponse({ ok: true, result: { kind: 'refund', ...outcome } });
 }
 
+type RejectionClaim = {
+  claimed?: boolean;
+  applicant_email?: string;
+  applicant_name?: string;
+  meetup_title?: string;
+  subscriptions?: ClaimedSubscription[];
+};
+
+async function handleRejectionNotice(applicationId: string) {
+  // Gated by the DB claim (status = 'rejected', one-shot), so this is safe to
+  // call with the anon key like the approval path. The email goes out whenever
+  // an address is on file; the push is best-effort on top.
+  const claim = (await supabaseRequest('rpc/claim_rejection_notice', {
+    method: 'POST',
+    body: JSON.stringify({ p_application_id: applicationId }),
+  })) as RejectionClaim;
+
+  if (!claim?.claimed) {
+    return jsonResponse({
+      ok: true,
+      result: { kind: 'rejection', claimed: false, emailed: 0, sent: 0, failed: 0, expired: 0 },
+    });
+  }
+
+  const meetupTitle = claim.meetup_title || '모임';
+  const email = typeof claim.applicant_email === 'string' ? claim.applicant_email.trim() : '';
+  let emailed = 0;
+
+  if (email) {
+    const { subject, html } = buildApplicationRejectionEmail({
+      applicantName: claim.applicant_name || '',
+      meetupTitle,
+    });
+    const result = await sendBrevoEmail({ to: email, toName: claim.applicant_name, subject, html });
+    if (result?.ok) emailed = 1;
+  }
+
+  const subscriptions = (claim.subscriptions || []) as ClaimedSubscription[];
+  const message = JSON.stringify({
+    title: '신청 결과 안내',
+    body: `${meetupTitle} 신청 결과를 확인해 주세요.`,
+    url: './my-history.html',
+  });
+  const outcome = await pushToSubscriptions(subscriptions, message);
+
+  return jsonResponse({ ok: true, result: { kind: 'rejection', claimed: true, emailed, ...outcome } });
+}
+
 async function handleRequest(request: Request) {
   if (request.method === 'OPTIONS') {
     return new Response('ok');
@@ -130,6 +180,10 @@ async function handleRequest(request: Request) {
 
     if (kind === 'refund') {
       return await handleRefundPush(request, applicationId);
+    }
+
+    if (kind === 'rejection') {
+      return await handleRejectionNotice(applicationId);
     }
 
     const claim = await supabaseRequest('rpc/claim_approval_push', {
