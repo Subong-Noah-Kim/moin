@@ -42,7 +42,7 @@
             </label>
             <button type="submit">비밀번호 설정</button>
           </form>
-          <p class="status-text" data-login-status></p>
+          <p class="status-text" data-login-status role="status" aria-live="polite"></p>
           <a class="site-link" href="./">사이트로 돌아가기</a>
         </div>
       </section>
@@ -92,7 +92,7 @@
             <button type="button" data-tab-button="meetups">모임</button>
             <button type="button" data-tab-button="agentic">작업판</button>
           </div>
-          <p data-sync-status></p>
+          <p data-sync-status role="status" aria-live="polite"></p>
         </div>
 
         <section class="table-section" data-tab-panel="applications">
@@ -281,7 +281,7 @@
               </label>
             </div>
             <div class="form-actions">
-              <p data-meetup-form-status></p>
+              <p data-meetup-form-status role="status" aria-live="polite"></p>
               <button type="submit" data-save-meetup>저장</button>
             </div>
           </form>

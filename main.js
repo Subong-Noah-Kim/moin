@@ -323,6 +323,7 @@ let checkoutRestoreFocusElement = null;
 let mobileNavRaf = 0;
 
 function getTopOpenModal() {
+  if (isModalOpen(installGuide)) return installGuide;
   if (isModalOpen(checkoutModal)) return checkoutModal;
   if (isModalOpen(drawer)) return drawer;
   return null;
@@ -1508,6 +1509,11 @@ document.addEventListener('keydown', (event) => {
   }
 
   if (event.key === 'Escape') {
+    if (isModalOpen(installGuide)) {
+      closeInstallGuide();
+      return;
+    }
+
     if (isModalOpen(checkoutModal)) {
       closeCheckout();
       return;
@@ -1571,6 +1577,8 @@ function refreshInstallBanner() {
   installBanner.hidden = !(mode === 'native' || mode === 'ios-guide' || mode === 'ios-browser');
 }
 
+let installGuideRestoreFocus = null;
+
 function openInstallGuide({ browserOnly = false } = {}) {
   if (!installGuide) return;
   const note = installGuide.querySelector('[data-install-guide-note]');
@@ -1579,11 +1587,13 @@ function openInstallGuide({ browserOnly = false } = {}) {
       ? '아이폰에서는 Safari 브라우저에서만 홈 화면에 추가할 수 있어요. Safari로 열어주세요.'
       : '홈 화면 앱에서 열면 신청 승인·환불 알림을 받을 수 있어요.';
   }
-  installGuide.hidden = false;
+  installGuideRestoreFocus = openModal(installGuide, 'install-guide-open', document.activeElement, '.install-guide-close');
 }
 
 function closeInstallGuide() {
-  if (installGuide) installGuide.hidden = true;
+  if (!installGuide || !isModalOpen(installGuide)) return;
+  closeModal(installGuide, 'install-guide-open', installGuideRestoreFocus);
+  installGuideRestoreFocus = null;
 }
 
 async function openInstallFlow() {

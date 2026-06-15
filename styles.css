@@ -44,6 +44,10 @@ body.checkout-open {
   overflow: hidden;
 }
 
+body.install-guide-open {
+  overflow: hidden;
+}
+
 button,
 input {
   font: inherit;
