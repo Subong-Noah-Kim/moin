@@ -2072,7 +2072,101 @@ h1 {
 }
 
 .drawer-apply-flow .payment-summary {
-  margin-top: 16px;
+  margin-top: 0;
+}
+
+.apply-steps {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.apply-step {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--surface);
+  transition: border-color 150ms ease, opacity 150ms ease;
+}
+
+.apply-step.is-active {
+  border-color: var(--green);
+  box-shadow: 0 0 0 1px var(--green);
+}
+
+.apply-step.is-locked {
+  opacity: 0.65;
+  background: var(--soft);
+}
+
+.apply-step.is-done {
+  border-color: rgba(31, 106, 83, 0.4);
+  background: var(--green-2);
+}
+
+.apply-step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.apply-step-head h4 {
+  margin: 0;
+  font-size: 1.04rem;
+}
+
+.apply-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--coal);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.apply-step.is-locked .apply-step-num {
+  background: var(--muted);
+}
+
+.apply-step-num.is-check {
+  background: var(--green);
+}
+
+.apply-step .application-form {
+  margin-top: 0;
+}
+
+.apply-step-note {
+  margin: 0;
+  color: var(--green);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.apply-lock-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.apply-submit {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(31, 106, 83, 0.24);
+}
+
+.apply-submit:hover {
+  background: #1a5b48;
 }
 
 .history-page {

@@ -280,18 +280,39 @@ test('push opt-in renders as a labeled checkbox instead of a ghost button', asyn
   assert.match(styles, /\.push-optin-helper/);
 });
 
-test('drawer gathers application form, push opt-in, and payment into one flow section', async () => {
+test('drawer renders a guided two-step apply-then-pay flow', async () => {
   const main = await readProjectFile('main.js');
 
+  assert.match(main, /function buildApplyFlow\(item\)/);
+  assert.match(main, /function refreshApplyFlow\(item/);
+
+  // The apply-flow section is built from the state machine, then schedule follows.
   assert.match(
     main,
-    /drawer-apply-flow[\s\S]*?\$\{applicationMarkup\}[\s\S]*?aria-label="결제 요약"/,
-    'application form (with push opt-in) must sit directly above the payment summary in one section',
+    /drawer-apply-flow[\s\S]*?\$\{buildApplyFlow\(item\)\}[\s\S]*?<\/section>[\s\S]*?\$\{scheduleMarkup\}/,
+    'the apply flow sits above schedule/FAQ/recommendations in one section',
+  );
+
+  // The builders cover the form, push opt-in, payment, and the locked/done steps.
+  const builder = main.slice(main.indexOf('function buildApplicationFormMarkup'));
+  assert.match(builder, /application-form/);
+  assert.match(builder, /data-push-optin/);
+  assert.match(builder, /aria-label="결제 요약"/);
+  assert.match(builder, /apply-step/);
+  assert.match(builder, /apply-step is-locked/, 'payment is visibly locked until the application is submitted');
+  assert.match(builder, /apply-step is-done/, 'the form collapses to a completed step after submission');
+  assert.match(builder, /apply-submit/, 'the submit button gets a high-contrast primary style');
+
+  // Submitting an application re-renders the flow and advances to the payment step.
+  assert.match(
+    main,
+    /refreshApplyFlow\(item, \{ focusPayment: true \}\)/,
+    'a successful submission advances and focuses the payment step',
   );
   assert.match(
     main,
-    /aria-label="결제 요약"[\s\S]*?<\/section>[\s\S]*?\$\{scheduleMarkup\}/,
-    'schedule, FAQ, and recommendations move below the consolidated apply flow',
+    /focusPayment[\s\S]{0,300}data-apply-step="2"[\s\S]{0,200}scrollIntoView/,
+    'focusPayment scrolls the payment step into view',
   );
 });
 

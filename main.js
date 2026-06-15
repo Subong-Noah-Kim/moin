@@ -733,6 +733,156 @@ loadRetryButton?.addEventListener('click', async () => {
   }
 });
 
+function buildApplicationFormMarkup(item) {
+  const nameId = createFieldId('application', item.id, 'name');
+  const nameHelpId = createFieldId(nameId, 'help');
+  const emailId = createFieldId('application', item.id, 'email');
+  const emailHelpId = createFieldId(emailId, 'help');
+  const interestId = createFieldId('application', item.id, 'interest');
+  const interestHelpId = createFieldId(interestId, 'help');
+
+  return `
+    <form class="application-form" data-application-form="${escapeAttribute(item.id)}">
+      <label class="field-group" for="${escapeAttribute(nameId)}">
+        <span>이름</span>
+        <input
+          id="${escapeAttribute(nameId)}"
+          name="name"
+          type="text"
+          autocomplete="name"
+          aria-describedby="${escapeAttribute(nameHelpId)}"
+          required
+        />
+      </label>
+      <p class="form-helper" id="${escapeAttribute(nameHelpId)}">신청 확인에 사용할 이름을 적어주세요.</p>
+      <label class="field-group" for="${escapeAttribute(emailId)}">
+        <span>이메일</span>
+        <input
+          id="${escapeAttribute(emailId)}"
+          name="email"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          aria-describedby="${escapeAttribute(emailHelpId)}"
+          required
+        />
+      </label>
+      <p class="form-helper" id="${escapeAttribute(emailHelpId)}">신청 확인과 모임 안내에만 사용해요. 어느 기기에서든 이 이메일로 내 신청 이력을 확인할 수 있어요.</p>
+      <label class="field-group" for="${escapeAttribute(interestId)}">
+        <span>이 모임에 끌린 이유</span>
+        <input
+          id="${escapeAttribute(interestId)}"
+          name="interest"
+          type="text"
+          aria-describedby="${escapeAttribute(interestHelpId)}"
+          required
+        />
+      </label>
+      <p class="form-helper" id="${escapeAttribute(interestHelpId)}">모임에 끌린 이유를 한 줄로 적어주세요.</p>
+      <button class="drawer-cta apply-submit" type="submit">신청서 제출하기</button>
+    </form>
+  `;
+}
+
+function buildPaymentSummaryMarkup(item, actionState) {
+  return `
+    <section class="${escapeAttribute(actionState.paymentSummaryClass)}" aria-label="결제 요약">
+      <div>
+        <span>${escapeHtml(actionState.paymentSummaryLabel)}</span>
+        <strong>${escapeHtml(actionState.paymentSummaryTitle)}</strong>
+        <p>${escapeHtml(actionState.paymentSummaryDescription)}</p>
+      </div>
+      <button
+        class="drawer-pay-button"
+        type="button"
+        data-checkout="${escapeAttribute(item.id)}"
+        ${actionState.paymentButtonDisabled ? 'disabled' : ''}
+      >
+        ${escapeHtml(actionState.paymentButtonText)}
+      </button>
+    </section>
+  `;
+}
+
+// Renders the apply→pay area as a guided two-step flow. Before an application
+// exists the payment step is visibly locked; after submission step 1 collapses
+// to a completed state and the payment step activates.
+function buildApplyFlow(item) {
+  const isPaid = paid.has(item.id);
+  const hasApplication = hasStoredApplication(item.id);
+  const actionState = getPublicMeetupActionState(item, { isPaid, hasApplication });
+
+  if (!actionState.canRegister) {
+    return `
+      <div class="registration-closed-note" role="status">
+        <strong>${escapeHtml(actionState.registrationLabel)}</strong>
+        <p>${escapeHtml(actionState.registrationDescription)}</p>
+      </div>
+    `;
+  }
+
+  const applied = hasApplication || isPaid;
+
+  const step1 = applied
+    ? `
+      <li class="apply-step is-done" data-apply-step="1">
+        <div class="apply-step-head">
+          <span class="apply-step-num is-check" aria-hidden="true">✓</span>
+          <h4>신청 완료</h4>
+        </div>
+        <p class="apply-step-note">신청이 접수되어 확인 메일을 보냈어요. 아래에서 결제를 마치면 신청이 확정됩니다.</p>
+        <div class="push-optin" data-push-optin="${escapeAttribute(item.id)}" hidden></div>
+      </li>
+    `
+    : `
+      <li class="apply-step is-active" data-apply-step="1">
+        <div class="apply-step-head">
+          <span class="apply-step-num" aria-hidden="true">1</span>
+          <h4>신청서 작성</h4>
+        </div>
+        ${buildApplicationFormMarkup(item)}
+      </li>
+    `;
+
+  const step2 = applied
+    ? `
+      <li class="apply-step is-active" data-apply-step="2">
+        <div class="apply-step-head">
+          <span class="apply-step-num" aria-hidden="true">2</span>
+          <h4>결제</h4>
+        </div>
+        ${buildPaymentSummaryMarkup(item, actionState)}
+      </li>
+    `
+    : `
+      <li class="apply-step is-locked" data-apply-step="2">
+        <div class="apply-step-head">
+          <span class="apply-step-num" aria-hidden="true">2</span>
+          <h4>결제</h4>
+        </div>
+        <p class="apply-lock-note">신청서를 먼저 제출하면 결제를 진행할 수 있어요.</p>
+      </li>
+    `;
+
+  return `<ol class="apply-steps">${step1}${step2}</ol>`;
+}
+
+function refreshApplyFlow(item, { focusPayment = false } = {}) {
+  if (!isModalOpen(drawer)) return;
+
+  const section = drawerContent.querySelector('.drawer-apply-flow');
+  if (!section) return;
+
+  section.innerHTML = `<h3>신청과 결제</h3>${buildApplyFlow(item)}`;
+  renderPushOptIn(item);
+
+  if (focusPayment) {
+    const paymentStep = section.querySelector('[data-apply-step="2"]');
+    paymentStep?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    paymentStep?.querySelector('.drawer-pay-button:not([disabled])')?.focus({ preventScroll: true });
+  }
+}
+
 function openDrawer(itemId, opener = document.activeElement) {
   const item = meetups.find((meetup) => meetup.id === itemId);
   if (!item) return;
@@ -742,17 +892,7 @@ function openDrawer(itemId, opener = document.activeElement) {
   const recommendations = meetups.filter((meetup) => meetup.id !== item.id).slice(0, 2);
   const isPaid = paid.has(item.id);
   const actionState = getPublicMeetupActionState(item, { isPaid, hasApplication: hasStoredApplication(item.id) });
-  const {
-    canRegister,
-    registrationLabel,
-    registrationDescription,
-  } = actionState;
-  const applicationNameId = createFieldId('application', item.id, 'name');
-  const applicationNameHelpId = createFieldId(applicationNameId, 'help');
-  const applicationEmailId = createFieldId('application', item.id, 'email');
-  const applicationEmailHelpId = createFieldId(applicationEmailId, 'help');
-  const applicationInterestId = createFieldId('application', item.id, 'interest');
-  const applicationInterestHelpId = createFieldId(applicationInterestId, 'help');
+  const { registrationLabel } = actionState;
   const scheduleMarkup = item.schedule.length
     ? `
       <section class="drawer-section">
@@ -761,56 +901,6 @@ function openDrawer(itemId, opener = document.activeElement) {
       </section>
     `
     : '';
-  const applicationMarkup = canRegister
-    ? `
-      <form class="application-form" data-application-form="${escapeAttribute(item.id)}">
-        <label class="field-group" for="${escapeAttribute(applicationNameId)}">
-          <span>이름</span>
-          <input
-            id="${escapeAttribute(applicationNameId)}"
-            name="name"
-            type="text"
-            autocomplete="name"
-            aria-describedby="${escapeAttribute(applicationNameHelpId)}"
-            required
-          />
-        </label>
-        <p class="form-helper" id="${escapeAttribute(applicationNameHelpId)}">신청 확인에 사용할 이름을 적어주세요.</p>
-        <label class="field-group" for="${escapeAttribute(applicationEmailId)}">
-          <span>이메일</span>
-          <input
-            id="${escapeAttribute(applicationEmailId)}"
-            name="email"
-            type="email"
-            autocomplete="email"
-            inputmode="email"
-            aria-describedby="${escapeAttribute(applicationEmailHelpId)}"
-            required
-          />
-        </label>
-        <p class="form-helper" id="${escapeAttribute(applicationEmailHelpId)}">신청 확인과 모임 안내에만 사용해요. 어느 기기에서든 이 이메일로 내 신청 이력을 확인할 수 있어요.</p>
-        <label class="field-group" for="${escapeAttribute(applicationInterestId)}">
-          <span>이 모임에 끌린 이유</span>
-          <input
-            id="${escapeAttribute(applicationInterestId)}"
-            name="interest"
-            type="text"
-            aria-describedby="${escapeAttribute(applicationInterestHelpId)}"
-            required
-          />
-        </label>
-        <p class="form-helper" id="${escapeAttribute(applicationInterestHelpId)}">모임에 끌린 이유를 한 줄로 적어주세요.</p>
-        <button class="drawer-cta" type="submit">신청서 제출</button>
-      </form>
-      <div class="push-optin" data-push-optin="${escapeAttribute(item.id)}" hidden></div>
-    `
-    : `
-      <div class="registration-closed-note" role="status">
-        <strong>${escapeHtml(registrationLabel)}</strong>
-        <p>${escapeHtml(registrationDescription)}</p>
-      </div>
-    `;
-
   drawerContent.innerHTML = `
     <div class="drawer-hero">
       <img src="${escapeImageUrl(item.image)}" alt="${escapeAttribute(item.title)}" />
@@ -843,22 +933,7 @@ function openDrawer(itemId, opener = document.activeElement) {
 
       <section class="drawer-section drawer-apply-flow" aria-label="신청과 결제">
         <h3>신청과 결제</h3>
-        ${applicationMarkup}
-        <section class="${escapeAttribute(actionState.paymentSummaryClass)}" aria-label="결제 요약">
-          <div>
-            <span>${escapeHtml(actionState.paymentSummaryLabel)}</span>
-            <strong>${escapeHtml(actionState.paymentSummaryTitle)}</strong>
-            <p>${escapeHtml(actionState.paymentSummaryDescription)}</p>
-          </div>
-          <button
-            class="drawer-pay-button"
-            type="button"
-            data-checkout="${escapeAttribute(item.id)}"
-            ${actionState.paymentButtonDisabled ? 'disabled' : ''}
-          >
-            ${escapeHtml(actionState.paymentButtonText)}
-          </button>
-        </section>
+        ${buildApplyFlow(item)}
       </section>
 
       ${scheduleMarkup}
@@ -881,32 +956,6 @@ function openDrawer(itemId, opener = document.activeElement) {
 
   drawerRestoreFocusElement = openModal(drawer, 'drawer-open', restoreFocusTarget, 'input[name="name"]');
   renderPushOptIn(item);
-}
-
-function refreshDrawerPaymentSummary(item) {
-  if (!isModalOpen(drawer)) return;
-
-  const payButton = drawerContent.querySelector('.drawer-pay-button');
-  if (!payButton || payButton.dataset.checkout !== item.id) return;
-
-  const actionState = getPublicMeetupActionState(item, {
-    isPaid: paid.has(item.id),
-    hasApplication: hasStoredApplication(item.id),
-  });
-  const summary = payButton.closest('.payment-summary');
-
-  if (summary) {
-    summary.className = actionState.paymentSummaryClass;
-    const label = summary.querySelector('span');
-    const title = summary.querySelector('strong');
-    const description = summary.querySelector('p');
-    if (label) label.textContent = actionState.paymentSummaryLabel;
-    if (title) title.textContent = actionState.paymentSummaryTitle;
-    if (description) description.textContent = actionState.paymentSummaryDescription;
-  }
-
-  payButton.disabled = actionState.paymentButtonDisabled;
-  payButton.textContent = actionState.paymentButtonText;
 }
 
 function renderPushOptIn(item) {
@@ -1218,8 +1267,7 @@ async function completeCheckout(itemId, form) {
 
     if (error?.code === 'APPLICATION_NOT_FOUND') {
       clearApplicationToken(item.id);
-      refreshDrawerPaymentSummary(item);
-      renderPushOptIn(item);
+      refreshApplyFlow(item);
       const message = '신청 내역을 찾지 못했어요. 신청서를 다시 제출한 뒤 결제해주세요.';
       setCheckoutStatus(form, message, 'error');
       showToast(message);
@@ -1255,15 +1303,16 @@ async function submitApplication(form) {
     const { skipped, rows } = await createApplication({ meetup: item, name, interest, email });
     const confirmationToken = rows?.[0]?.confirmation_token || '';
     setApplicationToken(item.id, confirmationToken);
-    refreshDrawerPaymentSummary(item);
-    renderPushOptIn(item);
     form.reset();
 
     if (!skipped && !confirmationToken) {
       console.warn('createApplication returned no confirmation_token; checkout stays gated.');
+      refreshApplyFlow(item);
       showToast('신청서는 저장됐지만 결제 연결 정보를 받지 못했어요. 새로고침 후 다시 신청해주세요.');
       return;
     }
+
+    refreshApplyFlow(item, { focusPayment: true });
 
     showToast(
       isSupabaseConfigured()

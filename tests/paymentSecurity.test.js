@@ -1869,14 +1869,14 @@ test('public application and checkout forms have explicit labels', async () => {
 
   assert.match(mainScript, /createPublicFieldId as createFieldId/);
   assert.match(formModule, /export function createPublicFieldId\(\.\.\.parts\)/);
-  assert.match(mainScript, /const applicationNameId = createFieldId\('application', item\.id, 'name'\)/);
-  assert.match(mainScript, /const applicationNameHelpId = createFieldId\(applicationNameId, 'help'\)/);
-  assert.match(mainScript, /const applicationInterestId = createFieldId\('application', item\.id, 'interest'\)/);
-  assert.match(mainScript, /const applicationInterestHelpId = createFieldId\(applicationInterestId, 'help'\)/);
-  assert.match(mainScript, /<label class="field-group" for="\$\{escapeAttribute\(applicationNameId\)\}">[\s\S]*<span>이름<\/span>[\s\S]*id="\$\{escapeAttribute\(applicationNameId\)\}"[\s\S]*name="name"[\s\S]*aria-describedby="\$\{escapeAttribute\(applicationNameHelpId\)\}"/);
-  assert.match(mainScript, /id="\$\{escapeAttribute\(applicationNameHelpId\)\}">신청 확인에 사용할 이름을 적어주세요\./);
-  assert.match(mainScript, /<label class="field-group" for="\$\{escapeAttribute\(applicationInterestId\)\}">[\s\S]*<span>이 모임에 끌린 이유<\/span>[\s\S]*id="\$\{escapeAttribute\(applicationInterestId\)\}"[\s\S]*name="interest"[\s\S]*aria-describedby="\$\{escapeAttribute\(applicationInterestHelpId\)\}"/);
-  assert.match(mainScript, /id="\$\{escapeAttribute\(applicationInterestHelpId\)\}">모임에 끌린 이유를 한 줄로 적어주세요\./);
+  assert.match(mainScript, /const nameId = createFieldId\('application', item\.id, 'name'\)/);
+  assert.match(mainScript, /const nameHelpId = createFieldId\(nameId, 'help'\)/);
+  assert.match(mainScript, /const interestId = createFieldId\('application', item\.id, 'interest'\)/);
+  assert.match(mainScript, /const interestHelpId = createFieldId\(interestId, 'help'\)/);
+  assert.match(mainScript, /<label class="field-group" for="\$\{escapeAttribute\(nameId\)\}">[\s\S]*<span>이름<\/span>[\s\S]*id="\$\{escapeAttribute\(nameId\)\}"[\s\S]*name="name"[\s\S]*aria-describedby="\$\{escapeAttribute\(nameHelpId\)\}"/);
+  assert.match(mainScript, /id="\$\{escapeAttribute\(nameHelpId\)\}">신청 확인에 사용할 이름을 적어주세요\./);
+  assert.match(mainScript, /<label class="field-group" for="\$\{escapeAttribute\(interestId\)\}">[\s\S]*<span>이 모임에 끌린 이유<\/span>[\s\S]*id="\$\{escapeAttribute\(interestId\)\}"[\s\S]*name="interest"[\s\S]*aria-describedby="\$\{escapeAttribute\(interestHelpId\)\}"/);
+  assert.match(mainScript, /id="\$\{escapeAttribute\(interestHelpId\)\}">모임에 끌린 이유를 한 줄로 적어주세요\./);
   assert.doesNotMatch(mainScript, /<input name="name" type="text" placeholder="이름"/);
   assert.doesNotMatch(mainScript, /<input name="interest" type="text" placeholder=/);
 
