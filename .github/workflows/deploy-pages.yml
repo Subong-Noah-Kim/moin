@@ -78,6 +78,7 @@ jobs:
           cp public-availability.js dist/
           cp public-flow.js dist/
           cp public-form.js dist/
+          cp public-meetup.js dist/
           cp public-storage.js dist/
           cp supabase-client.js dist/
           cp supabase-config.js dist/

@@ -97,6 +97,7 @@ const cacheBustedSourceFiles = [
   '../public-availability.js',
   '../public-flow.js',
   '../public-form.js',
+  '../public-meetup.js',
   '../public-storage.js',
   '../supabase-client.js',
   '../admin-render.js',
@@ -805,12 +806,17 @@ test('Toss confirmation function validates server amount and failure checkout to
 });
 
 test('public meetup rendering escapes dynamic content before writing HTML templates', async () => {
-  const mainScript = await readProjectFile('../main.js');
+  const [mainScript, meetupModule] = await Promise.all([
+    readProjectFile('../main.js'),
+    readProjectFile('../public-meetup.js'),
+  ]);
 
   assert.match(mainScript, /import { escapeHtml } from '\.\/escape-html\.js\?v=__ASSET_VERSION__'/);
-  assert.match(mainScript, /function escapeAttribute/);
-  assert.match(mainScript, /function escapeImageUrl/);
-  assert.match(mainScript, /createTagMarkup\(tags\) {\s+return tags\.map\(\(tag\) => `<span>\$\{escapeHtml\(tag\)\}<\/span>`\)/);
+  // The escaping/markup primitives now live in the tested public-meetup module.
+  assert.match(meetupModule, /export function escapeAttribute/);
+  assert.match(meetupModule, /export function escapeImageUrl/);
+  assert.match(meetupModule, /createTagMarkup\(tags\) {\s+return tags\.map\(\(tag\) => `<span>\$\{escapeHtml\(tag\)\}<\/span>`\)/);
+  assert.match(mainScript, /escapeAttribute,[\s\S]*?from '\.\/public-meetup\.js/);
   assert.match(mainScript, /alt="\$\{escapeAttribute\(item\.title\)\}"/);
   assert.match(mainScript, /src="\$\{escapeImageUrl\(item\.image\)\}"/);
   assert.match(mainScript, /data-detail="\$\{escapeAttribute\(item\.id\)\}"/);
