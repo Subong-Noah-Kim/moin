@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7f2e8"/>
+      <stop offset="0.34" stop-color="#fbf7ef"/>
+      <stop offset="1" stop-color="#f1ece2"/>
+    </linearGradient>
+    <linearGradient id="markBase" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0.5" stop-color="#1f6a53"/>
+      <stop offset="0.5" stop-color="#e7b93f"/>
+    </linearGradient>
+    <linearGradient id="markTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0.46" stop-color="#c94b35"/>
+      <stop offset="0.46" stop-color="#c94b35" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="markRound"><rect x="96" y="104" width="132" height="132" rx="33"/></clipPath>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="12" fill="#1f6a53"/>
+
+  <g clip-path="url(#markRound)">
+    <rect x="96" y="104" width="132" height="132" fill="url(#markBase)"/>
+    <rect x="96" y="104" width="132" height="132" fill="url(#markTop)"/>
+  </g>
+  <text x="252" y="205" font-family="'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif" font-size="104" font-weight="800" fill="#191816">moin</text>
+
+  <text x="96" y="372" font-family="'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif" font-size="74" font-weight="800" fill="#191816">
+    <tspan x="96" dy="0">취향이 비슷한 사람들과</tspan>
+    <tspan x="96" dy="92">보내는 진짜 저녁</tspan>
+  </text>
+
+  <text x="96" y="556" font-family="'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif" font-size="36" font-weight="700" fill="#6d6a62">취향 기반 모임 · 원데이 이벤트 · 작은 소모임</text>
+</svg>

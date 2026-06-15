@@ -29,6 +29,7 @@ const renders = [
   { svg: 'icons/app-icon.svg', size: 512, out: 'icons/icon-512.png' },
   { svg: 'icons/app-icon-fullbleed.svg', size: 512, out: 'icons/icon-maskable-512.png' },
   { svg: 'icons/app-icon-fullbleed.svg', size: 180, out: 'icons/apple-touch-icon-180.png' },
+  { svg: 'icons/og-image.svg', width: 1200, height: 630, out: 'icons/og-image.png' },
 ];
 
 function getFreePort() {
@@ -136,15 +137,17 @@ class CdpConnection {
   }
 }
 
-async function renderIcon(connection, { svg, size, out }) {
+async function renderIcon(connection, { svg, size, width, height, out }) {
+  const renderWidth = width || size;
+  const renderHeight = height || size;
   const { targetId } = await connection.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await connection.send('Target.attachToTarget', { targetId, flatten: true });
 
   try {
     await connection.send('Page.enable', {}, sessionId);
     await connection.send('Emulation.setDeviceMetricsOverride', {
-      width: size,
-      height: size,
+      width: renderWidth,
+      height: renderHeight,
       deviceScaleFactor: 1,
       mobile: false,
     }, sessionId);
@@ -158,7 +161,7 @@ async function renderIcon(connection, { svg, size, out }) {
 
     const { data } = await connection.send('Page.captureScreenshot', {
       format: 'png',
-      clip: { x: 0, y: 0, width: size, height: size, scale: 1 },
+      clip: { x: 0, y: 0, width: renderWidth, height: renderHeight, scale: 1 },
     }, sessionId);
 
     writeFileSync(path.join(root, out), Buffer.from(data, 'base64'));

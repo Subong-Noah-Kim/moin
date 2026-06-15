@@ -54,3 +54,41 @@ test('manifest and apple touch icons exist as PNG files', async () => {
     assert.equal(file.subarray(1, 4).toString(), 'PNG', `${iconPath} should be a PNG file`);
   }
 });
+
+test('index.html exposes Open Graph and Twitter cards for link previews', async () => {
+  const html = await readProjectFile('index.html');
+  const base = 'https://subong-noah-kim.github.io/moin/';
+
+  assert.match(html, /<meta property="og:type" content="website" \/>/);
+  assert.match(html, /<meta property="og:site_name" content="moin" \/>/);
+  assert.match(html, /<meta property="og:title" content="[^"]+" \/>/);
+  assert.match(html, /<meta property="og:description" content="[^"]+" \/>/);
+  assert.match(html, new RegExp(`<meta property="og:url" content="${base}" />`));
+  assert.match(html, new RegExp(`<meta property="og:image" content="${base}icons/og-image\\.png" />`));
+  assert.match(html, /<meta property="og:image:width" content="1200" \/>/);
+  assert.match(html, /<meta property="og:image:height" content="630" \/>/);
+  assert.match(html, /<meta property="og:locale" content="ko_KR" \/>/);
+  assert.match(html, /<meta name="twitter:card" content="summary_large_image" \/>/);
+  assert.match(html, new RegExp(`<meta name="twitter:image" content="${base}icons/og-image\\.png" />`));
+
+  // OG image URL must be absolute so scrapers (KakaoTalk, etc.) can fetch it.
+  assert.doesNotMatch(html, /property="og:image" content="\.\//, 'og:image must be an absolute URL');
+});
+
+test('the Open Graph preview image exists as a 1200x630 PNG', async () => {
+  const svg = await readProjectFile('icons/og-image.svg');
+  assert.match(svg, /viewBox="0 0 1200 630"/);
+
+  const png = await readFile(new URL('../icons/og-image.png', import.meta.url));
+  assert.ok(png.length > 0);
+  assert.equal(png.subarray(1, 4).toString(), 'PNG');
+  // PNG width/height live in the IHDR chunk at bytes 16-23 (big-endian).
+  assert.equal(png.readUInt32BE(16), 1200);
+  assert.equal(png.readUInt32BE(20), 630);
+
+  const workflow = await readProjectFile('.github/workflows/deploy-pages.yml');
+  assert.match(workflow, /cp -R icons dist\//, 'the icons dir (with og-image.png) must deploy');
+
+  const renderScript = await readProjectFile('scripts/render-app-icons.mjs');
+  assert.match(renderScript, /og-image\.svg/, 'the OG image is reproducible via the render script');
+});
