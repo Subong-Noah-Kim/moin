@@ -102,7 +102,13 @@ test('history page requests a magic link and reads the session from the callback
   assert.match(script, /만료되었거나 이미 사용/);
 
   const index = await readProjectFile('index.html');
-  assert.match(index, /my-history\.html/, 'the public site must link to the history page');
+  assert.match(
+    index,
+    /<header[\s\S]*?class="header-history-link" href="\.\/my-history\.html"[\s\S]*?<\/header>/,
+    'the history link lives in the top-right header',
+  );
+  const footer = index.slice(index.indexOf('<footer'), index.indexOf('</footer>'));
+  assert.doesNotMatch(footer, /my-history\.html/, 'the history link moved out of the footer');
 });
 
 test('history view builder escapes content and covers empty and paid states', async () => {

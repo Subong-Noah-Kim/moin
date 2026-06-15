@@ -137,6 +137,34 @@ a {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-history-link {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: color 150ms ease;
+}
+
+.header-history-link:hover {
+  color: #fff;
+}
+
+@media (max-width: 420px) {
+  .header-actions {
+    gap: 10px;
+  }
+
+  .header-history-link {
+    font-size: 0.82rem;
+  }
+}
+
 main {
   width: min(1160px, calc(100% - 40px));
   margin: 0 auto;
@@ -2011,7 +2039,7 @@ h1 {
   }
 
   .site-header {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto auto;
   }
 
   .hero-card {
