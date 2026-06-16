@@ -137,3 +137,20 @@ test('admin wires the guest modal to the client and refreshes seats', async () =
   // opening or mutating guests refreshes availability so the row seat summary updates
   assert.match(admin, /loadOperationalData\(\)/);
 });
+
+test('admin availability migration qualifies the guest CTE column (42702 regression)', async () => {
+  // list_admin_meetup_availability is `language plpgsql`, so the RETURNS TABLE column
+  // `meetup_id` shadows an unqualified `meetup_id` in the body. The guest_counts CTE must
+  // qualify it as meetup_guests.meetup_id (like the sibling orders.meetup_id) or the
+  // function raises 42702 "column reference meetup_id is ambiguous" at runtime.
+  const fix = await readProjectFile(
+    'supabase/migrations/20260625000000_fix_admin_availability_ambiguous_meetup_id.sql',
+  );
+
+  assert.match(fix, /create or replace function public\.list_admin_meetup_availability/);
+  assert.match(fix, /select meetup_guests\.meetup_id, count\(\*\)/, 'guest CTE selects the qualified column');
+  assert.match(fix, /group by meetup_guests\.meetup_id/, 'guest CTE groups by the qualified column');
+  // must not reintroduce the bare references that caused the ambiguity
+  assert.doesNotMatch(fix, /select meetup_id, count\(\*\)/);
+  assert.doesNotMatch(fix, /group by meetup_id\b/);
+});
