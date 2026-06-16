@@ -88,3 +88,14 @@ test('admin availability carries the guest count into the breakdown', () => {
   assert.match(getSeatBreakdownText(meetup), /게스트 3/);
   assert.match(getSeatBreakdownText(meetup), /확정 4/);
 });
+
+test('admin client exposes guest CRUD against meetup_guests', async () => {
+  const client = await readProjectFile('supabase-client.js');
+
+  assert.match(client, /export async function listMeetupGuests\(accessToken, meetupId\)/);
+  assert.match(client, /export async function addMeetupGuest\(accessToken, meetupId, \{ name, memo \}\)/);
+  assert.match(client, /export async function deleteMeetupGuest\(accessToken, guestId\)/);
+  assert.match(client, /selectRowsWithToken\(\s*'meetup_guests'/);
+  assert.match(client, /writeRowsWithToken\(\s*'meetup_guests'[\s\S]*?'POST'/);
+  assert.match(client, /writeRowsWithToken\(\s*'meetup_guests'[\s\S]*?'DELETE'/);
+});

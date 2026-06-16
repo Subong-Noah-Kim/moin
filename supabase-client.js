@@ -1044,3 +1044,39 @@ export async function updateAdminOrderStatus(accessToken, orderId, status) {
 
   return rows[0];
 }
+
+const adminGuestFields = ['id', 'meetup_id', 'name', 'memo', 'created_at'].join(',');
+
+export async function listMeetupGuests(accessToken, meetupId) {
+  return selectRowsWithToken(
+    'meetup_guests',
+    `?meetup_id=eq.${encodeURIComponent(meetupId)}&select=${adminGuestFields}&order=created_at.asc`,
+    accessToken,
+  );
+}
+
+export async function addMeetupGuest(accessToken, meetupId, { name, memo }) {
+  const rows = await writeRowsWithToken(
+    'meetup_guests',
+    `?select=${adminGuestFields}`,
+    accessToken,
+    { meetup_id: meetupId, name: String(name || '').trim(), memo: memo ? String(memo).trim() : null },
+    'POST',
+  );
+
+  if (!rows?.length) {
+    throw new Error('게스트를 추가하지 못했습니다.');
+  }
+
+  return rows[0];
+}
+
+export async function deleteMeetupGuest(accessToken, guestId) {
+  await writeRowsWithToken(
+    'meetup_guests',
+    `?id=eq.${encodeURIComponent(guestId)}`,
+    accessToken,
+    {},
+    'DELETE',
+  );
+}
