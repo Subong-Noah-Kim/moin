@@ -389,11 +389,11 @@ test('public availability helpers map sold-out, closed, and remaining-seat behav
 
   assert.equal(isRegistrationAvailable(nearlyFull), true);
   assert.equal(getRegistrationBlockReason(nearlyFull), '');
-  assert.equal(getRegistrationStatusLabel(nearlyFull), '잔여 2석');
+  assert.equal(getRegistrationStatusLabel(nearlyFull), '정원 4명 · 잔여 2석');
   assert.equal(getPublicStatusClass(nearlyFull), 'is-urgent');
   assert.equal(getPaymentButtonTextForMeetup(nearlyFull, { isPaid: true }), '테스트 결제 완료');
 
-  assert.equal(getRegistrationStatusLabel(open), '잔여 5석');
+  assert.equal(getRegistrationStatusLabel(open), '정원 10명 · 잔여 5석');
   assert.equal(getPublicStatusClass(open), 'is-seat');
   assert.equal(getPaymentButtonTextForMeetup(open), '결제하기');
 });
@@ -762,12 +762,12 @@ test('admin availability helpers render seat summaries from structured rows', ()
   assert.equal(getSeatStatusLabel(open), '접수 가능');
   assert.equal(getSeatStatusClass(open), 'is-published');
   assert.equal(getSeatSummaryText(open), '무제한');
-  assert.equal(getSeatBreakdownText(open), '확정 7 · 결제중 1');
+  assert.equal(getSeatBreakdownText(open), '확정 7 · 결제중 1 · 게스트 0');
 
   assert.equal(getSeatStatusLabel(nearlyFull), '접수 가능');
   assert.equal(getSeatStatusClass(nearlyFull), 'is-pending');
   assert.equal(getSeatSummaryText(nearlyFull), '잔여 2/4');
-  assert.equal(getSeatBreakdownText(nearlyFull), '확정 1 · 결제중 1');
+  assert.equal(getSeatBreakdownText(nearlyFull), '확정 1 · 결제중 1 · 게스트 0');
 
   assert.equal(getSeatStatusLabel(soldOut), '마감');
   assert.equal(getSeatStatusClass(soldOut), 'is-failed');
