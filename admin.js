@@ -8,6 +8,9 @@ import {
   fetchAdminOrders,
   getStoredAdminSession,
   isSupabaseConfigured,
+  listMeetupGuests,
+  addMeetupGuest,
+  deleteMeetupGuest,
   refundAdminOrder,
   sendApprovalPush,
   sendRejectionNotice,
@@ -19,6 +22,12 @@ import {
   updateAdminOrderStatus,
   uploadMeetupImage,
 } from './supabase-client.js?v=__ASSET_VERSION__';
+import {
+  closeModal,
+  isModalOpen,
+  openModal,
+  trapFocus,
+} from './modal-manager.js?v=__ASSET_VERSION__';
 import { createAdminMeetupPayload } from './admin-meetup-form.js?v=__ASSET_VERSION__';
 import { mergeAdminMeetupAvailability } from './admin-availability.js?v=__ASSET_VERSION__';
 import {
@@ -32,6 +41,7 @@ import {
   buildAgenticSummaryCards,
   buildApplicationRows,
   buildEmptyRow,
+  buildGuestListHtml,
   buildMeetupRows,
   buildOrderRows,
   buildTaskItems,
@@ -72,6 +82,13 @@ const agenticRefreshButton = document.querySelector('[data-agentic-refresh]');
 const meetupImagePreviewImg = document.querySelector('[data-image-preview-img]');
 const meetupImagePreviewEmpty = document.querySelector('[data-image-preview-empty]');
 const meetupImageFileName = document.querySelector('[data-image-file-name]');
+const guestModal = document.querySelector('[data-guest-modal]');
+const guestModalMeetup = document.querySelector('[data-guest-modal-meetup]');
+const guestList = document.querySelector('[data-guest-list]');
+const guestAddForm = document.querySelector('[data-guest-add-form]');
+const guestModalStatus = document.querySelector('[data-guest-modal-status]');
+let guestModalMeetupId = null;
+let guestModalRestoreFocus = null;
 
 let activeSession = getStoredAdminSession();
 let overview = {
@@ -483,6 +500,39 @@ function closeMeetupForm() {
   meetupFormStatus.textContent = '';
   resetMeetupImagePicker();
   meetupForm.reset();
+}
+
+function renderGuestList(guests) {
+  guestList.innerHTML = buildGuestListHtml(Array.isArray(guests) ? guests : []);
+}
+
+async function refreshGuestList() {
+  const guests = await listMeetupGuests(activeSession.accessToken, guestModalMeetupId);
+  renderGuestList(Array.isArray(guests) ? guests : []);
+  guestModalStatus.textContent = `게스트 ${Array.isArray(guests) ? guests.length : 0}명`;
+}
+
+async function openGuestModal(meetup) {
+  if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 진행해주세요.')) return;
+  guestModalMeetupId = meetup.id;
+  guestModalMeetup.textContent = meetup.title;
+  guestList.innerHTML = '';
+  guestModalStatus.textContent = '불러오는 중…';
+  guestModalRestoreFocus = openModal(guestModal, 'guest-modal-open', document.activeElement, 'input[name="name"]');
+
+  try {
+    await refreshGuestList();
+  } catch (error) {
+    console.error(error);
+    guestModalStatus.textContent = '게스트를 불러오지 못했습니다.';
+  }
+}
+
+function closeGuestModal() {
+  if (!isModalOpen(guestModal)) return;
+  closeModal(guestModal, 'guest-modal-open', guestModalRestoreFocus);
+  guestModalRestoreFocus = null;
+  guestModalMeetupId = null;
 }
 
 function upsertMeetupInOverview(meetup) {
@@ -1068,6 +1118,13 @@ meetupForm.addEventListener('submit', async (event) => {
 });
 
 meetupsBody.addEventListener('click', async (event) => {
+  const guestsButton = event.target.closest('[data-guests-meetup]');
+  if (guestsButton) {
+    const meetup = overview.meetups.find((item) => item.id === guestsButton.dataset.guestsMeetup);
+    if (meetup) openGuestModal(meetup);
+    return;
+  }
+
   const editButton = event.target.closest('[data-edit-meetup]');
   const toggleButton = event.target.closest('[data-toggle-meetup]');
 
@@ -1124,6 +1181,60 @@ tabButtons.forEach((button) => {
       void loadAgenticStatus();
     }
   });
+});
+
+document.querySelectorAll('[data-guest-modal-close]').forEach((element) => {
+  element.addEventListener('click', closeGuestModal);
+});
+
+guestAddForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!requireActiveSession(guestModalStatus, '다시 로그인한 뒤 진행해주세요.')) return;
+
+  const formData = new FormData(guestAddForm);
+  const name = String(formData.get('name') || '').trim();
+  if (!name) return;
+  const memo = String(formData.get('memo') || '').trim();
+
+  guestModalStatus.textContent = '추가 중…';
+  try {
+    await addMeetupGuest(activeSession.accessToken, guestModalMeetupId, { name, memo });
+    guestAddForm.reset();
+    await refreshGuestList();
+    await loadOperationalData();
+  } catch (error) {
+    console.error(error);
+    guestModalStatus.textContent = getAdminWriteErrorMessage(error);
+  }
+});
+
+guestList.addEventListener('click', async (event) => {
+  const deleteButton = event.target.closest('[data-delete-guest]');
+  if (!deleteButton) return;
+  if (!requireActiveSession(guestModalStatus, '다시 로그인한 뒤 진행해주세요.')) return;
+
+  deleteButton.disabled = true;
+  guestModalStatus.textContent = '삭제 중…';
+  try {
+    await deleteMeetupGuest(activeSession.accessToken, deleteButton.dataset.deleteGuest);
+    await refreshGuestList();
+    await loadOperationalData();
+  } catch (error) {
+    console.error(error);
+    deleteButton.disabled = false;
+    guestModalStatus.textContent = getAdminWriteErrorMessage(error);
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (!isModalOpen(guestModal)) return;
+  if (event.key === 'Escape') {
+    closeGuestModal();
+    return;
+  }
+  if (event.key === 'Tab') {
+    trapFocus(event, guestModal);
+  }
 });
 
 if (pendingInvite) {

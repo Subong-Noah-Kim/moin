@@ -381,3 +381,24 @@ export function buildTaskItems(tasks, emptyMessage = 'Task 상태가 없습니�
     })
     .join('') || `<article class="task-item"><p>${escapeHtml(emptyMessage)}</p></article>`;
 }
+
+
+export function buildGuestListHtml(guests) {
+  if (!guests.length) {
+    return '<li class="guest-empty">아직 게스트가 없습니다.</li>';
+  }
+
+  return guests
+    .map(
+      (guest) => `
+        <li>
+          <span>
+            <strong>${escapeHtml(guest.name)}</strong>
+            ${guest.memo ? `<span class="guest-memo"> · ${escapeHtml(guest.memo)}</span>` : ''}
+          </span>
+          <button type="button" data-delete-guest="${escapeHtml(guest.id)}">삭제</button>
+        </li>
+      `,
+    )
+    .join('');
+}

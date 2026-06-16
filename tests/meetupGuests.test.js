@@ -124,3 +124,16 @@ test('admin html has an accessible guest modal', async () => {
   assert.match(css, /\.guest-modal/);
   assert.match(css, /\.guest-list/);
 });
+
+test('admin wires the guest modal to the client and refreshes seats', async () => {
+  const admin = await readProjectFile('admin.js');
+
+  assert.match(admin, /listMeetupGuests/);
+  assert.match(admin, /addMeetupGuest/);
+  assert.match(admin, /deleteMeetupGuest/);
+  assert.match(admin, /data-guests-meetup/);
+  assert.match(admin, /openModal\(guestModal,/, 'the guest modal uses the focus-trapping modal manager');
+  assert.match(admin, /closeModal\(guestModal,/);
+  // opening or mutating guests refreshes availability so the row seat summary updates
+  assert.match(admin, /loadOperationalData\(\)/);
+});

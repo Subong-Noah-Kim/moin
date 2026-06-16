@@ -1230,3 +1230,8 @@ tr.is-refund-requested {
   color: var(--muted, #6d6a62);
   font-size: 0.85rem;
 }
+
+
+body.guest-modal-open {
+  overflow: hidden;
+}
