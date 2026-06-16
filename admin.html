@@ -343,6 +343,22 @@
       </section>
     </main>
 
+    <div class="guest-modal" data-guest-modal aria-hidden="true" hidden inert>
+      <div class="guest-modal-backdrop" data-guest-modal-close></div>
+      <article class="guest-modal-card" role="dialog" aria-modal="true" aria-labelledby="guestModalTitle" tabindex="-1">
+        <button class="icon-button guest-modal-close" type="button" data-guest-modal-close aria-label="게스트 관리 닫기">×</button>
+        <h3 id="guestModalTitle">게스트 관리</h3>
+        <p class="guest-modal-subtitle" data-guest-modal-meetup></p>
+        <form class="guest-add-form" data-guest-add-form>
+          <input type="text" name="name" placeholder="이름" required maxlength="80" aria-label="게스트 이름" />
+          <input type="text" name="memo" placeholder="메모(선택)" maxlength="200" aria-label="메모" />
+          <button type="submit">추가</button>
+        </form>
+        <ul class="guest-list" data-guest-list></ul>
+        <p class="guest-modal-status" data-guest-modal-status role="status" aria-live="polite"></p>
+      </article>
+    </div>
+
     <script type="module" src="./admin.js?v=__ASSET_VERSION__"></script>
   </body>
 </html>

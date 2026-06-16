@@ -111,3 +111,16 @@ test('admin meetup row exposes a guest-management button with the count', async 
   assert.match(rows, /data-guests-meetup="m1"/);
   assert.match(rows, /게스트 3명/);
 });
+
+test('admin html has an accessible guest modal', async () => {
+  const html = await readProjectFile('admin.html');
+  assert.match(html, /data-guest-modal[^>]*aria-hidden="true"[^>]*inert|data-guest-modal[^>]*inert/);
+  assert.match(html, /role="dialog" aria-modal="true"/);
+  assert.match(html, /data-guest-add-form/);
+  assert.match(html, /data-guest-list/);
+  assert.match(html, /data-guest-modal-close/);
+
+  const css = await readProjectFile('admin.css');
+  assert.match(css, /\.guest-modal/);
+  assert.match(css, /\.guest-list/);
+});
