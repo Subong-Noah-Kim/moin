@@ -22,5 +22,34 @@ test('migration creates an admin-only meetup_guests table', async () => {
   assert.match(sql, /for select to authenticated\s+using \(public\.is_admin\(\)\)/);
   assert.match(sql, /for insert to authenticated\s+with check \(public\.is_admin\(\)\)/);
   assert.match(sql, /for delete to authenticated\s+using \(public\.is_admin\(\)\)/);
-  assert.doesNotMatch(sql, /to anon/, 'guests must never be exposed to anon');
+  // table grants must never expose guest rows to anon
+  const tableSection = sql.slice(0, sql.indexOf('create or replace function'));
+  assert.doesNotMatch(tableSection, /to anon/, 'guests must never be exposed to anon');
+});
+
+test('all seat functions fold in the manual guest count', async () => {
+  const sql = await readProjectFile(MIGRATION);
+
+  // every seat function references the guest table
+  assert.match(sql, /create or replace function public\.list_public_meetup_availability/);
+  assert.match(sql, /create or replace function public\.list_admin_meetup_availability/);
+  assert.match(sql, /create or replace function public\.get_meetup_seat_snapshot/);
+  assert.match(sql, /create or replace function public\.assert_meetup_can_register/);
+
+  // remaining subtracts guests; sold-out adds guests to the order count
+  assert.match(sql, /- coalesce\(guest_counts\.manual_guest_count, 0\)/);
+  assert.match(sql, /v_active_order_count - v_manual_guest_count|v_active_order_count \+ v_manual_guest_count/);
+
+  // admin availability exposes the breakdown count
+  assert.match(sql, /manual_guest_count integer,/, 'admin RPC returns manual_guest_count');
+
+  // the admin function's return type changes, so it must be dropped before recreate
+  assert.match(sql, /drop function if exists public\.list_admin_meetup_availability\(\)/);
+
+  // public RPC must NOT add a guest column (only the reduced remaining is public)
+  const publicFn = sql.slice(
+    sql.indexOf('create or replace function public.list_public_meetup_availability'),
+    sql.indexOf('create or replace function public.list_admin_meetup_availability'),
+  );
+  assert.doesNotMatch(publicFn, /manual_guest_count integer/, 'public return signature stays count-free');
 });
