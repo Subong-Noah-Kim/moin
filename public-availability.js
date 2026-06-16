@@ -78,6 +78,9 @@ export function getRegistrationStatusLabel(item) {
   }
 
   if (Number.isFinite(item?.remainingSpots)) {
+    if (Number.isFinite(item?.capacity)) {
+      return `정원 ${item.capacity}명 · 잔여 ${item.remainingSpots}석`;
+    }
     return `잔여 ${item.remainingSpots}석`;
   }
 
@@ -102,6 +105,9 @@ export function getRegistrationStatusDescription(item) {
   }
 
   if (Number.isFinite(item?.remainingSpots)) {
+    if (Number.isFinite(item?.capacity)) {
+      return `정원 ${item.capacity}명 중 ${item.remainingSpots}석이 남아 있습니다.`;
+    }
     return `현재 신청 가능한 자리는 ${item.remainingSpots}석입니다.`;
   }
 

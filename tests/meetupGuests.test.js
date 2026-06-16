@@ -53,3 +53,22 @@ test('all seat functions fold in the manual guest count', async () => {
   );
   assert.doesNotMatch(publicFn, /manual_guest_count integer/, 'public return signature stays count-free');
 });
+
+import {
+  getRegistrationStatusLabel,
+  getRegistrationStatusDescription,
+} from '../public-availability.js';
+
+test('public label shows capacity alongside remaining', () => {
+  const withCapacity = { availabilityKnown: true, effectiveRegistrationStatus: 'open', capacity: 12, remainingSpots: 5 };
+  assert.equal(getRegistrationStatusLabel(withCapacity), '정원 12명 · 잔여 5석');
+  assert.match(getRegistrationStatusDescription(withCapacity), /정원 12명 중 5석/);
+
+  // no capacity → unchanged behavior
+  const noCapacity = { availabilityKnown: true, effectiveRegistrationStatus: 'open', capacity: null, remainingSpots: null };
+  assert.equal(getRegistrationStatusLabel(noCapacity), '접수중');
+
+  // sold out unchanged
+  const soldOut = { availabilityKnown: true, effectiveRegistrationStatus: 'sold_out', capacity: 12, remainingSpots: 0 };
+  assert.equal(getRegistrationStatusLabel(soldOut), '마감');
+});
