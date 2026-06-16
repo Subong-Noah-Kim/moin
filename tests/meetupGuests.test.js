@@ -72,3 +72,19 @@ test('public label shows capacity alongside remaining', () => {
   const soldOut = { availabilityKnown: true, effectiveRegistrationStatus: 'sold_out', capacity: 12, remainingSpots: 0 };
   assert.equal(getRegistrationStatusLabel(soldOut), '마감');
 });
+
+import {
+  mergeAdminMeetupAvailability,
+  getSeatBreakdownText,
+} from '../admin-availability.js';
+
+test('admin availability carries the guest count into the breakdown', () => {
+  const merged = mergeAdminMeetupAvailability(
+    [{ id: 'm1', title: '모임' }],
+    [{ meetup_id: 'm1', capacity: 12, paid_order_count: 4, pending_order_count: 0, active_order_count: 4, manual_guest_count: 3, remaining_spots: 5, registration_status: 'open', effective_registration_status: 'open', can_register: true }],
+  );
+  const meetup = merged[0];
+  assert.equal(meetup.manual_guest_count, 3);
+  assert.match(getSeatBreakdownText(meetup), /게스트 3/);
+  assert.match(getSeatBreakdownText(meetup), /확정 4/);
+});

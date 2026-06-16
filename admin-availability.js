@@ -13,6 +13,7 @@ function normalizeAdminAvailability(row) {
     capacity: normalizeOptionalInteger(row.capacity),
     paid_order_count: Number(row.paid_order_count || 0),
     pending_order_count: Number(row.pending_order_count || 0),
+    manual_guest_count: Number(row.manual_guest_count || 0),
     active_order_count: Number(row.active_order_count || 0),
     remaining_spots: row.remaining_spots === null ? null : Number(row.remaining_spots),
     registration_status: String(row.registration_status || 'open'),
@@ -46,6 +47,7 @@ export function mergeAdminMeetupAvailability(meetups, availabilityRows = []) {
       can_register: false,
       paid_order_count: null,
       pending_order_count: null,
+      manual_guest_count: null,
       active_order_count: null,
       remaining_spots: null,
     };
@@ -85,5 +87,5 @@ export function getSeatBreakdownText(meetup) {
     return '정원 상태를 다시 불러와야 합니다.';
   }
 
-  return `확정 ${meetup.paid_order_count || 0} · 결제중 ${meetup.pending_order_count || 0}`;
+  return `확정 ${meetup.paid_order_count || 0} · 결제중 ${meetup.pending_order_count || 0} · 게스트 ${meetup.manual_guest_count || 0}`;
 }
