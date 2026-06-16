@@ -99,3 +99,15 @@ test('admin client exposes guest CRUD against meetup_guests', async () => {
   assert.match(client, /writeRowsWithToken\(\s*'meetup_guests'[\s\S]*?'POST'/);
   assert.match(client, /writeRowsWithToken\(\s*'meetup_guests'[\s\S]*?'DELETE'/);
 });
+
+test('admin meetup row exposes a guest-management button with the count', async () => {
+  const { buildMeetupRows } = await import('../admin-render.js');
+  const rows = buildMeetupRows([{
+    id: 'm1', title: '모임', category: '문화', type: 'social',
+    date_label: '6월', time_label: '19:00', location: '성수',
+    price_label: '1,000원', price_amount: 1000, is_published: true,
+    availability: { registrationStatus: 'open' }, manual_guest_count: 3,
+  }]);
+  assert.match(rows, /data-guests-meetup="m1"/);
+  assert.match(rows, /게스트 3명/);
+});

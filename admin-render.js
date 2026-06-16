@@ -240,6 +240,7 @@ export function buildMeetupRows(meetups) {
           <td data-label="관리">
             <div class="row-actions">
               <button type="button" data-edit-meetup="${escapeHtml(meetup.id)}">수정</button>
+              <button type="button" data-guests-meetup="${escapeHtml(meetup.id)}">게스트 ${escapeHtml(String(meetup.manual_guest_count ?? 0))}명</button>
               <button
                 class="ghost-button"
                 type="button"
