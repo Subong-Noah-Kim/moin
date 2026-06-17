@@ -100,41 +100,42 @@ test('admin client exposes guest CRUD against meetup_guests', async () => {
   assert.match(client, /writeRowsWithToken\(\s*'meetup_guests'[\s\S]*?'DELETE'/);
 });
 
-test('admin meetup row exposes a guest-management button with the count', async () => {
+test('the unified manage button carries the guest count', async () => {
   const { buildMeetupRows } = await import('../admin-render.js');
   const rows = buildMeetupRows([{
     id: 'm1', title: '모임', category: '문화', type: 'social',
     date_label: '6월', time_label: '19:00', location: '성수',
     price_label: '1,000원', price_amount: 1000, is_published: true,
-    availability: { registrationStatus: 'open' }, manual_guest_count: 3,
+    availability: { registrationStatus: 'open' }, applicant_count: 4, manual_guest_count: 3,
   }]);
-  assert.match(rows, /data-guests-meetup="m1"/);
-  assert.match(rows, /게스트 3명/);
+  assert.match(rows, /data-manage-meetup="m1"/);
+  assert.match(rows, /게스트 3/);
 });
 
-test('admin html has an accessible guest modal', async () => {
+test('the guest section lives inside the accessible manage drawer', async () => {
   const html = await readProjectFile('admin.html');
-  assert.match(html, /data-guest-modal[^>]*aria-hidden="true"[^>]*inert|data-guest-modal[^>]*inert/);
+  assert.match(html, /data-manage-drawer[^>]*aria-hidden="true"[^>]*inert/);
   assert.match(html, /role="dialog" aria-modal="true"/);
   assert.match(html, /data-guest-add-form/);
   assert.match(html, /data-guest-list/);
-  assert.match(html, /data-guest-modal-close/);
+  assert.match(html, /data-manage-drawer-close/);
+  // the old standalone guest modal is gone
+  assert.doesNotMatch(html, /data-guest-modal/);
 
   const css = await readProjectFile('admin.css');
-  assert.match(css, /\.guest-modal/);
   assert.match(css, /\.guest-list/);
 });
 
-test('admin wires the guest modal to the client and refreshes seats', async () => {
+test('admin wires guest CRUD through the manage drawer and refreshes seats', async () => {
   const admin = await readProjectFile('admin.js');
 
   assert.match(admin, /listMeetupGuests/);
   assert.match(admin, /addMeetupGuest/);
   assert.match(admin, /deleteMeetupGuest/);
-  assert.match(admin, /data-guests-meetup/);
-  assert.match(admin, /openModal\(guestModal,/, 'the guest modal uses the focus-trapping modal manager');
-  assert.match(admin, /closeModal\(guestModal,/);
-  // opening or mutating guests refreshes availability so the row seat summary updates
+  assert.match(admin, /data-manage-meetup/);
+  assert.match(admin, /openModal\(manageDrawer,/, 'the manage drawer uses the focus-trapping modal manager');
+  assert.match(admin, /closeModal\(manageDrawer,/);
+  // mutating guests refreshes availability so the row seat summary updates
   assert.match(admin, /loadOperationalData\(\)/);
 });
 

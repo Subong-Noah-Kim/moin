@@ -1,7 +1,6 @@
 import {
   canManuallyUpdateOrderStatus,
   getAgentStatusLabel,
-  getApplicationStatusLabel,
   getApplicationStatusOptions,
   getOrderStatusLabel,
   getOrderStatusOptions,
@@ -184,7 +183,14 @@ export function buildMeetupApplicantList(applications) {
         <li class="applicant-item">
           <div class="applicant-head">
             <strong>${escapeHtml(application.applicant_name)}</strong>
-            <span class="pill is-${escapeHtml(application.status)}">${escapeHtml(getApplicationStatusLabel(application.status))}</span>
+            <select
+              class="status-select is-${escapeHtml(application.status)}"
+              data-application-status="${escapeHtml(application.id)}"
+              data-current-status="${escapeHtml(application.status)}"
+              aria-label="${escapeHtml(application.applicant_name)} 신청 상태"
+            >
+              ${renderApplicationStatusOptions(application.status)}
+            </select>
           </div>
           ${application.interest ? `<p class="applicant-interest">${escapeHtml(application.interest)}</p>` : ''}
           <span class="applicant-date">${escapeHtml(formatDate(application.created_at))}</span>
@@ -262,8 +268,7 @@ export function buildMeetupRows(meetups) {
           <td data-label="관리">
             <div class="row-actions">
               <button type="button" data-edit-meetup="${escapeHtml(meetup.id)}">수정</button>
-              <button type="button" data-guests-meetup="${escapeHtml(meetup.id)}">게스트 ${escapeHtml(String(meetup.manual_guest_count ?? 0))}명</button>
-              <button type="button" data-applicants-meetup="${escapeHtml(meetup.id)}">신청자 ${escapeHtml(String(meetup.applicant_count ?? 0))}명</button>
+              <button type="button" data-manage-meetup="${escapeHtml(meetup.id)}">신청 ${escapeHtml(String(meetup.applicant_count ?? 0))} · 게스트 ${escapeHtml(String(meetup.manual_guest_count ?? 0))}</button>
               <button
                 class="ghost-button"
                 type="button"

@@ -348,34 +348,33 @@
       </section>
     </main>
 
-    <div class="guest-modal" data-guest-modal aria-hidden="true" hidden inert>
-      <div class="guest-modal-backdrop" data-guest-modal-close></div>
-      <article class="guest-modal-card" role="dialog" aria-modal="true" aria-labelledby="guestModalTitle" tabindex="-1">
-        <button class="icon-button guest-modal-close" type="button" data-guest-modal-close aria-label="게스트 관리 닫기">×</button>
-        <h3 id="guestModalTitle">게스트 관리</h3>
-        <p class="guest-modal-subtitle" data-guest-modal-meetup></p>
-        <form class="guest-add-form" data-guest-add-form>
-          <input type="text" name="name" placeholder="이름" required maxlength="80" aria-label="게스트 이름" />
-          <input type="text" name="memo" placeholder="메모(선택)" maxlength="200" aria-label="메모" />
-          <button type="submit">추가</button>
-        </form>
-        <ul class="guest-list" data-guest-list></ul>
-        <p class="guest-modal-status" data-guest-modal-status role="status" aria-live="polite"></p>
-      </article>
-    </div>
-
-    <div class="meetup-drawer" data-applicant-drawer aria-hidden="true" hidden inert>
-      <div class="meetup-drawer-backdrop" data-applicant-drawer-close></div>
-      <aside class="meetup-drawer-panel applicant-panel" role="dialog" aria-modal="true" aria-labelledby="applicantDrawerTitle" tabindex="-1">
-        <div class="applicant-head-row">
+    <div class="meetup-drawer" data-manage-drawer aria-hidden="true" hidden inert>
+      <div class="meetup-drawer-backdrop" data-manage-drawer-close></div>
+      <aside class="meetup-drawer-panel manage-panel" role="dialog" aria-modal="true" aria-labelledby="manageDrawerTitle" tabindex="-1">
+        <div class="manage-head-row">
           <div>
-            <p class="eyebrow">APPLICANTS</p>
-            <h3 id="applicantDrawerTitle">신청자</h3>
+            <p class="eyebrow">MANAGE</p>
+            <h3 id="manageDrawerTitle" data-manage-drawer-meetup>관리</h3>
           </div>
-          <button class="ghost-button" type="button" data-applicant-drawer-close>닫기</button>
+          <button class="ghost-button" type="button" data-manage-drawer-close>닫기</button>
         </div>
-        <p class="applicant-drawer-subtitle" data-applicant-drawer-meetup></p>
-        <ul class="applicant-list" data-applicant-list></ul>
+
+        <section class="manage-section" aria-labelledby="manageApplicantsTitle">
+          <h4 id="manageApplicantsTitle" class="manage-section-title" data-applicant-section-title>신청자</h4>
+          <ul class="applicant-list" data-applicant-list></ul>
+        </section>
+
+        <section class="manage-section" aria-labelledby="manageGuestsTitle">
+          <h4 id="manageGuestsTitle" class="manage-section-title" data-guest-section-title>게스트</h4>
+          <form class="guest-add-form" data-guest-add-form>
+            <input type="text" name="name" placeholder="이름" required maxlength="80" aria-label="게스트 이름" />
+            <input type="text" name="memo" placeholder="메모(선택)" maxlength="200" aria-label="메모" />
+            <button type="submit">추가</button>
+          </form>
+          <ul class="guest-list" data-guest-list></ul>
+        </section>
+
+        <p class="manage-status" data-manage-status role="status" aria-live="polite"></p>
       </aside>
     </div>
 

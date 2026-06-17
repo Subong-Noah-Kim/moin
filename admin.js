@@ -84,17 +84,16 @@ const agenticRefreshButton = document.querySelector('[data-agentic-refresh]');
 const meetupImagePreviewImg = document.querySelector('[data-image-preview-img]');
 const meetupImagePreviewEmpty = document.querySelector('[data-image-preview-empty]');
 const meetupImageFileName = document.querySelector('[data-image-file-name]');
-const guestModal = document.querySelector('[data-guest-modal]');
-const guestModalMeetup = document.querySelector('[data-guest-modal-meetup]');
-const guestList = document.querySelector('[data-guest-list]');
-const guestAddForm = document.querySelector('[data-guest-add-form]');
-const guestModalStatus = document.querySelector('[data-guest-modal-status]');
-let guestModalMeetupId = null;
-let guestModalRestoreFocus = null;
-const applicantDrawer = document.querySelector('[data-applicant-drawer]');
-const applicantDrawerMeetup = document.querySelector('[data-applicant-drawer-meetup]');
+const manageDrawer = document.querySelector('[data-manage-drawer]');
+const manageDrawerMeetup = document.querySelector('[data-manage-drawer-meetup]');
 const applicantList = document.querySelector('[data-applicant-list]');
-let applicantDrawerRestoreFocus = null;
+const applicantSectionTitle = document.querySelector('[data-applicant-section-title]');
+const guestSectionTitle = document.querySelector('[data-guest-section-title]');
+const guestAddForm = document.querySelector('[data-guest-add-form]');
+const guestList = document.querySelector('[data-guest-list]');
+const manageStatus = document.querySelector('[data-manage-status]');
+let manageMeetupId = null;
+let manageDrawerRestoreFocus = null;
 
 let activeSession = getStoredAdminSession();
 let overview = {
@@ -459,17 +458,10 @@ function renderMeetups() {
   document.querySelector('[data-meetups-body]').innerHTML = buildMeetupRows(meetupsWithApplicantCounts);
 }
 
-function openApplicantDrawer(meetup) {
-  const applicants = overview.applications.filter((application) => application.meetup_id === meetup.id);
-  applicantDrawerMeetup.textContent = `${meetup.title} · 신청자 ${applicants.length}명`;
+function renderManageApplicants() {
+  const applicants = overview.applications.filter((application) => application.meetup_id === manageMeetupId);
+  applicantSectionTitle.textContent = `신청자 ${applicants.length}명`;
   applicantList.innerHTML = buildMeetupApplicantList(applicants);
-  applicantDrawerRestoreFocus = openModal(applicantDrawer, 'applicant-drawer-open', document.activeElement, '[data-applicant-drawer-close]');
-}
-
-function closeApplicantDrawer() {
-  if (!isModalOpen(applicantDrawer)) return;
-  closeModal(applicantDrawer, 'applicant-drawer-open', applicantDrawerRestoreFocus);
-  applicantDrawerRestoreFocus = null;
 }
 
 function renderMeetupsMessage(message, countLabel = '0개') {
@@ -531,36 +523,41 @@ function closeMeetupForm() {
 }
 
 function renderGuestList(guests) {
-  guestList.innerHTML = buildGuestListHtml(Array.isArray(guests) ? guests : []);
+  const list = Array.isArray(guests) ? guests : [];
+  guestSectionTitle.textContent = `게스트 ${list.length}명`;
+  guestList.innerHTML = buildGuestListHtml(list);
 }
 
 async function refreshGuestList() {
-  const guests = await listMeetupGuests(activeSession.accessToken, guestModalMeetupId);
-  renderGuestList(Array.isArray(guests) ? guests : []);
-  guestModalStatus.textContent = `게스트 ${Array.isArray(guests) ? guests.length : 0}명`;
+  const guests = await listMeetupGuests(activeSession.accessToken, manageMeetupId);
+  renderGuestList(guests);
 }
 
-async function openGuestModal(meetup) {
+async function openManageDrawer(meetup) {
   if (!requireActiveSession(syncStatus, '다시 로그인한 뒤 진행해주세요.')) return;
-  guestModalMeetupId = meetup.id;
-  guestModalMeetup.textContent = meetup.title;
+  manageMeetupId = meetup.id;
+  manageDrawerMeetup.textContent = meetup.title;
+  renderManageApplicants();
+  guestSectionTitle.textContent = '게스트';
   guestList.innerHTML = '';
-  guestModalStatus.textContent = '불러오는 중…';
-  guestModalRestoreFocus = openModal(guestModal, 'guest-modal-open', document.activeElement, 'input[name="name"]');
+  manageStatus.textContent = '게스트 불러오는 중…';
+  manageDrawerRestoreFocus = openModal(manageDrawer, 'manage-drawer-open', document.activeElement, 'button[data-manage-drawer-close]');
 
   try {
     await refreshGuestList();
+    manageStatus.textContent = '';
   } catch (error) {
     console.error(error);
-    guestModalStatus.textContent = '게스트를 불러오지 못했습니다.';
+    manageStatus.textContent = '게스트를 불러오지 못했습니다.';
   }
 }
 
-function closeGuestModal() {
-  if (!isModalOpen(guestModal)) return;
-  closeModal(guestModal, 'guest-modal-open', guestModalRestoreFocus);
-  guestModalRestoreFocus = null;
-  guestModalMeetupId = null;
+function closeManageDrawer() {
+  if (!isModalOpen(manageDrawer)) return;
+  closeModal(manageDrawer, 'manage-drawer-open', manageDrawerRestoreFocus);
+  manageDrawerRestoreFocus = null;
+  manageMeetupId = null;
+  manageStatus.textContent = '';
 }
 
 function upsertMeetupInOverview(meetup) {
@@ -602,6 +599,9 @@ function updateApplicationInOverview(updatedApplication) {
     application.id === updatedApplication.id ? updatedApplication : application,
   );
   renderApplications();
+  if (isModalOpen(manageDrawer)) {
+    renderManageApplicants();
+  }
 }
 
 function updateOrderInOverview(updatedOrder) {
@@ -892,7 +892,7 @@ signOutButton.addEventListener('click', async () => {
   showLogin('로그아웃했습니다.');
 });
 
-applicationsBody.addEventListener('change', async (event) => {
+async function handleApplicationStatusChange(event) {
   const select = event.target.closest('[data-application-status]');
 
   if (!select) {
@@ -954,7 +954,10 @@ applicationsBody.addEventListener('change', async (event) => {
   } finally {
     select.disabled = false;
   }
-});
+}
+
+applicationsBody.addEventListener('change', handleApplicationStatusChange);
+applicantList.addEventListener('change', handleApplicationStatusChange);
 
 ordersBody.addEventListener('change', async (event) => {
   const select = event.target.closest('[data-order-status]');
@@ -1146,17 +1149,10 @@ meetupForm.addEventListener('submit', async (event) => {
 });
 
 meetupsBody.addEventListener('click', async (event) => {
-  const guestsButton = event.target.closest('[data-guests-meetup]');
-  if (guestsButton) {
-    const meetup = overview.meetups.find((item) => item.id === guestsButton.dataset.guestsMeetup);
-    if (meetup) openGuestModal(meetup);
-    return;
-  }
-
-  const applicantsButton = event.target.closest('[data-applicants-meetup]');
-  if (applicantsButton) {
-    const meetup = overview.meetups.find((item) => item.id === applicantsButton.dataset.applicantsMeetup);
-    if (meetup) openApplicantDrawer(meetup);
+  const manageButton = event.target.closest('[data-manage-meetup]');
+  if (manageButton) {
+    const meetup = overview.meetups.find((item) => item.id === manageButton.dataset.manageMeetup);
+    if (meetup) openManageDrawer(meetup);
     return;
   }
 
@@ -1218,10 +1214,6 @@ tabButtons.forEach((button) => {
   });
 });
 
-document.querySelectorAll('[data-guest-modal-close]').forEach((element) => {
-  element.addEventListener('click', closeGuestModal);
-});
-
 document.querySelectorAll('[data-meetup-drawer-close]').forEach((element) => {
   element.addEventListener('click', closeMeetupForm);
 });
@@ -1237,49 +1229,49 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-document.querySelectorAll('[data-applicant-drawer-close]').forEach((element) => {
-  element.addEventListener('click', closeApplicantDrawer);
+document.querySelectorAll('[data-manage-drawer-close]').forEach((element) => {
+  element.addEventListener('click', closeManageDrawer);
 });
 
 document.addEventListener('keydown', (event) => {
-  if (!isModalOpen(applicantDrawer)) return;
+  if (!isModalOpen(manageDrawer)) return;
   if (event.key === 'Escape') {
-    closeApplicantDrawer();
+    closeManageDrawer();
     return;
   }
   if (event.key === 'Tab') {
-    trapFocus(event, applicantDrawer);
+    trapFocus(event, manageDrawer);
   }
 });
 
 guestAddForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  if (!requireActiveSession(guestModalStatus, '다시 로그인한 뒤 진행해주세요.')) return;
+  if (!requireActiveSession(manageStatus, '다시 로그인한 뒤 진행해주세요.')) return;
 
   const formData = new FormData(guestAddForm);
   const name = String(formData.get('name') || '').trim();
   if (!name) return;
   const memo = String(formData.get('memo') || '').trim();
 
-  guestModalStatus.textContent = '추가 중…';
+  manageStatus.textContent = '추가 중…';
   try {
-    await addMeetupGuest(activeSession.accessToken, guestModalMeetupId, { name, memo });
+    await addMeetupGuest(activeSession.accessToken, manageMeetupId, { name, memo });
     guestAddForm.reset();
     await refreshGuestList();
     await loadOperationalData();
   } catch (error) {
     console.error(error);
-    guestModalStatus.textContent = getAdminWriteErrorMessage(error);
+    manageStatus.textContent = getAdminWriteErrorMessage(error);
   }
 });
 
 guestList.addEventListener('click', async (event) => {
   const deleteButton = event.target.closest('[data-delete-guest]');
   if (!deleteButton) return;
-  if (!requireActiveSession(guestModalStatus, '다시 로그인한 뒤 진행해주세요.')) return;
+  if (!requireActiveSession(manageStatus, '다시 로그인한 뒤 진행해주세요.')) return;
 
   deleteButton.disabled = true;
-  guestModalStatus.textContent = '삭제 중…';
+  manageStatus.textContent = '삭제 중…';
   try {
     await deleteMeetupGuest(activeSession.accessToken, deleteButton.dataset.deleteGuest);
     await refreshGuestList();
@@ -1287,18 +1279,7 @@ guestList.addEventListener('click', async (event) => {
   } catch (error) {
     console.error(error);
     deleteButton.disabled = false;
-    guestModalStatus.textContent = getAdminWriteErrorMessage(error);
-  }
-});
-
-document.addEventListener('keydown', (event) => {
-  if (!isModalOpen(guestModal)) return;
-  if (event.key === 'Escape') {
-    closeGuestModal();
-    return;
-  }
-  if (event.key === 'Tab') {
-    trapFocus(event, guestModal);
+    manageStatus.textContent = getAdminWriteErrorMessage(error);
   }
 });
 

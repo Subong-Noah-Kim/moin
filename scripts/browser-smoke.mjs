@@ -495,20 +495,24 @@ async function smokeAdminDashboard(connection, baseUrl) {
     if (!drawerClosed) throw new Error('meetup edit drawer did not close');
     console.log('✓ meetup editor drawer opens and closes (list stays in place)');
 
-    // The applicants drawer opens from the meetup row and lists that meetup's applicants.
-    await evaluate(connection, page.sessionId, `document.querySelector('[data-applicants-meetup]').click()`);
+    // The unified manage drawer opens from the meetup row with editable applicants + a guest section.
+    await evaluate(connection, page.sessionId, `document.querySelector('[data-manage-meetup]').click()`);
     await waitForExpression(
       connection,
       page.sessionId,
       `(() => {
-        const drawer = document.querySelector('[data-applicant-drawer]');
-        return drawer && drawer.getAttribute('aria-hidden') === 'false'
-          && document.querySelector('[data-applicant-list]').textContent.includes('스모크 신청자');
+        const drawer = document.querySelector('[data-manage-drawer]');
+        if (!drawer || drawer.getAttribute('aria-hidden') !== 'false') return false;
+        const applicantList = document.querySelector('[data-applicant-list]');
+        const hasApplicant = applicantList.textContent.includes('스모크 신청자');
+        const editable = !!applicantList.querySelector('select[data-application-status]');
+        const hasGuestForm = !!drawer.querySelector('[data-guest-add-form]');
+        return hasApplicant && editable && hasGuestForm;
       })()`,
-      'applicant drawer lists the meetup applicants',
+      'manage drawer shows editable applicants and the guest section',
     );
-    await evaluate(connection, page.sessionId, `document.querySelector('[data-applicant-drawer-close]').click()`);
-    console.log('✓ applicant drawer lists meetup applicants');
+    await evaluate(connection, page.sessionId, `document.querySelector('[data-manage-drawer-close]').click()`);
+    console.log('✓ manage drawer: editable applicants + guest section in one place');
   } finally {
     await page.close();
   }
