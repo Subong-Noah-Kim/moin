@@ -1,6 +1,7 @@
 import {
   canManuallyUpdateOrderStatus,
   getAgentStatusLabel,
+  getApplicationStatusLabel,
   getApplicationStatusOptions,
   getOrderStatusLabel,
   getOrderStatusOptions,
@@ -172,6 +173,27 @@ export function buildApplicationRows(applications, { getMeetupTitle }) {
     .join('') || buildEmptyRow(5, '신청 내역이 없습니다.');
 }
 
+export function buildMeetupApplicantList(applications) {
+  if (!Array.isArray(applications) || !applications.length) {
+    return '<li class="applicant-empty">아직 신청자가 없습니다.</li>';
+  }
+
+  return applications
+    .map(
+      (application) => `
+        <li class="applicant-item">
+          <div class="applicant-head">
+            <strong>${escapeHtml(application.applicant_name)}</strong>
+            <span class="pill is-${escapeHtml(application.status)}">${escapeHtml(getApplicationStatusLabel(application.status))}</span>
+          </div>
+          ${application.interest ? `<p class="applicant-interest">${escapeHtml(application.interest)}</p>` : ''}
+          <span class="applicant-date">${escapeHtml(formatDate(application.created_at))}</span>
+        </li>
+      `,
+    )
+    .join('');
+}
+
 export function buildOrderRows(orders, { getMeetupTitle, getPaymentForOrder }) {
   return sortOrdersForReview(orders)
     .map(
@@ -241,6 +263,7 @@ export function buildMeetupRows(meetups) {
             <div class="row-actions">
               <button type="button" data-edit-meetup="${escapeHtml(meetup.id)}">수정</button>
               <button type="button" data-guests-meetup="${escapeHtml(meetup.id)}">게스트 ${escapeHtml(String(meetup.manual_guest_count ?? 0))}명</button>
+              <button type="button" data-applicants-meetup="${escapeHtml(meetup.id)}">신청자 ${escapeHtml(String(meetup.applicant_count ?? 0))}명</button>
               <button
                 class="ghost-button"
                 type="button"

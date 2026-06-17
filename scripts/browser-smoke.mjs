@@ -494,6 +494,21 @@ async function smokeAdminDashboard(connection, baseUrl) {
     );
     if (!drawerClosed) throw new Error('meetup edit drawer did not close');
     console.log('✓ meetup editor drawer opens and closes (list stays in place)');
+
+    // The applicants drawer opens from the meetup row and lists that meetup's applicants.
+    await evaluate(connection, page.sessionId, `document.querySelector('[data-applicants-meetup]').click()`);
+    await waitForExpression(
+      connection,
+      page.sessionId,
+      `(() => {
+        const drawer = document.querySelector('[data-applicant-drawer]');
+        return drawer && drawer.getAttribute('aria-hidden') === 'false'
+          && document.querySelector('[data-applicant-list]').textContent.includes('스모크 신청자');
+      })()`,
+      'applicant drawer lists the meetup applicants',
+    );
+    await evaluate(connection, page.sessionId, `document.querySelector('[data-applicant-drawer-close]').click()`);
+    console.log('✓ applicant drawer lists meetup applicants');
   } finally {
     await page.close();
   }

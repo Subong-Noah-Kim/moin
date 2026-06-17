@@ -789,18 +789,21 @@ td strong {
 
 .pill.is-paid,
 .pill.is-submitted,
+.pill.is-accepted,
 .pill.is-published {
   background: rgba(31, 106, 83, 0.13);
   color: var(--green);
 }
 
-.pill.is-pending {
+.pill.is-pending,
+.pill.is-reviewing {
   background: rgba(163, 107, 17, 0.15);
   color: var(--amber);
 }
 
 .pill.is-cancelled,
 .pill.is-failed,
+.pill.is-rejected,
 .pill.is-refunded {
   background: rgba(156, 59, 46, 0.13);
   color: var(--red);
@@ -1281,4 +1284,70 @@ body.guest-modal-open {
 
 body.meetup-drawer-open {
   overflow: hidden;
+}
+
+body.applicant-drawer-open {
+  overflow: hidden;
+}
+
+.applicant-panel {
+  padding: 20px 18px 24px;
+}
+
+.applicant-head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.applicant-head-row h3 {
+  margin: 2px 0 0;
+  font-size: 1.1rem;
+}
+
+.applicant-drawer-subtitle {
+  margin: 10px 0 16px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.applicant-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.applicant-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.applicant-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.applicant-interest {
+  margin: 0;
+  color: var(--coal);
+  font-size: 0.92rem;
+}
+
+.applicant-date {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.applicant-empty {
+  list-style: none;
+  color: var(--muted);
+  padding: 16px 4px;
 }

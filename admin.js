@@ -42,6 +42,7 @@ import {
   buildApplicationRows,
   buildEmptyRow,
   buildGuestListHtml,
+  buildMeetupApplicantList,
   buildMeetupRows,
   buildOrderRows,
   buildTaskItems,
@@ -90,6 +91,10 @@ const guestAddForm = document.querySelector('[data-guest-add-form]');
 const guestModalStatus = document.querySelector('[data-guest-modal-status]');
 let guestModalMeetupId = null;
 let guestModalRestoreFocus = null;
+const applicantDrawer = document.querySelector('[data-applicant-drawer]');
+const applicantDrawerMeetup = document.querySelector('[data-applicant-drawer-meetup]');
+const applicantList = document.querySelector('[data-applicant-list]');
+let applicantDrawerRestoreFocus = null;
 
 let activeSession = getStoredAdminSession();
 let overview = {
@@ -441,9 +446,30 @@ function renderOrdersMessage(message, countLabel = '0건') {
   document.querySelector('[data-orders-body]').innerHTML = buildEmptyRow(8, message);
 }
 
+function countApplicantsForMeetup(meetupId) {
+  return overview.applications.filter((application) => application.meetup_id === meetupId).length;
+}
+
 function renderMeetups() {
   document.querySelector('[data-meetups-count]').textContent = `${overview.meetups.length}개`;
-  document.querySelector('[data-meetups-body]').innerHTML = buildMeetupRows(overview.meetups);
+  const meetupsWithApplicantCounts = overview.meetups.map((meetup) => ({
+    ...meetup,
+    applicant_count: countApplicantsForMeetup(meetup.id),
+  }));
+  document.querySelector('[data-meetups-body]').innerHTML = buildMeetupRows(meetupsWithApplicantCounts);
+}
+
+function openApplicantDrawer(meetup) {
+  const applicants = overview.applications.filter((application) => application.meetup_id === meetup.id);
+  applicantDrawerMeetup.textContent = `${meetup.title} · 신청자 ${applicants.length}명`;
+  applicantList.innerHTML = buildMeetupApplicantList(applicants);
+  applicantDrawerRestoreFocus = openModal(applicantDrawer, 'applicant-drawer-open', document.activeElement, '[data-applicant-drawer-close]');
+}
+
+function closeApplicantDrawer() {
+  if (!isModalOpen(applicantDrawer)) return;
+  closeModal(applicantDrawer, 'applicant-drawer-open', applicantDrawerRestoreFocus);
+  applicantDrawerRestoreFocus = null;
 }
 
 function renderMeetupsMessage(message, countLabel = '0개') {
@@ -1127,6 +1153,13 @@ meetupsBody.addEventListener('click', async (event) => {
     return;
   }
 
+  const applicantsButton = event.target.closest('[data-applicants-meetup]');
+  if (applicantsButton) {
+    const meetup = overview.meetups.find((item) => item.id === applicantsButton.dataset.applicantsMeetup);
+    if (meetup) openApplicantDrawer(meetup);
+    return;
+  }
+
   const editButton = event.target.closest('[data-edit-meetup]');
   const toggleButton = event.target.closest('[data-toggle-meetup]');
 
@@ -1201,6 +1234,21 @@ document.addEventListener('keydown', (event) => {
   }
   if (event.key === 'Tab') {
     trapFocus(event, meetupDrawer);
+  }
+});
+
+document.querySelectorAll('[data-applicant-drawer-close]').forEach((element) => {
+  element.addEventListener('click', closeApplicantDrawer);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (!isModalOpen(applicantDrawer)) return;
+  if (event.key === 'Escape') {
+    closeApplicantDrawer();
+    return;
+  }
+  if (event.key === 'Tab') {
+    trapFocus(event, applicantDrawer);
   }
 });
 

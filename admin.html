@@ -364,6 +364,21 @@
       </article>
     </div>
 
+    <div class="meetup-drawer" data-applicant-drawer aria-hidden="true" hidden inert>
+      <div class="meetup-drawer-backdrop" data-applicant-drawer-close></div>
+      <aside class="meetup-drawer-panel applicant-panel" role="dialog" aria-modal="true" aria-labelledby="applicantDrawerTitle" tabindex="-1">
+        <div class="applicant-head-row">
+          <div>
+            <p class="eyebrow">APPLICANTS</p>
+            <h3 id="applicantDrawerTitle">신청자</h3>
+          </div>
+          <button class="ghost-button" type="button" data-applicant-drawer-close>닫기</button>
+        </div>
+        <p class="applicant-drawer-subtitle" data-applicant-drawer-meetup></p>
+        <ul class="applicant-list" data-applicant-list></ul>
+      </aside>
+    </div>
+
     <script type="module" src="./admin.js?v=__ASSET_VERSION__"></script>
   </body>
 </html>
