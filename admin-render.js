@@ -238,11 +238,12 @@ export function buildOrderRows(orders, { getMeetupTitle, getPaymentForOrder }) {
 
 export function buildSeatSummary(meetup) {
   return `
-    <div class="seat-summary">
+    <button type="button" class="seat-summary" data-manage-meetup="${escapeHtml(meetup.id)}" aria-label="${escapeHtml(meetup.title)} 신청자·게스트 관리">
       <span class="pill ${getSeatStatusClass(meetup)}">${escapeHtml(getSeatStatusLabel(meetup))}</span>
       <strong>${escapeHtml(getSeatSummaryText(meetup))}</strong>
       <span>${escapeHtml(getSeatBreakdownText(meetup))}</span>
-    </div>
+      <span class="seat-manage-hint">신청 ${escapeHtml(String(meetup.applicant_count ?? 0))}명 · 관리 ›</span>
+    </button>
   `;
 }
 
@@ -268,7 +269,6 @@ export function buildMeetupRows(meetups) {
           <td data-label="관리">
             <div class="row-actions">
               <button type="button" data-edit-meetup="${escapeHtml(meetup.id)}">수정</button>
-              <button type="button" data-manage-meetup="${escapeHtml(meetup.id)}">신청 ${escapeHtml(String(meetup.applicant_count ?? 0))} · 게스트 ${escapeHtml(String(meetup.manual_guest_count ?? 0))}</button>
               <button
                 class="ghost-button"
                 type="button"

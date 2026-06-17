@@ -6,7 +6,7 @@ function readProjectFile(pathname) {
   return readFile(new URL(`../${pathname}`, import.meta.url), 'utf8');
 }
 
-test('each meetup row has one manage button carrying applicant and guest counts', async () => {
+test('the clickable seat cell is the manage entry point and shows the applicant count', async () => {
   const { buildMeetupRows } = await import('../admin-render.js');
   const rows = buildMeetupRows([{
     id: 'm1', title: '취향 살롱', category: '문화', type: 'social',
@@ -14,8 +14,12 @@ test('each meetup row has one manage button carrying applicant and guest counts'
     price_label: '1,000원', price_amount: 1000, is_published: true,
     applicant_count: 5, manual_guest_count: 2,
   }]);
-  assert.match(rows, /data-manage-meetup="m1"/);
-  assert.match(rows, /신청 5 · 게스트 2/);
+  // the seat cell itself is the button that opens the manage drawer
+  assert.match(rows, /class="seat-summary" data-manage-meetup="m1"/);
+  assert.match(rows, /신청 5명/);
+  assert.match(rows, /게스트 2/); // guest count in the seat breakdown
+  // no separate manage button remains in the row actions
+  assert.doesNotMatch(rows, /row-actions[\s\S]*data-manage-meetup/);
 });
 
 test('buildMeetupApplicantList renders an editable status select, interest and an empty fallback', async () => {

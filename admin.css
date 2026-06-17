@@ -890,6 +890,27 @@ tr.is-refund-requested {
   display: grid;
   gap: 4px;
   min-width: 120px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin: -8px -10px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.seat-summary:hover,
+.seat-summary:focus-visible {
+  background: rgba(31, 106, 83, 0.06);
+  border-color: var(--line);
+}
+
+.seat-summary:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
 }
 
 .seat-summary .pill {
@@ -901,11 +922,21 @@ tr.is-refund-requested {
   line-height: 1.3;
 }
 
-.seat-summary span:not(.pill) {
+.seat-summary span:not(.pill):not(.seat-manage-hint) {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.35;
+}
+
+.seat-manage-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .status-select {
