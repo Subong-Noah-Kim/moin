@@ -1190,7 +1190,7 @@ h1 {
   margin-left: 4px;
   font-size: 2rem;
   line-height: 0;
-  vertical-align: -0.5em;
+  vertical-align: baseline;
   color: var(--green);
   font-family: Georgia, 'Times New Roman', serif;
 }
