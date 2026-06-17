@@ -181,19 +181,19 @@ export function buildMeetupApplicantList(applications) {
     .map(
       (application) => `
         <li class="applicant-item">
-          <div class="applicant-head">
+          <div class="applicant-info">
             <strong>${escapeHtml(application.applicant_name)}</strong>
-            <select
-              class="status-select is-${escapeHtml(application.status)}"
-              data-application-status="${escapeHtml(application.id)}"
-              data-current-status="${escapeHtml(application.status)}"
-              aria-label="${escapeHtml(application.applicant_name)} 신청 상태"
-            >
-              ${renderApplicationStatusOptions(application.status)}
-            </select>
+            ${application.interest ? `<p class="applicant-interest">${escapeHtml(application.interest)}</p>` : ''}
+            <span class="applicant-date">${escapeHtml(formatDate(application.created_at))}</span>
           </div>
-          ${application.interest ? `<p class="applicant-interest">${escapeHtml(application.interest)}</p>` : ''}
-          <span class="applicant-date">${escapeHtml(formatDate(application.created_at))}</span>
+          <select
+            class="status-select is-${escapeHtml(application.status)}"
+            data-application-status="${escapeHtml(application.id)}"
+            data-current-status="${escapeHtml(application.status)}"
+            aria-label="${escapeHtml(application.applicant_name)} 신청 상태"
+          >
+            ${renderApplicationStatusOptions(application.status)}
+          </select>
         </li>
       `,
     )
