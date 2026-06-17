@@ -218,6 +218,7 @@ export function normalizeMeetup(row) {
     tags: Array.isArray(row.tags) ? row.tags : fallback.tags,
     image: isPublicImageUrl(row.image_url) ? row.image_url : getCategoryFallbackImage(category),
     schedule: Array.isArray(row.schedule) ? row.schedule.filter(Boolean) : fallback.schedule,
+    reviews: Array.isArray(row.reviews) ? row.reviews.filter((review) => review && review.quote) : [],
     availabilityKnown: null,
     canRegister: true,
     effectiveRegistrationStatus: 'open',
@@ -254,4 +255,20 @@ export function matchesSearch(item, query) {
 
 export function createTagMarkup(tags) {
   return tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('');
+}
+
+export function createReviewsMarkup(reviews) {
+  if (!Array.isArray(reviews)) {
+    return '';
+  }
+
+  return reviews
+    .filter((review) => review && review.quote)
+    .map((review) => `
+      <figure class="review-card">
+        <blockquote>${escapeHtml(review.quote)}</blockquote>
+        ${review.audience ? `<figcaption>— ${escapeHtml(review.audience)}</figcaption>` : ''}
+      </figure>
+    `)
+    .join('');
 }

@@ -41,6 +41,27 @@ export function splitAdminMeetupList(value) {
     .filter(Boolean);
 }
 
+// One review per line, "추천 대상 | 리뷰 문구". The audience (before the first
+// "|") is optional; a line with no "|" is treated as a quote with no audience.
+// Lines without a quote are dropped.
+export function splitAdminMeetupReviews(value) {
+  return String(value || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const separatorIndex = line.indexOf('|');
+      if (separatorIndex === -1) {
+        return { audience: '', quote: line };
+      }
+      return {
+        audience: line.slice(0, separatorIndex).trim(),
+        quote: line.slice(separatorIndex + 1).trim(),
+      };
+    })
+    .filter((review) => review.quote);
+}
+
 export function createAdminMeetupId(title, timestamp = Date.now()) {
   const timestampValue = typeof timestamp === 'function' ? timestamp() : timestamp;
   const slug = String(title || '')
@@ -113,6 +134,7 @@ export function createAdminMeetupPayload(source, { includeId = false, timestamp 
     tags: splitAdminMeetupList(getSourceValue(source, 'tags')),
     image_url: getAdminMeetupImageUrlPayloadValue(getSourceValue(source, 'image_url')),
     schedule: splitAdminMeetupList(getSourceValue(source, 'schedule')),
+    reviews: splitAdminMeetupReviews(getSourceValue(source, 'reviews')),
     is_published: hasSourceValue(source, 'is_published'),
   };
 

@@ -570,6 +570,7 @@ test('admin meetup form helpers build safe create and update payloads', () => {
       tags: '독서, 회고\n네트워킹',
       image_url: ' https://example.com/cover.jpg ',
       schedule: '오프닝\n대화',
+      reviews: '혼자 오는 분 | 편하게 어울렸어요\n그냥 따라온 친구',
       is_published: 'on',
     }, { includeId: true, timestamp: 46655 }),
     {
@@ -592,6 +593,10 @@ test('admin meetup form helpers build safe create and update payloads', () => {
       tags: ['독서', '회고', '네트워킹'],
       image_url: 'https://example.com/cover.jpg',
       schedule: ['오프닝', '대화'],
+      reviews: [
+        { audience: '혼자 오는 분', quote: '편하게 어울렸어요' },
+        { audience: '', quote: '그냥 따라온 친구' },
+      ],
       is_published: true,
     },
   );
@@ -628,6 +633,7 @@ test('admin meetup form helpers build safe create and update payloads', () => {
       tags: [],
       image_url: '',
       schedule: [],
+      reviews: [],
       is_published: false,
     },
   );
@@ -661,6 +667,7 @@ test('admin meetup form helpers build safe create and update payloads', () => {
       tags: [],
       image_url: '',
       schedule: [],
+      reviews: [],
       is_published: true,
     },
   );

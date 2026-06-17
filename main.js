@@ -30,6 +30,7 @@ import {
   escapeAttribute,
   escapeImageUrl,
   createTagMarkup,
+  createReviewsMarkup,
 } from './public-meetup.js?v=__ASSET_VERSION__';
 import { detectInstallEnv, getInstallPromptMode } from './pwa-install.js?v=__ASSET_VERSION__';
 import { getPublicMeetupActionState } from './public-flow.js?v=__ASSET_VERSION__';
@@ -669,6 +670,14 @@ function openDrawer(itemId, opener = document.activeElement) {
       </section>
     `
     : '';
+  const reviewsMarkup = Array.isArray(item.reviews) && item.reviews.length
+    ? `
+      <section class="drawer-section drawer-reviews">
+        <h3>이런 분께 추천해요</h3>
+        <div class="review-list">${createReviewsMarkup(item.reviews)}</div>
+      </section>
+    `
+    : '';
   drawerContent.innerHTML = `
     <div class="drawer-hero">
       <img src="${escapeImageUrl(item.image)}" alt="${escapeAttribute(item.title)}" />
@@ -705,6 +714,8 @@ function openDrawer(itemId, opener = document.activeElement) {
       </section>
 
       ${scheduleMarkup}
+
+      ${reviewsMarkup}
 
       <section class="drawer-section">
         <h3>자주 묻는 질문</h3>

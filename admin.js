@@ -498,6 +498,11 @@ function setMeetupFormValues(meetup) {
   resetMeetupImagePicker(meetup?.image_url || '');
   meetupForm.elements.tags.value = Array.isArray(meetup?.tags) ? meetup.tags.join(', ') : '';
   meetupForm.elements.schedule.value = Array.isArray(meetup?.schedule) ? meetup.schedule.join('\n') : '';
+  meetupForm.elements.reviews.value = Array.isArray(meetup?.reviews)
+    ? meetup.reviews
+      .map((review) => (review.audience ? `${review.audience} | ${review.quote}` : review.quote))
+      .join('\n')
+    : '';
   meetupForm.elements.is_published.checked = meetup?.is_published ?? true;
   syncRegistrationStatusFields();
 }
