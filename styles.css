@@ -1185,6 +1185,16 @@ h1 {
   font-family: Georgia, 'Times New Roman', serif;
 }
 
+.review-card blockquote::after {
+  content: '\201D';
+  margin-left: 3px;
+  color: var(--green);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1em;
+  font-weight: 700;
+  vertical-align: -0.15em;
+}
+
 .review-card figcaption {
   margin-top: 10px;
   padding-left: 26px;
