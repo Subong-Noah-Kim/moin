@@ -471,6 +471,29 @@ async function smokeAdminDashboard(connection, baseUrl) {
     }
 
     console.log(`✓ admin dashboard rendered (${summary.orders} order row, refund alert ${summary.refundCount})`);
+
+    // The meetup editor opens as a right-side drawer overlay; the list stays in place.
+    await evaluate(connection, page.sessionId, `document.querySelector('[data-tab-button="meetups"]').click()`);
+    await evaluate(connection, page.sessionId, `document.querySelector('[data-edit-meetup]').click()`);
+    await waitForExpression(
+      connection,
+      page.sessionId,
+      `(() => {
+        const drawer = document.querySelector('[data-meetup-drawer]');
+        return drawer && drawer.getAttribute('aria-hidden') === 'false'
+          && !drawer.hasAttribute('inert')
+          && document.querySelectorAll('[data-meetups-body] tr').length > 0;
+      })()`,
+      'meetup edit drawer opens while the list stays',
+    );
+    await evaluate(connection, page.sessionId, `document.querySelector('[data-meetup-drawer-close]').click()`);
+    const drawerClosed = await evaluate(
+      connection,
+      page.sessionId,
+      `document.querySelector('[data-meetup-drawer]').getAttribute('aria-hidden') === 'true'`,
+    );
+    if (!drawerClosed) throw new Error('meetup edit drawer did not close');
+    console.log('✓ meetup editor drawer opens and closes (list stays in place)');
   } finally {
     await page.close();
   }

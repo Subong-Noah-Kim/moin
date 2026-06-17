@@ -68,6 +68,7 @@ const meetupForm = document.querySelector('[data-meetup-form]');
 const meetupFormTitle = document.querySelector('[data-meetup-form-title]');
 const meetupFormStatus = document.querySelector('[data-meetup-form-status]');
 const cancelMeetupButton = document.querySelector('[data-cancel-meetup]');
+const meetupDrawer = document.querySelector('[data-meetup-drawer]');
 const meetupsBody = document.querySelector('[data-meetups-body]');
 const applicationsBody = document.querySelector('[data-applications-body]');
 const ordersBody = document.querySelector('[data-orders-body]');
@@ -102,6 +103,7 @@ let operationsRequestId = 0;
 let ordersRequestId = 0;
 let agenticRequestId = 0;
 let editingMeetupId = null;
+let meetupDrawerRestoreFocus = null;
 const shouldClearAuthParams = hasAuthTokenParams();
 let pendingInvite = getInviteParams();
 let meetupImagePreviewObjectUrl = null;
@@ -490,13 +492,13 @@ function openMeetupForm(meetup = null) {
   meetupFormStatus.textContent = meetup
     ? '수정 후 저장하면 메인 사이트에도 반영됩니다.'
     : '관리 ID를 비워두면 자동으로 생성됩니다.';
-  meetupForm.hidden = false;
-  meetupForm.querySelector('input[name="title"]')?.focus({ preventScroll: true });
+  meetupDrawerRestoreFocus = openModal(meetupDrawer, 'meetup-drawer-open', document.activeElement, 'input[name="title"]');
 }
 
 function closeMeetupForm() {
   editingMeetupId = null;
-  meetupForm.hidden = true;
+  closeModal(meetupDrawer, 'meetup-drawer-open', meetupDrawerRestoreFocus);
+  meetupDrawerRestoreFocus = null;
   meetupFormStatus.textContent = '';
   resetMeetupImagePicker();
   meetupForm.reset();
@@ -1185,6 +1187,21 @@ tabButtons.forEach((button) => {
 
 document.querySelectorAll('[data-guest-modal-close]').forEach((element) => {
   element.addEventListener('click', closeGuestModal);
+});
+
+document.querySelectorAll('[data-meetup-drawer-close]').forEach((element) => {
+  element.addEventListener('click', closeMeetupForm);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (!isModalOpen(meetupDrawer)) return;
+  if (event.key === 'Escape') {
+    closeMeetupForm();
+    return;
+  }
+  if (event.key === 'Tab') {
+    trapFocus(event, meetupDrawer);
+  }
 });
 
 guestAddForm.addEventListener('submit', async (event) => {

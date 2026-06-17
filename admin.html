@@ -148,11 +148,14 @@
             </div>
             <button class="small-action" type="button" data-new-meetup>새 모임</button>
           </div>
-          <form class="meetup-form" data-meetup-form hidden>
+          <div class="meetup-drawer" data-meetup-drawer aria-hidden="true" hidden inert>
+            <div class="meetup-drawer-backdrop" data-meetup-drawer-close></div>
+            <aside class="meetup-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="meetupFormTitle" tabindex="-1">
+              <form class="meetup-form" data-meetup-form>
             <div class="form-title-row">
               <div>
                 <p class="eyebrow">MEETUP EDITOR</p>
-                <h3 data-meetup-form-title>새 모임 추가</h3>
+                <h3 id="meetupFormTitle" data-meetup-form-title>새 모임 추가</h3>
               </div>
               <button class="ghost-button" type="button" data-cancel-meetup>닫기</button>
             </div>
@@ -284,7 +287,9 @@
               <p data-meetup-form-status role="status" aria-live="polite"></p>
               <button type="submit" data-save-meetup>저장</button>
             </div>
-          </form>
+              </form>
+            </aside>
+          </div>
           <div class="table-wrap">
             <table>
               <thead>

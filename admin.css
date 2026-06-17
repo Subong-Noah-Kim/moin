@@ -1235,3 +1235,50 @@ tr.is-refund-requested {
 body.guest-modal-open {
   overflow: hidden;
 }
+
+.meetup-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+}
+
+.meetup-drawer[hidden] {
+  display: none;
+}
+
+.meetup-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 22, 24, 0);
+  transition: background 180ms ease;
+}
+
+.meetup-drawer[aria-hidden="false"] .meetup-drawer-backdrop {
+  background: rgba(20, 22, 24, 0.48);
+}
+
+.meetup-drawer-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(640px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: #fbf7ef;
+  transform: translateX(104%);
+  transition: transform 220ms ease;
+  box-shadow: -16px 0 50px rgba(0, 0, 0, 0.2);
+}
+
+.meetup-drawer[aria-hidden="false"] .meetup-drawer-panel {
+  transform: translateX(0);
+}
+
+.meetup-drawer-panel .meetup-form {
+  border-bottom: 0;
+  min-height: 100%;
+}
+
+body.meetup-drawer-open {
+  overflow: hidden;
+}
