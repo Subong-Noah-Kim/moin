@@ -966,6 +966,54 @@ h1 {
   font-weight: 800;
 }
 
+.site-footer {
+  flex-wrap: wrap;
+}
+
+.site-footer .footer-policy {
+  flex-basis: 100%;
+  justify-content: flex-start;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.site-footer .business-info {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 4px 18px;
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.site-footer .business-info div {
+  display: flex;
+  gap: 6px;
+}
+
+.site-footer .business-info dt {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.site-footer .business-info dd {
+  margin: 0;
+  color: #343941;
+}
+
+.site-footer .service-period-note {
+  flex-basis: 100%;
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.site-footer .footer-policy a,
+.site-footer .service-period-note a {
+  color: inherit;
+}
+
 .host-copy p:not(.eyebrow) {
   max-width: 560px;
   margin: 16px 0 0;

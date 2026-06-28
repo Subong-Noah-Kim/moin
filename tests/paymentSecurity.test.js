@@ -904,6 +904,58 @@ test('README documents the live-key switch procedure', async () => {
   assert.match(readme, /TOSS_SECRET_KEY/);
 });
 
+test('site footer carries business registration info and policy links', async () => {
+  const indexHtml = await readProjectFile('../index.html');
+
+  assert.match(indexHtml, /상호/);
+  assert.match(indexHtml, /대표자/);
+  assert.match(indexHtml, /사업자등록번호/);
+  assert.match(indexHtml, /사업장 주소/);
+  assert.match(indexHtml, /고객센터/);
+  assert.match(indexHtml, /통신판매업/);
+
+  assert.match(indexHtml, /href="\.\/terms\.html"/);
+  assert.match(indexHtml, /href="\.\/refund\.html"/);
+  assert.match(indexHtml, /href="\.\/privacy\.html"/);
+
+  // the "데모" wording that reads as a non-real service must be gone from the footer
+  assert.doesNotMatch(indexHtml, /커뮤니티 데모입니다/);
+
+  // 무형 재화: a visible max service-provision-period notice (Toss requirement)
+  assert.match(indexHtml, /서비스 제공기간/);
+  assert.match(indexHtml, /1년/);
+});
+
+test('policy pages describe the intangible service, provision period, and refund terms', async () => {
+  const [terms, refund, privacy] = await Promise.all([
+    readProjectFile('../terms.html'),
+    readProjectFile('../refund.html'),
+    readProjectFile('../privacy.html'),
+  ]);
+
+  assert.match(terms, /이용약관/);
+  assert.match(privacy, /개인정보\s*처리방침/);
+
+  // intangible good (무형 재화): provision period + refund terms must be explicit
+  assert.match(refund, /환불/);
+  assert.match(refund, /취소/);
+  assert.match(refund, /무형/);
+  assert.match(refund, /서비스 제공/);
+  assert.match(refund, /모임 (일시|시작)/);
+  // 서비스제공기간 = 결제 시점부터 서비스 종료까지(예약 기간 포함), 1년 이내
+  assert.match(refund, /서비스\s*제공\s*기간/);
+  assert.match(refund, /결제(일|일시|한 시점|한 날)/);
+  assert.match(refund, /1년/);
+});
+
+test('deploy workflow ships the policy pages', async () => {
+  const workflow = await readProjectFile('../.github/workflows/deploy-pages.yml');
+
+  assert.match(workflow, /cp terms\.html dist\//);
+  assert.match(workflow, /cp refund\.html dist\//);
+  assert.match(workflow, /cp privacy\.html dist\//);
+});
+
 test('public payment copy separates Toss test mode from live payments', async () => {
   const [mainScript, publicFlowModule, resultHtml, resultScript, resultStateModule] = await Promise.all([
     readProjectFile('../main.js'),

@@ -68,6 +68,9 @@ jobs:
           cp admin-status.js dist/
           cp escape-html.js dist/
           cp index.html dist/
+          cp terms.html dist/
+          cp refund.html dist/
+          cp privacy.html dist/
           cp main.js dist/
           cp modal-manager.js dist/
           cp toast-queue.js dist/

@@ -2,6 +2,17 @@
 
 Code review follow-up list. Keep this file as the source of truth for near-term cleanup and production-readiness work.
 
+## 🔴 높은 우선순위 — 토스 라이브 신청/런칭 전 필수
+
+- [ ] 사업자정보·정책 페이지 실제 내용 채우기 (구조 완료, 값만 남음)
+  - Problem: 카드사 심사관이 라이브 사이트를 직접 확인하므로, 전자결제 신청 전에 사업자정보 푸터와 정책 페이지에 실제 값이 채워져 있어야 한다. 현재는 플레이스홀더(`[[ ]]`)만 있어 라이브에 노출하면 대괄호가 그대로 보임.
+  - Files: `index.html`(푸터 `[[ ]]`), `refund.html`, `terms.html`, `privacy.html`
+  - 채울 값: 상호명 / 대표자명 / 사업자등록번호 / 사업장 주소 / 고객센터 전화·이메일 / 통신판매업 신고번호(또는 "면제 대상(간이과세자)") / 환불 기준(취소 시점별 일수·비율) / 개인정보 보호책임자 / 각 문서 시행일
+  - 무형 재화 주의: 서비스 제공기간(결제 시점~모임 종료, 사전 예약 기간 포함, 최대 결제일로부터 1년) 명시 — `refund.html` 2번 섹션 + 푸터 공통 안내에 이미 반영됨. 환불 비율·일수만 확정하면 됨.
+  - 약관/개인정보처리방침은 공정위 표준약관 등 참고해 법적 검토 후 게시 권장.
+  - Done when: 모든 `[[ ]]` 플레이스홀더가 실제 값으로 채워지고, 채운 상태로 배포되어 라이브 사이트 푸터·정책 페이지에 정상 노출됨.
+  - 후속(선택): 각 모임 카드/상세에 "서비스 제공기간: 결제일~모임 종료일" 자동 표시 + 결제일 기준 1년 초과 일정 판매 차단.
+
 ## Current Priority Queue - 2026-06-07 Audit
 
 1. Continue behavior-oriented frontend tests for shipped public/admin/payment flows.
