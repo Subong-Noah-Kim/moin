@@ -78,6 +78,11 @@ import {
   renderPaymentRecord,
 } from '../admin-render.js';
 import { escapeHtml } from '../escape-html.js';
+import {
+  getTossKeyMode,
+  isTossClientKeyConfigured,
+  isTossLiveKey,
+} from '../toss-config.js';
 
 const assetVersionPlaceholder = '__ASSET_VERSION__';
 const cacheBustedSourceFiles = [
@@ -889,6 +894,16 @@ test('docs distinguish wired test integration from remaining production setup', 
   assert.doesNotMatch(supabaseReadme, /Payment confirmation should be handled by a server endpoint or Supabase Edge Function/);
 });
 
+test('README documents the live-key switch procedure', async () => {
+  const readme = await readProjectFile('../README.md');
+
+  assert.match(readme, /라이브 키 전환/);
+  assert.match(readme, /live_ck_/);
+  assert.match(readme, /live_sk_/);
+  assert.match(readme, /같은 상점의 한 쌍/);
+  assert.match(readme, /TOSS_SECRET_KEY/);
+});
+
 test('public payment copy separates Toss test mode from live payments', async () => {
   const [mainScript, publicFlowModule, resultHtml, resultScript, resultStateModule] = await Promise.all([
     readProjectFile('../main.js'),
@@ -920,6 +935,50 @@ test('public payment copy separates Toss test mode from live payments', async ()
   assert.doesNotMatch(resultScript, /결제가 완료됐어요/);
   assert.doesNotMatch(resultScript, /아직 배포되지 않았|아직 설정되지 않았/);
   assert.doesNotMatch(resultStateModule, /return message \|\| '결제 승인 처리에 실패했습니다\.'/);
+});
+
+test('Toss key mode classifies live, test, and demo client keys', () => {
+  assert.equal(getTossKeyMode('live_ck_abc'), 'live');
+  assert.equal(getTossKeyMode('test_ck_abc'), 'test');
+  assert.equal(getTossKeyMode('  live_ck_padded  '), 'live');
+  assert.equal(getTossKeyMode(''), 'demo');
+  assert.equal(getTossKeyMode(null), 'demo');
+  assert.equal(getTossKeyMode('garbage'), 'demo');
+});
+
+test('a live Toss client key counts as configured (regression: live_ must not fall back to demo)', () => {
+  assert.equal(isTossClientKeyConfigured('live_ck_abc'), true);
+  assert.equal(isTossClientKeyConfigured('test_ck_abc'), true);
+  assert.equal(isTossClientKeyConfigured(''), false);
+  assert.equal(isTossClientKeyConfigured('garbage'), false);
+});
+
+test('Toss live mode is detected only for live_ client keys', () => {
+  assert.equal(isTossLiveKey('live_ck_abc'), true);
+  assert.equal(isTossLiveKey('test_ck_abc'), false);
+  assert.equal(isTossLiveKey(''), false);
+});
+
+test('Toss checkout treats both test and live keys as configured and exposes live mode', async () => {
+  const tossCheckoutModule = await readProjectFile('../toss-checkout.js');
+
+  assert.match(tossCheckoutModule, /isTossClientKeyConfigured/);
+  assert.match(tossCheckoutModule, /export function isTossLiveMode/);
+  assert.match(tossCheckoutModule, /isTossLiveKey/);
+  assert.doesNotMatch(tossCheckoutModule, /startsWith\('test_'\)/);
+});
+
+test('checkout copy switches to a real-charge warning in Toss live mode', async () => {
+  const mainScript = await readProjectFile('../main.js');
+
+  assert.match(mainScript, /const tossLive = isTossLiveMode\(\)/);
+  assert.match(mainScript, /TOSS LIVE CHECKOUT/);
+  assert.match(mainScript, /실제 결제가 진행됩니다/);
+  assert.match(mainScript, /즉시 출금됩니다/);
+  assert.match(mainScript, /tossLive \? '결제하기'/);
+  // test and demo copy must still be present (no regression for the current key)
+  assert.match(mainScript, /TOSS TEST CHECKOUT/);
+  assert.match(mainScript, /데모 결제 표시하기/);
 });
 
 test('payment result uses paymentKey for confirmation without exposing the raw identifier', async () => {

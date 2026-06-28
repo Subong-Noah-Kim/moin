@@ -1,4 +1,8 @@
-import { TOSS_CLIENT_KEY } from './toss-config.js?v=__ASSET_VERSION__';
+import {
+  TOSS_CLIENT_KEY,
+  isTossClientKeyConfigured,
+  isTossLiveKey,
+} from './toss-config.js?v=__ASSET_VERSION__';
 
 const tossCustomerKeyStorage = 'momentclub:toss-customer-key';
 const tossSdkUrl = 'https://js.tosspayments.com/v2/standard';
@@ -10,7 +14,11 @@ function getTossClientKey() {
 }
 
 export function isTossConfigured() {
-  return getTossClientKey().startsWith('test_');
+  return isTossClientKeyConfigured(getTossClientKey());
+}
+
+export function isTossLiveMode() {
+  return isTossLiveKey(getTossClientKey());
 }
 
 export function createSafeRandomId(prefix) {

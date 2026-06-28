@@ -72,6 +72,22 @@ supabase secrets set PUBLIC_SUBMISSION_HASH_SALT=임의의_긴_난수_문자열
 
 토스 테스트 결제 승인 처리는 브라우저에서 직접 하지 않습니다. Supabase Edge Function이 토스 테스트 결제 승인 API를 호출하고, 승인 결과로 `orders.status`와 `payments`를 업데이트합니다. 이 저장소에는 테스트 결제 흐름만 포함되어 있으며, 실제 과금 전환은 토스 라이브 키, 약관/환불/개인정보 고지, 운영 검증을 별도로 완료한 뒤 진행해야 합니다.
 
+### 라이브 키 전환
+
+실제 과금으로 바꾸려면 **클라이언트 키와 시크릿 키를 같은 상점의 라이브 키 한 쌍(`live_`)으로 동시에** 교체합니다. 코드는 `live_` 키를 자동으로 인식해(`toss-config.js`의 `getTossKeyMode`) 데모가 아닌 실제 결제창을 열고, 결제창 문구도 "TOSS LIVE CHECKOUT / 실제 결제가 진행됩니다"로 자동 전환됩니다.
+
+1. `toss-config.js`의 `TOSS_CLIENT_KEY`를 `live_ck_...`로 교체하고 커밋·배포합니다. 클라이언트 키는 공개 키라 저장소·브라우저 노출이 정상입니다.
+2. Supabase 시크릿 `TOSS_SECRET_KEY`를 같은 상점의 `live_sk_...`로 교체합니다. 시크릿 키는 저장소에 절대 넣지 않습니다.
+
+```bash
+supabase secrets set TOSS_SECRET_KEY=토스_라이브_시크릿키
+```
+
+3. 두 키는 반드시 **같은 상점의 한 쌍**이어야 합니다. 한쪽만 바꾸면 결제 승인이 실패합니다.
+4. 전환 후 본인 카드로 소액 실결제 1건을 진행하고 토스 대시보드에서 환불해 끝까지 검증합니다.
+
+라이브 전환 전제조건(온라인 결제연동 계약, 통신판매업 신고, 약관·환불·개인정보 고지)은 코드와 별개로 먼저 갖춰야 합니다.
+
 ### 결제 승인 Edge Function
 
 `supabase/functions/confirm-toss-payment`는 토스 성공 리다이렉트로 받은 `paymentKey`, `orderId`, `amount`를 검증하고 토스 결제 승인 API를 호출합니다. 승인 성공 시 `orders.status = 'paid'`로 바꾸고 `payments`에 결제 기록을 추가합니다. 토스 결제창 취소나 실패 리다이렉트가 발생하면 같은 함수가 해당 주문을 `cancelled` 또는 `failed`로 정리합니다.

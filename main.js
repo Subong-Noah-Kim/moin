@@ -62,6 +62,7 @@ import {
   getTossMethod,
   getTossPayment,
   isTossConfigured,
+  isTossLiveMode,
 } from './toss-checkout.js?v=__ASSET_VERSION__';
 
 function redirectInviteToAdmin() {
@@ -875,6 +876,7 @@ function openCheckout(itemId, opener = document.activeElement) {
   }
 
   const tossConfigured = isTossConfigured();
+  const tossLive = isTossLiveMode();
   const checkoutPayerId = createFieldId('checkout', item.id, 'payer');
   const checkoutPayerHelpId = createFieldId(checkoutPayerId, 'help');
 
@@ -886,13 +888,15 @@ function openCheckout(itemId, opener = document.activeElement) {
 
   checkoutContent.innerHTML = `
     <div class="checkout-content">
-      <p class="checkout-kicker">${tossConfigured ? 'TOSS TEST CHECKOUT' : 'DEMO CHECKOUT'}</p>
+      <p class="checkout-kicker">${tossLive ? 'TOSS LIVE CHECKOUT' : tossConfigured ? 'TOSS TEST CHECKOUT' : 'DEMO CHECKOUT'}</p>
       <h2 id="checkoutTitle">결제하기</h2>
       <p class="checkout-desc">
         ${
-          tossConfigured
-            ? '토스페이먼츠 테스트 결제창을 열고 Supabase 승인 함수까지 이어지는 흐름을 확인합니다.'
-            : '토스 테스트 키가 없어서 결제창 없이 화면 확인용 데모 결제로 진행합니다.'
+          tossLive
+            ? '실제 결제가 진행됩니다. 선택한 결제수단에서 바로 출금되니 금액을 확인한 뒤 진행해주세요.'
+            : tossConfigured
+              ? '토스페이먼츠 테스트 결제창을 열고 Supabase 승인 함수까지 이어지는 흐름을 확인합니다.'
+              : '토스 테스트 키가 없어서 결제창 없이 화면 확인용 데모 결제로 진행합니다.'
         }
       </p>
 
@@ -938,14 +942,16 @@ function openCheckout(itemId, opener = document.activeElement) {
         </fieldset>
         <p class="checkout-note">
           ${
-            tossConfigured
-              ? '테스트 결제는 실제 출금되지 않으며, 인증 후 Supabase Edge Function이 승인 API를 호출합니다.'
-              : '토스 개발자센터에서 받은 test_ 클라이언트 키를 toss-config.js에 넣으면 테스트 결제창이 열립니다.'
+            tossLive
+              ? '실제 결제가 진행되어 카드·계좌에서 즉시 출금됩니다. 환불이 필요하면 운영자에게 문의해주세요.'
+              : tossConfigured
+                ? '테스트 결제는 실제 출금되지 않으며, 인증 후 Supabase Edge Function이 승인 API를 호출합니다.'
+                : '토스 개발자센터에서 받은 test_ 클라이언트 키를 toss-config.js에 넣으면 테스트 결제창이 열립니다.'
           }
         </p>
         <p class="checkout-status" data-checkout-status aria-live="polite"></p>
         <button class="checkout-submit" type="submit">
-          ${tossConfigured ? '토스 테스트 결제 열기' : '데모 결제 표시하기'}
+          ${tossLive ? '결제하기' : tossConfigured ? '토스 테스트 결제 열기' : '데모 결제 표시하기'}
         </button>
       </form>
     </div>
